@@ -1,0 +1,79 @@
+# Dependencies
+node_modules
+**/node_modules
+.pnp
+.pnp.js
+
+# Build outputs (but keep package dist files)
+build
+.next
+out
+apps/*/dist
+apps/**/dist
+
+# Testing
+coverage
+.nyc_output
+**/*.test.ts
+**/*.spec.ts
+**/test
+**/tests
+**/__tests__
+
+# Environment and configs
+.env
+.env.*
+!.env.example
+.envrc
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.md
+!README.md
+.prettierrc
+.eslintrc*
+.editorconfig
+jest.config.*
+tsconfig*.json
+!tsconfig.json
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Temp files
+tmp
+temp
+*.tmp
+.cache

@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "clean": "rm -rf node_modules apps/*/node_modules"
+  }
+}
