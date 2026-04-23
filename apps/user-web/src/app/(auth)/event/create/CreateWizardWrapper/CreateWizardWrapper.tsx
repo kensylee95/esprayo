@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeft } from "lucide-react";
+import {ArrowBigLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect } from "react";
@@ -53,7 +53,7 @@ export function Wizard({ children }: WizardProps) {
               onClick={handleBackBtn}
               className={styles.icon}
             >
-              <ArrowLeft height={16} width={16} />
+              <ArrowBigLeftIcon height={24} width={24} />
             </button>
           )}
         </div>

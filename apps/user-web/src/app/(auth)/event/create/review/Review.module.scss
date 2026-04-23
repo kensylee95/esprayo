@@ -76,7 +76,7 @@
 
 .eventTitle {
   @include mixins.display;
-  font-size: 16px;
+  font-size: 24px;
   color: vars.$text-1;
   margin-bottom: 4px;
 }
@@ -105,18 +105,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 12px;
 }
 
 .rowKey {
   font-family: vars.$font-body;
-  font-size: 12px;
+  font-size: 16px;
   margin-right: auto;
   color: vars.$text-2;
 }
 
 .rowVal {
   font-family: vars.$font-mono;
-  font-size: 12px;
+  font-size: 16px;
   color: vars.$text-2;
   margin-left: auto;
   text-align: right;

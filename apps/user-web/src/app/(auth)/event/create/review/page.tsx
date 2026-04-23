@@ -46,7 +46,7 @@ export default function EventReviewScreen() {
 
             <div className={styles.rows}>
               <div className={styles.row}>
-                <span className={styles.rowKey}>Type</span>
+                <span className={styles.rowKey}>Type:</span>
                 <span className={styles.rowVal}>
                   {form.type
                     ? form.type.charAt(0).toUpperCase() + form.type.slice(1)
@@ -55,11 +55,11 @@ export default function EventReviewScreen() {
               </div>
 
               <div className={styles.row}>
-                <span className={styles.rowKey}>Venue</span>
+                <span className={styles.rowKey}>Venue:</span>
                 <span className={styles.rowVal}>{form.venue || "—"}</span>
               </div>
               <div className={styles.row}>
-                <span className={styles.rowKey}>Welcome Message</span>
+                <span className={styles.rowKey}>Welcome Message:</span>
                 <span className={styles.rowVal}>
                   {form.welcomeMessage || "—"}
                 </span>
