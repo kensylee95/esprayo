@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
-import { ScheduleModule } from '@nestjs/schedule';
 import RedisConfig from '@modules/redis/redis.config';
 
 import AppConfig from './app.config';
@@ -11,30 +10,36 @@ import { RedisProviderModule } from '@modules/redis/redis.module';
 import { AuthModule } from '@modules/auth/src/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from '@modules/auth/src';
+import { OrmModule } from '@modules/orm/src';
+import { AuthControllerModule } from './controllers/auth';
+import { UsersControllerModule } from './controllers/users';
 
 @Module({
   imports: [
     //Config
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env', '.env.development'],
+      envFilePath: ['.env'],
       load: [AppConfig, RedisConfig],
     }),
-
-    //Scheduler (once)
-    ScheduleModule.forRoot(),
+    
     AuthModule,
+    OrmModule,
     RedisProviderModule,
-    BullModule.forRootAsync({
+   BullModule.forRootAsync({
+     imports: [ConfigModule.forFeature(RedisConfig)],
       inject: [RedisConfig.KEY],
       useFactory: (config: ConfigType<typeof RedisConfig>) => ({
         connection: {
           host: config.redisHost,
           port: Number(config.redisPort),
-          password: config.redisPassword,
+          password: config.redisPassword || undefined
         },
       }),
     }),
+    GiftControllerModule,
+    AuthControllerModule,
+    UsersControllerModule,
     //Logger
     LoggerModule.forRootAsync({
       inject: [AppConfig.KEY],
@@ -50,7 +55,7 @@ import { JwtAuthGuard } from '@modules/auth/src';
         },
       }),
     }),
-    GiftControllerModule
+   
   ],
    providers: [
     {

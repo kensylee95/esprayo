@@ -1,15 +1,38 @@
-import { Injectable } from '@nestjs/common'
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
-import { User, UserStatus, UserStatusEnum } from './entities/user.entity'
-import { ApiUser, UserPayload } from '@modules/auth/src'
-import { PaginatedResult, PaginationDto, UserFilter, UserManyFilter, UserResponse } from './users.interface'
+import {
+  AuthProviderEnum,
+  User,
+  UserStatus,
+  UserStatusEnum,
+} from './entities/user.entity'
+import { UserPayload } from '@modules/auth/src'
+import {
+  PaginatedResult,
+  PaginationDto,
+  UserFilter,
+  UserManyFilter,
+  UserResponse,
+} from './users.interface'
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
-  private mapToUserResponse = (user: User): UserResponse => ({
+  // -------------------------
+  // MAPPER
+  // -------------------------
+  private mapToUserResponse = (
+    user: User,
+  ): UserResponse => ({
     id: user.id,
     email: user.email,
     firstName: user.firstName,
@@ -20,59 +43,86 @@ export class UsersService {
     status: user.status,
   })
 
+  // -------------------------
+  // FINDERS
+  // -------------------------
   async findUserByEmail(email: string): Promise<User | null> {
-    return await this.userRepository.findOne({
+    return this.userRepository.findOne({
       where: { email },
     })
   }
 
-  async findUser(filter: UserFilter): Promise<UserResponse | null> {
+  async findUser(
+    filter: UserFilter,
+  ): Promise<UserResponse | null> {
     const user = await this.userRepository.findOne({
       where: filter,
     })
 
-    return user ? this.mapToUserResponse(user) : null
+    return user
+      ? this.mapToUserResponse(user)
+      : null
   }
 
-  async findUsers(filter: UserManyFilter): Promise<UserResponse[]> {
+  async findUsers(
+    filter: UserManyFilter,
+  ): Promise<UserResponse[]> {
     const users = await this.userRepository.find({
       where: filter,
     })
 
-    return users.map((user) => this.mapToUserResponse(user))
+    return users.map(this.mapToUserResponse)
   }
 
-  async findUsersPaginated(filter: UserManyFilter, queryParams: PaginationDto): Promise<PaginatedResult> {
+  async findUsersPaginated(
+    filter: UserManyFilter,
+    queryParams: PaginationDto,
+  ): Promise<PaginatedResult> {
     const { page = 1, limit = 10 } = queryParams
-    const [users, total] = await this.userRepository.findAndCount({
-      where: filter,
-      skip: (page - 1) * limit,
-      take: limit,
-      order: { createdAt: 'DESC' },
-    })
 
-    return { users: users.map((user) => this.mapToUserResponse(user)), total, page, limit }
+    const [users, total] =
+      await this.userRepository.findAndCount({
+        where: filter,
+        skip: (page - 1) * limit,
+        take: limit,
+        order: { createdAt: 'DESC' },
+      })
+
+    return {
+      users: users.map(this.mapToUserResponse),
+      total,
+      page,
+      limit,
+    }
   }
 
-  async createUser(
+  // -------------------------
+  // LOCAL USER (EMAIL/PASSWORD)
+  // -------------------------
+  async createLocalUser(
     user: {
       email: string
       password: string
       firstName: string
       lastName: string
     },
-    currentUser: UserPayload
+    currentUser: UserPayload,
   ): Promise<UserResponse> {
-    const existingUser = await this.userRepository.findOne({ where: { email: user.email } })
+    const existingUser =
+      await this.findUserByEmail(user.email)
+
     if (existingUser) {
-      throw new Error('Email is already in use')
+      throw new ConflictException(
+        'Email is already in use',
+      )
     }
 
-    const newUser = new User({
+    const newUser = this.userRepository.create({
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      passwordHash: user.password,
+      passwordHash: user.password, // ideally hash before calling this
+      provider: AuthProviderEnum.Local,
       isActive: true,
       createdBy: currentUser.id,
       createdAt: new Date(),
@@ -80,23 +130,78 @@ export class UsersService {
       status: UserStatusEnum.Active,
     })
 
-    const savedUser = await this.userRepository.save(newUser)
-    return this.mapToUserResponse(savedUser)
+    const saved =
+      await this.userRepository.save(newUser)
+
+    return this.mapToUserResponse(saved)
   }
 
+  // -------------------------
+  // GOOGLE USER (OAUTH)
+  // -------------------------
+  async createGoogleUser(user: {
+    email: string
+    firstName: string
+    lastName: string
+    googleId: string
+  }): Promise<UserResponse> {
+    let existingUser =
+      await this.findUserByEmail(user.email)
+
+    if (existingUser) {
+      return this.mapToUserResponse(existingUser)
+    }
+
+    const newUser = this.userRepository.create({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      passwordHash: null,
+      provider: AuthProviderEnum.Google,
+      googleId: user.googleId,
+      isActive: true,
+      createdBy: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: UserStatusEnum.Active,
+    })
+
+    const saved =
+      await this.userRepository.save(newUser)
+
+    return this.mapToUserResponse(saved)
+  }
+
+  // -------------------------
+  // UPDATE USER
+  // -------------------------
   async updateUser(
     userId: string,
-    data: { firstName: string; lastName: string; status: UserStatus }
+    data: {
+      firstName: string
+      lastName: string
+      status: UserStatus
+    },
   ): Promise<UserResponse> {
-    const user = await this.userRepository.findOne({ where: { id: userId } })
-    if (!user) throw new Error('User with id not found')
+    const user =
+      await this.userRepository.findOne({
+        where: { id: userId },
+      })
+
+    if (!user) {
+      throw new NotFoundException(
+        'User not found',
+      )
+    }
 
     user.firstName = data.firstName
     user.lastName = data.lastName
     user.status = data.status
     user.updatedAt = new Date()
 
-    const updatedUser = await this.userRepository.save(user)
-    return this.mapToUserResponse(updatedUser)
+    const updated =
+      await this.userRepository.save(user)
+
+    return this.mapToUserResponse(updated)
   }
 }

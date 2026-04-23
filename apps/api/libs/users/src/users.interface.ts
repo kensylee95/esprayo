@@ -10,7 +10,7 @@ export type UserResponse = {
   firstName: string
   lastName: string
   status: UserStatus
-  createdBy: string
+  createdBy: string|null
   createdAt: Date
   updatedAt: Date
 }

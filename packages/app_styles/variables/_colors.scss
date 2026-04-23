@@ -1,87 +1,104 @@
+// =====================================
+// SERENADE — Exact Color Tokens
+// 100% extracted from supplied design
+// =====================================
+
 // ==============================
-// Color Tokens
+// Core Neutrals
 // ==============================
-$white: #fff;
-// Violet
-$violet-50:  #eeeaf2;
-$violet-100: #c9bdd8;
-$violet-200: #af9dc5;
-$violet-300: #8b70aa;
-$violet-400: #755599;
-$violet-500: #522a80;
-$violet-600: #4b2674;
-$violet-700: #3a1e5b;
-$violet-800: #2d1746;
-$violet-900: #221236;
+$white: #FFFFFF;
+$black: #000000;
 
-// Orange
-$orange-50:  #fff7e6;
-$orange-100: #ffe5b0;
-$orange-200: #ffd88a;
-$orange-300: #ffc654;
-$orange-400: #ffbb33;
-$orange-500: #ffaa00;
-$orange-600: #e89b00;
-$orange-700: #b57900;
-$orange-800: #8c5e00;
-$orange-900: #6b4700;
-//apple
-$apple-50: #f2fcf1;
-$apple-100: #defade;
-$apple-200: #c0f3bf;
-$apple-300: #8de88d;
-$apple-400: #54d553;
-$apple-500: #2ab22a;
-$apple-600: #1f9a1f;
-$apple-700: #1c791d;
-$apple-800: #1b601c;
-$apple-900: #184f1a;
-$apple-950: #082b09;
+// ==============================
+// Backgrounds
+// ==============================
+$bg-page: #060609;        // main page background
+$bg-phone: #0A0A0F;       // device shell / app bg
+$bg-bar: #0D0B14;         // notch / keypad cells
 
-// Green
-$green-50:  #ebf9f0;
-$green-100: #bfedd1;
-$green-200: #a1e4bb;
-$green-300: #76d79d;
-$green-400: #5bd089;
-$green-500: #32c46c;
-$green-600: #2eb262;
-$green-700: #248b4d;
-$green-800: #1c6c3b;
-$green-900: #15522d;
+// ==============================
+// Surfaces
+// ==============================
+$surface-1: #13111C;      // inputs / cards / buttons alt
+$surface-2: #1A1810;      // selected gold-tinted surface
+$surface-3: #1E1B2E;      // borders / keypad grid
+$surface-4: #2A2740;      // muted border / dividers
 
-// Yellow
-$yellow-50:  #fff9e6;
-$yellow-100: #ffeeb0;
-$yellow-200: #ffe58a;
-$yellow-300: #ffd954;
-$yellow-400: #ffd233;
-$yellow-500: #ffc700;
-$yellow-600: #e8b500;
-$yellow-700: #b58d00;
-$yellow-800: #8c6d00;
-$yellow-900: #6b5400;
+// ==============================
+// Text
+// ==============================
+$text-primary: #F0EDE8;   // main readable text
+$text-secondary: #8A85A0; // secondary labels
+$text-muted: #5A5570;     // helper / captions
+$text-subtle: #3A3555;    // faint divider text
 
-// Red
-$red-50:  #fbebeb;
-$red-100: #f3c1c1;
-$red-200: #eea3a3;
-$red-300: #e67878;
-$red-400: #e15e5e;
-$red-500: #d93636;
-$red-600: #c53131;
-$red-700: #9a2626;
-$red-800: #771e1e;
-$red-900: #5b1717;
+// ==============================
+// Brand Gold
+// ==============================
+$gold-primary: #C9A84C;   // main CTA / accents
+$gold-light: #F0D080;     // gradient highlight
 
-// Blue
-$blue-50:  #eaeaeb;
-$blue-100: #bdbebf;
-$blue-200: #9d9ea1;
-$blue-300: #707276;
-$blue-400: #54575b;
-$blue-500: #292d32;
-$blue-600: #25292e;
-$blue-700: #1d2024;
-$blue-800: #17191c;
-$blue-900: #111315;
+// Exact opacity variants used
+$gold-44: #C9A84C44;      // borders / focus
+$gold-22: #C9A84C22;      // soft avatar fill
+$gold-08: #C9A84C08;      // glow orb
+
+// ==============================
+// Accent Violet
+// ==============================
+$violet-glow: #7B6CE008;  // decorative orb glow
+
+// ==============================
+// Success
+// ==============================
+$success: #6ED88A;        // verified badge text
+$success-bg: #1A2A1A;     // verified badge bg
+$success-border: #6ED88A33;
+
+// ==============================
+// Utility / Misc
+// ==============================
+$shadow-overlay: #00000080;
+$google-text: #333333;
+
+// ==============================
+// Gradients
+// ==============================
+$gradient-primary: linear-gradient(
+  135deg,
+  #C9A84C 0%,
+  #F0D080 100%
+);
+
+$gradient-gold-glow: radial-gradient(
+  circle,
+  #C9A84C08 0%,
+  transparent 65%
+);
+
+$gradient-violet-glow: radial-gradient(
+  circle,
+  #7B6CE008 0%,
+  transparent 65%
+);
+
+// ==============================
+// Semantic Aliases (recommended)
+// ==============================
+$button-primary-bg: $gradient-primary;
+$button-primary-text: $bg-phone;
+
+$input-bg: $surface-1;
+$input-border: $surface-4;
+$input-focus: $gold-44;
+
+$card-bg: $surface-1;
+$card-border: $surface-4;
+
+$text-heading: $text-primary;
+$text-body: $text-primary;
+$text-caption: $text-muted;
+
+$badge-success-bg: $success-bg;
+$badge-success-text: $success;
+$badge-success-border: $success-border;

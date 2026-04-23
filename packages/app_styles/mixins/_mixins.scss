@@ -1,0 +1,98 @@
+@use "./variables" as *;
+
+// ── Media queries ────────────────────────
+@mixin sm-down {
+  @media (max-width: #{$bp-sm - 1px}) { @content; }
+}
+@mixin md-up {
+  @media (min-width: #{$bp-md}) { @content; }
+}
+
+// ── Buttons ──────────────────────────────
+@mixin btn-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: $radius-pill;
+  padding: 0.75rem 1.5rem;
+  font-family: $font-body;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.2s ease;
+
+  &:hover { opacity: 0.92; }
+  &:active { transform: scale(0.98); }
+}
+
+@mixin btn-primary {
+  @include btn-base;
+  background: $gradient-gold;
+  color: #000;
+  box-shadow: 0 6px 24px -8px rgba($gold, 0.6);
+
+  @include sm-down { width: 100%; }
+}
+
+@mixin btn-secondary {
+  @include btn-base;
+  background: $surface-1;
+  color: $text-1;
+  border: 0.5px solid $surface-2;
+}
+
+@mixin btn-ghost {
+  @include btn-base;
+  background: transparent;
+  color: $text-2;
+}
+
+// ── Card ─────────────────────────────────
+@mixin card {
+  background: $surface-1;
+  border: 0.5px solid $surface-2;
+  border-radius: $radius-card;
+  padding: 1.25rem;
+}
+
+// ── Input ────────────────────────────────
+@mixin input {
+  width: 100%;
+  height: 44px;
+  background: $surface-1;
+  border: 0.5px solid $surface-3;
+  border-radius: $radius-input;
+  padding: 0 14px;
+  font-family: $font-body;
+  font-size: 13px;
+  color: $text-1;
+  outline: none;
+  transition: border-color 0.15s ease;
+
+  &::placeholder { color: $text-4; }
+  &:focus { border: 0.5px solid $gold; }
+}
+
+// ── Typography ───────────────────────────
+@mixin label {
+  font-family: $font-mono;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $text-3;
+}
+
+@mixin display {
+  font-family: $font-display;
+  font-weight: 700;
+}
+
+@mixin gold-text {
+  background: $gradient-gold;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+ 

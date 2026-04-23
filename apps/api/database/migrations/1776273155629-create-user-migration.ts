@@ -1,64 +1,79 @@
-import { MigrationInterface, QueryRunner, Table } from "typeorm";
+import { MigrationInterface, QueryRunner, Table } from 'typeorm'
 
-export class CreateUserMigration1776273155629 implements MigrationInterface {
-
+export class CreateUserMigration1776273155629
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: "users",
+        name: 'users',
         columns: [
           {
-            name: "id",
-            type: "uuid",
+            name: 'id',
+            type: 'uuid',
             isPrimary: true,
-            generationStrategy: "uuid",
-            default: "uuid_generate_v4()",
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
           },
           {
-            name: "email",
-            type: "varchar",
+            name: 'email',
+            type: 'varchar',
+            isUnique: true,
           },
           {
-            name: "first_name",
-            type: "varchar",
+            name: 'first_name',
+            type: 'varchar',
           },
           {
-            name: "last_name",
-            type: "varchar",
+            name: 'last_name',
+            type: 'varchar',
           },
           {
-            name: "password_hash",
-            type: "varchar",
+            name: 'password_hash',
+            type: 'varchar',
+            isNullable: true,
           },
           {
-            name: "status",
-            type: "varchar",
+            name: 'provider',
+            type: 'varchar',
+            default: `'Local'`,
           },
           {
-            name: "created_by",
-            type: "varchar",
+            name: 'google_id',
+            type: 'varchar',
+            isNullable: true,
           },
           {
-            name: "created_at",
-            type: "timestamp",
-            default: "now()",
+            name: 'status',
+            type: 'varchar',
+            default: `'Active'`,
           },
           {
-            name: "updated_at",
-            type: "timestamp",
-            default: "now()",
+            name: 'created_by',
+            type: 'varchar',
+            isNullable: true,
           },
           {
-            name: "is_active",
-            type: "boolean",
-            default: false,
+            name: 'created_at',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'updated_at',
+            type: 'timestamp',
+            default: 'now()',
+          },
+          {
+            name: 'is_active',
+            type: 'boolean',
+            default: true,
           },
         ],
-      })
-    );
+      }),
+    )
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable("users");
+    await queryRunner.dropTable('users')
   }
 }

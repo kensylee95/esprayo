@@ -1,0 +1,41 @@
+// Serenade design tokens
+
+// ── Colors ───────────────────────────────
+$void: #0A0A0F;
+$surface-1: #13111C;
+$surface-2: #1E1B2E; 
+$surface-3: #2A2740;
+$surface-4: #0D0B14;
+
+$gold: #C9A84C;
+$gold-light: #F0D080;
+$gold-dim: #7A5E1A;
+
+$text-1: #F0EDE8;
+$text-2: #8A85A0;
+$text-3: #5A5570;
+$text-4: #3A3555;
+
+$success: #6ED88A;
+$danger:  #E87070;
+$warning: #EF9F27;
+$violet:  #7B6CE0;
+$rose:    #E07BA0;
+
+// ── Gradients ────────────────────────────
+$gradient-gold: linear-gradient(135deg, $gold-light, $gold);
+
+// ── Fonts ────────────────────────────────
+$font-display: "Cormorant Garamond", serif;
+$font-body:    "Outfit", sans-serif;
+$font-mono:    "DM Mono", monospace;
+
+// ── Radius ───────────────────────────────
+$radius-input: 11px;
+$radius-card:  12px;
+$radius-pill:  100px;
+
+// ── Breakpoints ──────────────────────────
+$bp-sm: 640px;
+$bp-md: 768px;
+$bp-lg: 1024px;

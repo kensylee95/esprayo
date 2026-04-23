@@ -18,7 +18,6 @@ export type UserDto = {
   email: string
   firstName: string
   lastName: string
-  createdBy: string
   createdAt: Date
   updatedAt: Date
   status: UserStatus

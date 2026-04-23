@@ -4,12 +4,17 @@ import { LeaderboardServiceModule } from "@modules/leaderboard/leaderboard.modul
 import { GiftProcessor } from "./gift.processor";
 import { WalletModule } from "@modules/wallet/wallet.module";
 import { BullModule } from "@nestjs/bullmq";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { Gift } from "./entities/gift.entity";
+import { RealtimeModule } from "@modules/RealtimeGateway/RealtimeGateway.module";
 
 @Module({
   imports: [
+    TypeOrmModule.forFeature([Gift]),
     LeaderboardServiceModule, 
     WalletModule,
-     BullModule.registerQueue({
+    RealtimeModule,
+    BullModule.registerQueue({
       name: 'gifts',
     }),
   ],

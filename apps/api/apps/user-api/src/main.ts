@@ -8,6 +8,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+    abortOnError: false,
   });
   const configService = app.get(ConfigService);
   const logger = app.get(Logger);
@@ -23,7 +24,7 @@ async function bootstrap() {
     'app',
   ) as AppConfigOptions;
 
-  const port = process.env.PORT || appConfig.port || 8080;
+  const port = process.env.PORT || appConfig.port || 3001;
 
   await app.listen(port, '0.0.0.0');
 }

@@ -9,7 +9,7 @@ import type {
   UserDto,
   UserUpdateDto,
 } from './users.dto'
-import { type ApiUser, CurrentUser, type AuthService, type UserPayload } from '@modules/auth/src'
+import { type ApiUser, CurrentUser, AuthService, type UserPayload } from '@modules/auth/src'
 
 @Controller('users')
 export class UsersController {
@@ -34,7 +34,7 @@ export class UsersController {
     }
     const hashedPassword = await this.authService.hashPassword(validationResult.value.password)
 
-    const user = await this.usersService.createUser(
+    const user = await this.usersService.createLocalUser(
       {
         ...validationResult.value,
         password: hashedPassword,
@@ -48,7 +48,6 @@ export class UsersController {
       firstName: user.firstName,
       lastName: user.lastName,
       createdAt: user.createdAt,
-      createdBy: user.createdBy,
       updatedAt: user.updatedAt,
       status: user.status,
     }
@@ -114,7 +113,6 @@ export class UsersController {
       firstName: user.firstName,
       lastName: user.lastName,
       createdAt: user.createdAt,
-      createdBy: user.createdBy,
       updatedAt: user.updatedAt,
       status: user.status,
     }

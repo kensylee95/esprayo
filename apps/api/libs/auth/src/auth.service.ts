@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import bcrypt from 'bcryptjs';
 import { UserPayload } from './auth.dto'
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    @Inject('GOOGLE_CLIENT')
+    private readonly googleClient: OAuth2Client,
+  ) {}
 
   generateToken = (user: UserPayload): string => {
     const payload = {
@@ -26,6 +31,15 @@ export class AuthService {
 
   verifyToken(token: string): UserPayload {
     return this.jwtService.verify<UserPayload>(token)
+  }
+
+  async VerifyGoogleToken(token: string) {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken: token,
+    });
+
+    const payload = ticket.getPayload();
+    return payload
   }
 }
 export type { UserPayload }

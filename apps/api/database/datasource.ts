@@ -9,6 +9,6 @@ export const dataSource = new DataSource({
   database: process.env.DB_DATABASE,
   ssl: process.env.DB_SSL?.trim().toLowerCase() === 'true',
   schema: 'public',
+  entities: ['apps/**/*.entity{.ts,.js}'],
    migrations: ['database/migrations/*.ts'],
-  entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
 });
