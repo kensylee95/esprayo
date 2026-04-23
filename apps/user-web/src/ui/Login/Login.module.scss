@@ -1,0 +1,116 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.loginScreen {
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+
+}
+.wrapper{
+  padding: 24px;
+  width: 100%;
+}
+.brand {
+  @include mixins.display;
+  font-size: 20px;
+  color: vars.$gold;
+  margin-bottom: 20px;
+}
+
+.title {
+  @include mixins.display; 
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: vars.$text-3;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  
+}
+
+.label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color:  vars.$text-3;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.numDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: vars.$surface-1;
+  border: 1px solid  vars.$surface-3;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.code {
+  font-family: vars.$font-mono;
+  color:  vars.$text-3;
+}
+
+.value {
+  font-family: vars.$font-mono;
+  flex: 1;
+  letter-spacing: 1px;
+  color: vars.$text-1;
+}
+
+.cursor {
+  width: 2px;
+  height: 18px;
+  background: vars.$gold;
+  display: inline-block;
+  margin-left: 2px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.cta {
+  background: linear-gradient(135deg, vars.$gold, vars.$gold-light);
+  color: vars.$surface-3;
+  border: none;
+  width: 100%;
+  border-radius: 100px;
+  padding: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.or{
+  display: flex;
+  width: 100%;
+  padding-block: 14px;
+  color: vars.$text-3;
+  font-size: 11px;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+.ctaGoogle {
+  background:  hsl(240, 20%, 5%);
+  color: vars.$gold;
+  width: 100%;
+  border: none;
+  border-radius: vars.$radius-pill;
+  padding: 14px;
+  border: 1px solid vars.$gold;
+  font-weight: 600;
+  cursor: pointer;
+}

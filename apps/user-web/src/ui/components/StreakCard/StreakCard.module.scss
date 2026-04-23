@@ -1,0 +1,39 @@
+@use "@app/styles/mixins/variables" as *;
+@use "@app/styles/mixins/mixins" as *;
+
+.streakCard {
+  @include card;
+  margin-top: 1rem;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  height: 2.25rem;
+  width: 2.25rem;
+  border-radius: 9999px;
+  background: conic-gradient(from 180deg, $violet, $rose, $gold-light, $violet);
+}
+
+.title { font-size: 0.875rem; }
+
+.sub {
+  font-family: $font-mono;
+  font-size: 11px;
+  color: $text-3;
+  margin-top: 2px;
+}
+
+.status {
+  color: $success;
+  font-family: $font-mono;
+  font-size: 0.75rem;
+}

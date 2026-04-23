@@ -1,0 +1,35 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: vars.$surface-3;
+  margin-top: auto;
+}
+
+.key { 
+  background: vars.$surface-2;
+  padding: 14px 0;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+}
+
+.key:active {
+  background: vars.$surface-1;
+}
+
+.keyNum {
+  font-size: 18px;
+  color: vars.$text-1;
+  font-weight: 500;
+}
+
+.keyAlpha {
+  font-size: 8px;
+  color: vars.$text-2;
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}

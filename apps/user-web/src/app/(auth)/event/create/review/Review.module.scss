@@ -1,0 +1,152 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  flex:1;
+  width: 100%;
+  background: vars.$void;
+  position: relative;
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.orb {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(vars.$gold, 0.07) 0%,
+    transparent 70%
+  );
+  top: -60px;
+  right: -60px;
+  pointer-events: none;
+}
+
+.back {
+  font-size: 18px;
+  color: vars.$text-3;
+  padding: 16px 22px 0;
+  cursor: pointer;
+  display: block;
+  line-height: 1;
+  background: none;
+  border: none;
+}
+
+.content {
+  padding: 0 22px;
+  flex: 1;
+}
+
+.title {
+  @include mixins.display;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  color: vars.$text-1;
+  margin-bottom: 24px;
+}
+
+// ── Summary card ─────────────────────────────────────────────────────────────
+
+.summary {
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-3;
+  border-radius: 24px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.cover {
+  height: 80px;
+  background: linear-gradient(135deg, #1A1810, #2A2010);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.body {
+  padding: 24px;
+}
+
+.eventTitle {
+  @include mixins.display;
+  font-size: 1.2rem;
+  color: vars.$text-1;
+  margin-bottom: 4px;
+}
+
+.draftBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #1A2A1A;
+  border: 0.5px solid rgba(vars.$success, 0.2);
+  border-radius: vars.$radius-pill;
+  padding: 3px 10px;
+  font-family: vars.$font-mono;
+  font-size: 9px;
+  color: vars.$success;
+  margin-bottom: 10px;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rowKey {
+  font-family: vars.$font-body;
+  font-size: 10px;
+  color: vars.$text-3;
+}
+
+.rowVal {
+  font-family: vars.$font-mono;
+  font-size: 10px;
+  color: vars.$text-2;
+
+  &.gold {
+    color: vars.$gold;
+  }
+}
+
+.divider {
+  height: 0.5px;
+  background: vars.$surface-2;
+  margin: 8px 0;
+}
+
+// ── CTAs ─────────────────────────────────────────────────────────────────────
+
+.ctaWrap {
+  padding: 0 22px 32px;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn {
+    @include mixins.btn-primary;
+    width: 100%;
+    margin-top: 1.2rem
+}
+
+.ghost {
+    @include mixins.btn-secondary;
+    width: 100%;
+    margin-top: .75rem
+}

@@ -1,0 +1,38 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.scr{
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.stepperText{
+    display: flex;
+    font-family: vars.$font-mono;
+    font-size: 9px;
+    color: #5A5570;
+    text-align: right;
+    width: fit-content;
+    margin-left: auto;
+}
+.icon{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    border-radius: 100px;
+    background-color: vars.$surface-2;
+    color: vars.$text-3;
+}
+.rowStepper{
+    display: flex;
+    margin-top: 16px;
+    height: 24px;
+    flex-direction:row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}

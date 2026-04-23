@@ -1,0 +1,132 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.page {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 2rem 1rem;
+    justify-content: center;
+}
+
+.card {
+    @include mixins.card;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    max-width: 430px;
+    width: 100%;
+    position: relative;
+    overflow: hidden
+}
+
+.orb {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(vars.$gold, .08) 0%, transparent 70%);
+    top: -80px;
+    right: -80px
+}
+
+.title {
+  @include mixins.display;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  color: vars.$text-1;
+  margin-bottom: 24px;
+}
+
+.sub {
+    font-size: 13px;
+    color: vars.$text-3;
+    line-height: 1.5;
+    margin-bottom: 1.5rem
+}
+
+.btn {
+    @include mixins.btn-primary;
+    width: 100%;
+    margin-top: auto;
+}
+
+.ghost {
+    @include mixins.btn-secondary;
+    width: 100%;
+    margin-top: .75rem
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem
+}
+
+.chip,
+.field,
+.row,
+.summary,
+.code {
+    @include mixins.card
+}
+
+.chip {
+    text-align: center;
+    padding: 1rem;
+    background: vars.$surface-1;
+    border: 1px solid vars.$surface-3;
+    cursor: pointer;
+    &.active{
+        background-color: #1A1810;
+         border: 1px solid rgba(201, 168, 76, 0.267);
+        color: vars.$gold;
+    }
+}
+
+.input {
+    @include mixins.input;
+    margin-top: .5rem
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .75rem
+}
+
+.small {
+    color: vars.$text-3;
+    font-size: 12px
+}
+
+.gold {
+    color: vars.$gold
+}
+
+.center {
+    text-align: center
+}
+
+.ring {
+    width: 78px;
+    height: 78px;
+    border-radius: 50%;
+    border: 1px solid rgba(vars.$gold, .3);
+    display: grid;
+    place-items: center;
+    margin: 0 auto 1rem
+}
+
+.btn {
+    @include mixins.btn-primary;
+    width: 100%;
+    margin-top: 1.2rem
+}
+
+.ghost {
+    @include mixins.btn-secondary;
+    width: 100%;
+    margin-top: .75rem
+}

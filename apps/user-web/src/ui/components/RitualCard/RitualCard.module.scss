@@ -1,0 +1,87 @@
+@use "@app/styles/mixins/variables" as *;
+@use "@app/styles/mixins/mixins" as *;
+
+.card { @include card; }
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.label { @include label; }
+
+.cardTitle {
+  @include display;
+  margin-top: 0.5rem;
+  font-size: 1.875rem;
+
+  em { font-style: italic; font-weight: 400; }
+}
+
+.timePill {
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-family: $font-mono;
+  font-size: 11px;
+  background: rgba($gold, 0.12);
+  color: $gold-light;
+}
+
+.rituals {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: $radius-input;
+  padding: 0.625rem 0.75rem;
+  border: 0.5px solid $surface-2;
+  background: transparent;
+}
+
+.rowAccent { background: rgba($gold, 0.08); }
+
+.rowLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rowDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: $text-3;
+}
+
+.rowDotAccent { background: $gold-light; }
+
+.rowTitle { font-size: 0.875rem; }
+
+.rowTag { @include label; }
+
+.rowDuration {
+  font-family: $font-mono;
+  font-size: 0.75rem;
+  color: $text-2;
+}
+
+.intentionWrap { margin-top: 1.5rem; }
+
+.input {
+  @include input;
+  margin-top: 0.5rem;
+}
+
+.btnPrimary { @include btn-primary; }
+
+.cta {
+  margin-top: 1.25rem;
+  width: 100%;
+}
