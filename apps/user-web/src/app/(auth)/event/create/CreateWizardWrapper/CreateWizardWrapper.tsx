@@ -26,7 +26,7 @@ export function Wizard({ children }: WizardProps) {
   return (
     <div className={styles.scr}>
       {/* STEP INDICATOR ONLY */}
-      <div style={{ padding: "14px 22px 0 22px" }}>
+      <div style={{ padding: "28px 22px 0 22px" }}>
         <div style={{ display: "flex", gap: 6, marginBottom: 4 }}>
           {[1, 2, 3].map((i) => (
             <div

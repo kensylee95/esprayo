@@ -45,7 +45,7 @@
 
 .title {
   @include mixins.display;
-  font-size: 1.75rem;
+  font-size: 36px;
   line-height: 1.15;
   color: vars.$text-1;
   margin-bottom: 24px;
@@ -76,7 +76,7 @@
 
 .eventTitle {
   @include mixins.display;
-  font-size: 1.2rem;
+  font-size: 16px;
   color: vars.$text-1;
   margin-bottom: 4px;
 }
@@ -90,9 +90,9 @@
   border-radius: vars.$radius-pill;
   padding: 3px 10px;
   font-family: vars.$font-mono;
-  font-size: 9px;
+  font-size: 16px;
   color: vars.$success;
-  margin-bottom: 10px;
+  margin-bottom: 30px;
 }
 
 .rows {
@@ -109,14 +109,17 @@
 
 .rowKey {
   font-family: vars.$font-body;
-  font-size: 10px;
-  color: vars.$text-3;
+  font-size: 12px;
+  margin-right: auto;
+  color: vars.$text-2;
 }
 
 .rowVal {
   font-family: vars.$font-mono;
-  font-size: 10px;
+  font-size: 12px;
   color: vars.$text-2;
+  margin-left: auto;
+  text-align: right;
 
   &.gold {
     color: vars.$gold;

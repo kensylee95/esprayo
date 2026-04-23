@@ -22,18 +22,20 @@ export default function Page() {
         <p className={styles.sub}>
           This appears at the top of the gift room and on the display screen
         </p>
-        <Input label="EVENT TITLE" placeholder="Adaeze & Chidi's Wedding" />
-        <Input
-          label="Venue (optional)"
-          placeholder="e.g Transcorp Hilton, Abuja"
-        />
-        <Input
-          label="Welcome message (optional)"
-          placeholder="Thank you for celebrating with us!"
-        />
-        <button type="button" onClick={handleNext} className={styles.btn}>
-          Continue
-        </button>
+        <form className={styles.form}>
+          <Input label="EVENT TITLE" placeholder="Adaeze & Chidi's Wedding" />
+          <Input
+            label="Venue (optional)"
+            placeholder="e.g Transcorp Hilton, Abuja"
+          />
+          <Input
+            label="Welcome message (optional)"
+            placeholder="Thank you for celebrating with us!"
+          />
+          <button type="button" onClick={handleNext} className={styles.btn}>
+            Continue
+          </button>
+        </form>
       </section>
     </main>
   );

@@ -1,19 +1,17 @@
 @use "@app/styles/mixins/variables" as vars;
 @use "@app/styles/mixins/mixins" as mixins;
-.field {
-  margin-bottom: 14px;
-}
+
 
 .label {
   display: block;
   margin-bottom: 6px;
 
   font-family: vars.$font-mono;
-  font-size: 9px;
+  font-size: 16px;
   letter-spacing: 1px;
   text-transform: uppercase;
 
-  color: vars.$text-3;
+  color: vars.$text-2;
 }
 
 .input {

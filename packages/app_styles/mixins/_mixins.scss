@@ -66,19 +66,19 @@
   border-radius: $radius-input;
   padding: 0 14px;
   font-family: $font-body;
-  font-size: 13px;
+  font-size: 16px;
   color: $text-1;
   outline: none;
   transition: border-color 0.15s ease;
 
   &::placeholder { color: $text-4; }
-  &:focus { border: 0.5px solid $gold; }
+  &:focus { border: 1.5px solid $gold; }
 }
 
 // ── Typography ───────────────────────────
 @mixin label {
   font-family: $font-mono;
-  font-size: 11px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: $text-3;
