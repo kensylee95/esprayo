@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import styles from "./Header.module.scss";
 
@@ -5,13 +6,15 @@ export function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.logo}>
-        <div className={styles.logoMark} />
-        <span className={styles.logoText}>Serenade</span>
+        <span className={styles.logoMark}>
+          <Sparkles size={16} strokeWidth={2.25} />
+        </span>
+        <span className={styles.logoText}>Sprae</span>
       </div>
       <nav className={styles.nav}>
-        <Link href="#">Rituals </Link>
-        <Link href="#">Library</Link>
-        <Link href="#">Journal</Link>
+        <Link href="#features">Features</Link>
+        <Link href="#rooms">Live Rooms</Link>
+        <Link href="#how">How it works</Link>
       </nav>
       <button type="button" className={styles.btnSecondary}>
         Sign in

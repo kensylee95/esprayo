@@ -1,0 +1,201 @@
+@use "@app/styles/mixins/variables" as *;
+@use "@app/styles/mixins/mixins" as *;
+
+.section {
+  margin: 0 auto;
+  max-width: 80rem;
+  padding: 4rem 1.5rem;
+
+  @include md-up { padding: 6rem 1.5rem; }
+}
+
+.frame {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 0.5px solid $surface-2;
+  aspect-ratio: 16 / 11;
+  isolation: isolate;
+
+  @include sm-down { aspect-ratio: 4 / 5; }
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scale(1.02);
+}
+
+.vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba($void, 0.1) 0%, rgba($void, 0.55) 55%, rgba($void, 0.95) 100%),
+    radial-gradient(ellipse at 50% 40%, transparent 30%, rgba($void, 0.5) 100%);
+  pointer-events: none;
+}
+
+// ── Floating broadcast chip (top-left) ──────────
+.broadcast {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.9rem 0.55rem 0.7rem;
+  background: rgba($void, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 0.5px solid rgba($text-1, 0.15);
+  border-radius: 9999px;
+  animation: float-in 0.8s ease-out 0.2s both;
+
+  @include md-up { top: 1.75rem; left: 1.75rem; }
+}
+
+.broadcastDot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background: rgba($danger, 0.18);
+  color: $danger;
+}
+
+.pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 0 rgba($danger, 0.6);
+  animation: pulse-ring 1.6s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba($danger, 0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba($danger, 0); }
+  100% { box-shadow: 0 0 0 0 rgba($danger, 0); }
+}
+
+.broadcastText {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.broadcastLabel {
+  @include label;
+  color: $text-1;
+  font-size: 10px;
+}
+
+.broadcastRoom {
+  font-family: $font-mono;
+  font-size: 11px;
+  color: $text-2;
+  margin-top: 2px;
+}
+
+// ── Floating spray notification (right side) ─────
+.spray {
+  position: absolute;
+  top: 22%;
+  right: 1.25rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1.1rem;
+  background: rgba($void, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 0.5px solid rgba($gold, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px -10px rgba($gold, 0.4);
+  animation: float-in 0.9s ease-out 0.5s both, gentle-bob 4s ease-in-out 1.4s infinite;
+
+  @include sm-down {
+    top: auto;
+    bottom: 38%;
+    right: 1rem;
+    padding: 0.7rem 0.9rem;
+  }
+}
+
+.sprayIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  background: $gradient-gold;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.sprayLine {
+  font-size: 0.8125rem;
+  color: $text-2;
+  strong { color: $text-1; font-weight: 500; }
+}
+
+.sprayAmount {
+  margin-top: 2px;
+  font-family: $font-mono;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  @include gold-text;
+}
+
+@keyframes float-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gentle-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+// ── Caption (bottom) ────────────────────────────
+.caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 1.75rem;
+  max-width: 36rem;
+
+  @include md-up { padding: 2.5rem 3rem; }
+}
+
+.label { @include label; color: $gold-light; }
+
+.title {
+  @include display;
+  margin-top: 0.75rem;
+  font-size: 2rem;
+  line-height: 1.05;
+
+  @include md-up { font-size: 3rem; }
+
+  em { font-style: italic; font-weight: 400; @include gold-text; }
+}
+
+.lead {
+  margin-top: 1rem;
+  color: $text-2;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  max-width: 28rem;
+}
