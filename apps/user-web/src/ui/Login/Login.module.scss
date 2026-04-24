@@ -2,6 +2,7 @@
 @use "@app/styles/mixins/mixins" as mixins;
 
 .loginScreen {
+  position: relative;
   display: flex;
   height: 100vh;
   flex-direction: column;
@@ -11,6 +12,11 @@
 .wrapper{
   padding: 24px;
   width: 100%;
+}
+.numpad{
+  position: absolute;
+  bottom: 0;
+  inset-inline:0;
 }
 .brand {
   @include mixins.display;
@@ -26,10 +32,10 @@
 }
 
 .subtitle {
-  font-size: 12px;
-  color: vars.$text-3;
+  color: vars.$text-2;
   margin-bottom: 20px;
-  line-height: 1.5;
+   font-size: 1rem;
+  line-height: 1.65;
   
 }
 
@@ -38,7 +44,6 @@
   letter-spacing: 1px;
   color:  vars.$text-3;
   text-transform: uppercase;
-  margin-bottom: 8px;
 }
 
 .numDisplay {
@@ -50,12 +55,13 @@
   border: 1px solid  vars.$surface-3;
   border-radius: 12px;
   padding: 14px;
+  margin-top: 8px;
   margin-bottom: 14px;
 }
 
 .code {
   font-family: vars.$font-mono;
-  color:  vars.$text-3;
+  color:  vars.$text-2;
 }
 
 .value {
@@ -63,6 +69,9 @@
   flex: 1;
   letter-spacing: 1px;
   color: vars.$text-1;
+  background: none;
+  border: none;
+  text-align: left;
 }
 
 .cursor {
@@ -97,7 +106,7 @@
   display: flex;
   width: 100%;
   padding-block: 14px;
-  color: vars.$text-3;
+  color: vars.$text-2;
   font-size: 11px;
   text-align: center;
   align-items: center;

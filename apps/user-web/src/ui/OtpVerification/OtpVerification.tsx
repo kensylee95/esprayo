@@ -81,7 +81,7 @@ export default function OTPVerification({ phone, onVerify, onBack }: Props) {
         </button>
       </div>
 
-      <NumericKeyboard onKeyPress={onKeyPress} />
+      <NumericKeyboard onClose={() => {}} onKeyPress={onKeyPress} />
     </div>
   );
 }

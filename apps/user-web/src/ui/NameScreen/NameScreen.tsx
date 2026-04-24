@@ -15,8 +15,6 @@ export default function NameScreen() {
       <div className={styles.bar} />
       <div className={styles.screen}>
         <div className={styles.container}>
-          <div className={styles.back}>←</div>
-
           <h1 className={styles.title}>What shall we call you?</h1>
 
           <p className={styles.hint}>

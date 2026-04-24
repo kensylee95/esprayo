@@ -14,8 +14,8 @@ export default function SplashScreen() {
           <div className={styles.orb} />
           <div className={styles.ring} />
 
-          <div className={styles.logo}>Serenade</div>
-          <div className={styles.sub}>Gift Room</div>
+          <div className={styles.logo}>Event Gift Room</div>
+          <div className={styles.sub}>Join room to gift</div>
 
           <div className={styles.qrBox}>
             <div className={styles.qrInner}>

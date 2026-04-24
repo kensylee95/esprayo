@@ -5,10 +5,11 @@ import styles from "./NumericKeypad.module.scss";
 
 type Props = {
   onKeyPress: (key: string) => void;
+  onClose: () => void;
 };
 
-export const NumericKeyboard: React.FC<Props> = ({ onKeyPress }) => {
-  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
+export const NumericKeyboard: React.FC<Props> = ({ onKeyPress, onClose }) => {
+  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "close", "0", "⌫"];
 
   const alpha: Record<string, string> = {
     2: "ABC",
@@ -22,6 +23,15 @@ export const NumericKeyboard: React.FC<Props> = ({ onKeyPress }) => {
     0: "+",
   };
 
+  const handleClick = (key: string) => {
+    if (key === "close") {
+      onClose();
+      return;
+    }
+
+    onKeyPress(key);
+  };
+
   return (
     <div className={styles.keypad}>
       {keys.map((k, i) => (
@@ -29,9 +39,11 @@ export const NumericKeyboard: React.FC<Props> = ({ onKeyPress }) => {
           type="button"
           key={i}
           className={styles.key}
-          onClick={() => k && onKeyPress(k)}
+          onClick={() => handleClick(k)}
         >
-          {k && (
+          {k === "close" ? (
+            <div className={styles.keyNum}>Close</div>
+          ) : (
             <>
               <div className={styles.keyNum}>{k}</div>
               <div className={styles.keyAlpha}>{alpha[k] || ""}</div>

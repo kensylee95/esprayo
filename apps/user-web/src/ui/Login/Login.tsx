@@ -9,6 +9,7 @@ import styles from "./Login.module.scss";
 
 export default function SerenadeLogin() {
   const { handleGoogleCredential } = useGoogleAuth();
+  const [showKeyBoard, setShowKeyboard] = useState(false);
   const router = useRouter();
 
   const [phone, setPhone] = useState("0812129877");
@@ -43,7 +44,7 @@ export default function SerenadeLogin() {
   return (
     <div className={styles.loginScreen}>
       <div className={styles.wrapper}>
-        <div className={styles.brand}>Serenade</div>
+        {/*<div className={styles.brand}>SprayIt</div>*/}
 
         <h1 className={styles.title}>Welcome. Enter your number.</h1>
 
@@ -62,10 +63,14 @@ export default function SerenadeLogin() {
           <span>🇳🇬</span>
           <span className={`${styles.code} ${DmMono.className}`}>+234</span>
 
-          <span className={`${styles.value} ${DmMono.className}`}>
+          <button
+            type="button"
+            onClick={() => setShowKeyboard(true)}
+            className={`${styles.value} ${DmMono.className}`}
+          >
             {phone}
             <span className={styles.cursor} />
-          </span>
+          </button>
         </div>
 
         <button type="button" className={styles.cta}>
@@ -96,7 +101,14 @@ export default function SerenadeLogin() {
           </div>
         </div>
       </div>
-      <NumericKeyboard onKeyPress={onKeyPress} />
+      {showKeyBoard && (
+        <div className={styles.numpad}>
+          <NumericKeyboard
+            onClose={() => setShowKeyboard(false)}
+            onKeyPress={onKeyPress}
+          />
+        </div>
+      )}
     </div>
   );
 }
