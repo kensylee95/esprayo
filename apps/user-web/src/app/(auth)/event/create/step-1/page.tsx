@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useWizardStore } from "@/stores/create-event-stores/useWizardStore";
 import styles from "./StepOne.module.scss";
-export default function Page() {
+export default function Step1() {
   const router = useRouter();
   const setStep = useWizardStore((s) => s.setStep);
   useEffect(() => {

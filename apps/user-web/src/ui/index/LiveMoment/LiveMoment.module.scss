@@ -121,8 +121,10 @@
   animation: float-in 0.9s ease-out 0.5s both, gentle-bob 4s ease-in-out 1.4s infinite;
 
   @include sm-down {
-    top: auto;
-    bottom: 38%;
+    top: 20%;
+    left: 0;
+    width: fit-content;
+    transform: translateX(50%);
     right: 1rem;
     padding: 0.7rem 0.9rem;
   }

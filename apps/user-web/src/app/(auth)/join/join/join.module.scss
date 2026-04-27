@@ -1,0 +1,246 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: vars.$void;
+  position: relative;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(vars.$gold, 0.07) 0%, transparent 70%);
+  top: -60px;
+  right: -60px;
+  pointer-events: none;
+}
+
+.back {
+  font-size: 18px;
+  color: vars.$text-3;
+  padding: 16px 22px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: block;
+  line-height: 1;
+  text-align: left;
+  transition: color 0.15s ease;
+
+  &:hover { color: vars.$text-2; }
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+
+.hero {
+  padding: 8px 22px 20px;
+}
+
+.title {
+  @include mixins.display;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  color: vars.$text-1;
+  margin-bottom: 5px;
+}
+
+.sub {
+  font-family: vars.$font-body;
+  font-size: 11px;
+  color: vars.$text-3;
+  line-height: 1.6;
+}
+
+// ── Code boxes ────────────────────────────────────────────────────────────────
+
+.codeCard {
+  margin: 0 18px 6px;
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-3;
+  border-radius: vars.$radius-card;
+  padding: 16px;
+}
+
+.codeLabel {
+  @include mixins.label;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.boxes {
+  display: flex;
+  gap: 7px;
+  justify-content: center;
+}
+
+.box {
+  width: 36px;
+  height: 44px;
+  background: vars.$surface-2;
+  border: 0.5px solid vars.$surface-3;
+  border-radius: 9px;
+  text-align: center;
+  font-family: vars.$font-mono;
+  font-size: 17px;
+  font-weight: 500;
+  color: vars.$text-1;
+  caret-color: vars.$gold;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &.active {
+    border-color: vars.$gold;
+    background: vars.$surface-1;
+  }
+
+  &.filled {
+    background: #1A1810;
+    border-color: rgba(vars.$gold, 0.3);
+    color: vars.$gold;
+  }
+}
+
+.searching {
+  font-family: vars.$font-mono;
+  font-size: 9px;
+  color: vars.$text-3;
+  text-align: center;
+  margin-top: 10px;
+}
+
+.errorMsg {
+  font-family: vars.$font-body;
+  font-size: 10px;
+  color: vars.$danger;
+  text-align: center;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+// ── Divider ───────────────────────────────────────────────────────────────────
+
+.dividerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+}
+
+.divLine {
+  flex: 1;
+  height: 0.5px;
+  background: vars.$surface-2;
+}
+
+.divText {
+  font-family: vars.$font-mono;
+  font-size: 9px;
+  color: vars.$text-3;
+}
+
+// ── QR zone ───────────────────────────────────────────────────────────────────
+
+.qrZone {
+  margin: 0 18px 16px;
+  background: vars.$surface-1;
+  border: 0.5px dashed vars.$surface-3;
+  border-radius: vars.$radius-card;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease;
+
+  &:hover  { border-color: rgba(vars.$gold, 0.3); }
+  &:active { background: vars.$surface-2; }
+}
+
+.qrIcon  { font-size: 22px; }
+.qrTitle { font-family: vars.$font-body; font-size: 12px; color: vars.$text-2; }
+.qrSub   { font-family: vars.$font-body; font-size: 10px; color: vars.$text-3; }
+
+// ── Event preview ─────────────────────────────────────────────────────────────
+
+.preview {
+  margin: 0 18px 6px;
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-2;
+  border-radius: vars.$radius-card;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideUp 0.25s ease both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+.previewEmoji { font-size: 22px; flex-shrink: 0; }
+
+.previewInfo  { flex: 1; min-width: 0; }
+
+.previewTitle {
+  font-family: vars.$font-body;
+  font-size: 12px;
+  font-weight: 500;
+  color: vars.$text-1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.previewSub {
+  font-family: vars.$font-body;
+  font-size: 10px;
+  color: vars.$text-3;
+  margin-top: 2px;
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #1A2A1A;
+  border: 0.5px solid rgba(vars.$success, 0.2);
+  border-radius: vars.$radius-pill;
+  padding: 3px 9px;
+  font-family: vars.$font-mono;
+  font-size: 8px;
+  color: vars.$success;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+// ── CTA ───────────────────────────────────────────────────────────────────────
+
+.ctaWrap {
+  padding: 0 18px 32px;
+  margin-top: auto;
+}
+
+.cta {
+  @include mixins.btn-primary;
+  width: 100%;
+  padding: 14px;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}

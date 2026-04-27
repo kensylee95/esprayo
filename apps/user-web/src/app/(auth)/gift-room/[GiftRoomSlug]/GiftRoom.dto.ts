@@ -1,0 +1,29 @@
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export interface LeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  tokens: number;
+  giftCount: number;
+  lastGift: string;
+}
+
+export interface GiftItem {
+  id: string;
+  name: string;
+  emoji: string;
+  tokens: number;
+  featured?: boolean;
+}
+
+export interface RoomStats {
+  guestCount: number;
+  totalTokens: number;
+  totalGifts: number;
+  eventTitle: string;
+  eventEmoji: string;
+}
+export type Overlay = "spray" | "wallet";
+
+// ─── Constants ────────────────────────────────────────────────────────────────

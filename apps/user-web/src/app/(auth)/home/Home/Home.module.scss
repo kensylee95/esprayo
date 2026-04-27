@@ -1,0 +1,252 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: vars.$void;
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; // clearance for fixed bottom nav
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 14px;
+}
+
+.logo {
+  font-family: vars.$font-display;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: vars.$gold;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(vars.$gold, 0.13);
+  border: 0.5px solid rgba(vars.$gold, 0.27);
+  color: vars.$gold;
+  font-family: vars.$font-body;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s ease;
+
+  &:hover { opacity: 0.8; }
+}
+
+// ── Balance card ──────────────────────────────────────────────────────────────
+
+.balanceCard {
+  margin: 0 18px 16px;
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-2;
+  border-radius: 16px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease;
+
+  &:hover { border-color: rgba(vars.$gold, 0.3); }
+  &:focus-visible { outline: 1.5px solid vars.$gold; outline-offset: 2px; }
+}
+
+.balOrb {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(vars.$gold, 0.07) 0%, transparent 70%);
+  right: -20px;
+  top: -20px;
+  pointer-events: none;
+}
+
+.balLabel {
+  font-family: vars.$font-mono;
+  font-size: 9px;
+  color: vars.$text-3;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.balValue {
+  font-family: vars.$font-display;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: vars.$gold;
+  line-height: 1;
+}
+
+.balSub {
+  font-family: vars.$font-body;
+  font-size: 10px;
+  color: vars.$text-3;
+  margin-top: 4px;
+}
+
+// ── Quick actions grid ────────────────────────────────────────────────────────
+
+.quickGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 18px 18px;
+}
+
+.quickAction {
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-2;
+  border-radius: 14px;
+  padding: 14px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  &:hover  { border-color: rgba(vars.$gold, 0.27); }
+  &:active { background: vars.$surface-2; }
+}
+
+.qaIcon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.qaLabel {
+  font-family: vars.$font-body;
+  font-size: 12px;
+  font-weight: 500;
+  color: vars.$text-1;
+}
+
+.qaSub {
+  font-family: vars.$font-body;
+  font-size: 10px;
+  color: vars.$text-3;
+}
+
+// ── Recent events ─────────────────────────────────────────────────────────────
+
+.sectionLabel {
+  font-family: vars.$font-mono;
+  font-size: 9px;
+  color: vars.$text-3;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 18px;
+  margin-bottom: 8px;
+}
+
+.eventList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 18px;
+}
+
+.eventCard {
+  width: 100%;
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-2;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease;
+
+  &:hover  { border-color: rgba(vars.$gold, 0.2); }
+  &:active { background: vars.$surface-2; }
+}
+
+.ecIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1A1810, #2A2010);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.ecInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.ecTitle {
+  font-family: vars.$font-body;
+  font-size: 12px;
+  font-weight: 500;
+  color: vars.$text-1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ecSub {
+  font-family: vars.$font-body;
+  font-size: 10px;
+  color: vars.$text-3;
+  margin-top: 2px;
+}
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: vars.$radius-pill;
+  padding: 3px 9px;
+  font-family: vars.$font-mono;
+  font-size: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badgeLive {
+  background: #1A2A1A;
+  border: 0.5px solid rgba(vars.$success, 0.2);
+  color: vars.$success;
+}
+
+.badgeDraft {
+  background: #2A1E10;
+  border: 0.5px solid rgba(vars.$warning, 0.2);
+  color: vars.$warning;
+}
+
+.badgeEnded {
+  background: vars.$surface-2;
+  border: 0.5px solid vars.$surface-3;
+  color: vars.$text-3;
+}
