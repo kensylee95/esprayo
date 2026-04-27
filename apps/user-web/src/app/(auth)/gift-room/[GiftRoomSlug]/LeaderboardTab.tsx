@@ -1,4 +1,5 @@
 import { avatarColour, initials } from "./GiftRoom.constants";
+import type { LeaderboardEntry, RoomStats } from "./GiftRoom.dto";
 import styles from "./GiftRoom.module.scss";
 export default function LeaderboardTab({
   entries,

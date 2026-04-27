@@ -1,3 +1,5 @@
+import type { LeaderboardEntry } from "./GiftRoom.dto";
+
 export const leaderboardData: LeaderboardEntry[] = [
   {
     rank: 1,

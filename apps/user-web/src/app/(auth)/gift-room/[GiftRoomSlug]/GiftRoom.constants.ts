@@ -1,3 +1,5 @@
+import type { GiftItem } from "./GiftRoom.dto";
+
 const AVATAR_COLOURS = ["#C9A84C", "#7B6CE0", "#E07BA0", "#6ED88A", "#E87070"];
 
 export const GIFT_CATALOG: GiftItem[] = [

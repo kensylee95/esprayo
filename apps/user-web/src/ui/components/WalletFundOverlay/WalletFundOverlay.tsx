@@ -1,4 +1,6 @@
+"use client";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { TOKEN_PACKAGES } from "./constants";
 import styles from "./walletFundOverlay.module.scss";
@@ -11,6 +13,13 @@ export default function WalletFundOverlay({
   closeWalletOverlay: () => void;
 }) {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
   return createPortal(
     <div
       className={styles.portal}
