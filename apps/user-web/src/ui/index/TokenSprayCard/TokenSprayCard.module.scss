@@ -9,6 +9,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-direction: column;
+  @media(min-width: 350px){
+    flex-direction: row;
+  }
 }
 
 .left { display: flex; flex-direction: column; gap: 0.5rem; }

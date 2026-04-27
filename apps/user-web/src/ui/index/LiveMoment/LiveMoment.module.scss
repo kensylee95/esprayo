@@ -4,7 +4,8 @@
 .section {
   margin: 0 auto;
   max-width: 80rem;
-  padding: 4rem 1.5rem;
+  padding: 16px;
+  min-width: 0;
 
   @include md-up { padding: 6rem 1.5rem; }
 }
@@ -14,7 +15,7 @@
   border-radius: 24px;
   overflow: hidden;
   border: 0.5px solid $surface-2;
-  aspect-ratio: 16 / 11;
+  aspect-ratio: 1;
   isolation: isolate;
 
   @include sm-down { aspect-ratio: 4 / 5; }
@@ -43,7 +44,7 @@
   top: 1.25rem;
   left: 1.25rem;
   z-index: 2;
-  display: inline-flex;
+  display: none;
   align-items: center;
   gap: 0.65rem;
   padding: 0.55rem 0.9rem 0.55rem 0.7rem;
@@ -53,6 +54,10 @@
   border: 0.5px solid rgba($text-1, 0.15);
   border-radius: 9999px;
   animation: float-in 0.8s ease-out 0.2s both;
+  @media(min-width: 350px) {
+    display: inline-flex;
+    
+  }
 
   @include md-up { top: 1.75rem; left: 1.75rem; }
 }
@@ -87,6 +92,7 @@
   display: flex;
   flex-direction: column;
   line-height: 1.15;
+
 }
 
 .broadcastLabel {
@@ -108,7 +114,7 @@
   top: 22%;
   right: 1.25rem;
   z-index: 2;
-  display: flex;
+  display: none;
   align-items: center;
   gap: 0.85rem;
   padding: 0.85rem 1.1rem;
@@ -119,6 +125,9 @@
   border-radius: 14px;
   box-shadow: 0 12px 40px -10px rgba($gold, 0.4);
   animation: float-in 0.9s ease-out 0.5s both, gentle-bob 4s ease-in-out 1.4s infinite;
+    @media(min-width: 350px){
+    display: flex;
+  }
 
   @include sm-down {
     top: 20%;

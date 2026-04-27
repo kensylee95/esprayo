@@ -2,7 +2,7 @@
 @use "@app/styles/mixins/mixins" as *;
 
 .hero {
-  margin: 0 auto;
+  width: 100%;
   max-width: 72rem;
   padding: 3rem 1.5rem 5rem;
 
@@ -12,11 +12,15 @@
 .heroGrid {
   display: grid;
   gap: 3rem;
+   min-width: 0;
 
   @include md-up {
     grid-template-columns: 1fr 1fr;
     align-items: center;
   }
+}
+.heroGrid > * {
+  min-width: 0;
 }
 
 .label {
@@ -38,6 +42,7 @@
   @include display;
   margin-top: 1.25rem;
   font-size: 3rem;
+  min-width: 0;
   line-height: 1.05;
 
   @include md-up { font-size: 4.5rem; }
@@ -77,6 +82,13 @@
   display: flex;
   align-items: center;
   gap: 2rem;
+  flex-direction: column;
+  @media(min-width: 350px){
+    flex-direction: row;
+  }
+}
+.statsRow > * {
+  min-width: 0;
 }
 
 .statValue {
@@ -99,6 +111,10 @@
   height: 2rem;
   width: 1px;
   background: $surface-2;
+  display: none;
+   @media(min-width: 350px){
+    display: block;
+  }
 }
 
 .cardStack { position: relative; }
