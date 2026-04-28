@@ -9,7 +9,7 @@ import {
 } from "react";
 import styles from "./join.module.scss";
 
-const CODE_LENGTH = 7;
+const CODE_LENGTH = 5;
 
 interface EventPreview {
   id: string;
@@ -36,9 +36,9 @@ export default function JoinEventPage() {
     setLoading(true);
     setError("");
     await new Promise((r) => setTimeout(r, 600));
-    if (fullCode.toUpperCase() === "ADC2025") {
+    if (fullCode.toUpperCase() === "ADC20") {
       setPreview({
-        id: "evt-123",
+        id: "evt12",
         emoji: "💍",
         title: "Adaeze & Chidi's Wedding",
         sub: "47 guests active",
@@ -102,7 +102,7 @@ export default function JoinEventPage() {
 
   function handleEnter() {
     if (!preview) return;
-    router.push(`/gift-room/${preview.id}`);
+    router.push(`/gift-room/${preview.id}/name-screen`);
   }
 
   return (

@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import styles from "./NameScreen.module.scss";
 
-export default function NameScreen() {
+export default function NameScreen({ eventId }: { eventId: string }) {
   const router = useRouter();
 
   const handleCTAButton = () => {
-    router.push("/splash-screen");
+    router.push(`/gift-room/${eventId}`);
     return;
   };
   return (

@@ -19,7 +19,7 @@ export default function SerenadeLogin() {
     try {
       if (!res.credential) return;
       await handleGoogleCredential(res.credential);
-      router.push("/name-screen");
+      router.push("/home");
     } catch (e) {
       console.log(e);
     }

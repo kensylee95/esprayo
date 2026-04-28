@@ -16,9 +16,9 @@ export function Header() {
         <Link href="#rooms">Live Rooms</Link>
         <Link href="#how">How it works</Link>
       </nav>
-      <button type="button" className={styles.btnSecondary}>
+      <Link href={"/login"} className={styles.btnSecondary}>
         Sign in
-      </button>
+      </Link>
     </header>
   );
 }
