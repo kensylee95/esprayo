@@ -11,7 +11,7 @@ import Redis from 'ioredis';
 import { customAlphabet } from 'nanoid';
 
 import { Event, EventStatus } from './entities/event.entity';
-import { IEvent} from './dtos/event.dto';
+import { EventCreateDTO, IEvent} from './dtos/event.dto';
 import { EventRedisKeys } from './EventRedisKeys';
 import {
   ApplyGiftParams,
@@ -47,21 +47,22 @@ export class EventService {
 
   // ─── Create ──────────────────────────────────────────────────────────────
 
-  async createEvent(hostId: string, dto: IEvent): Promise<Event> {
+  async createEvent(hostId: string, dto: EventCreateDTO): Promise<Event> {
     const slug = brandSlug(await this.generateUniqueSlug());
 
     const entity: Partial<Event> = {
       ...dto,
       hostId,
+      welcomeMessage: dto.welcomeMessage,
       slug,
-      startsAt: new Date(dto.startsAt),
-      endsAt: new Date(dto.endsAt),
+      startsAt: new Date(),
+      endsAt: new Date(),
       status: EventStatus.DRAFT,
       tokenBalance: 0,
       nairaBalance: 0,
       giftCount: 0,
       gifterCount: 0,
-      tokenRateNaira: dto.tokenRateNaira ?? 10,
+      tokenRateNaira: 10,
     };
 
     const saved: Event = await this.eventRepo.save(
@@ -274,7 +275,7 @@ export class EventService {
   async updateEvent(
     eventId: string,
     hostId: string,
-    dto: IEvent,
+    dto: EventCreateDTO,
   ): Promise<Event> {
     const event = await this.findOrFail(eventId);
     this.assertHost(event, hostId);

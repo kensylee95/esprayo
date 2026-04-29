@@ -35,4 +35,4 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
-CMD ["node", "dist/apps/api/apps/api/src/main.js"]
+CMD ["node", "dist/apps/api/apps/user-api/src/main.js"]

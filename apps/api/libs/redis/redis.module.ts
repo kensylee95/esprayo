@@ -16,6 +16,7 @@ import { ConfigModule, ConfigType } from '@nestjs/config';
                         host: config.redisHost,
                         port: config.redisPort,
                         password: config.redisPassword,
+                        tls:{}
                     },
                 };
             },

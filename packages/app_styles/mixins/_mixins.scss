@@ -34,6 +34,15 @@
   box-shadow: 0 6px 24px -8px rgba($gold, 0.6);
 
   @include sm-down { width: 100%; }
+   &:disabled,
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+    background: rgba($gold, 0.8);
+    color: rgba(#000, 0.5);
+    transform: none;
+  }
 }
 
 @mixin btn-secondary {

@@ -13,6 +13,7 @@ import { JwtAuthGuard } from '@modules/auth/src';
 import { OrmModule } from '@modules/orm/src';
 import { AuthControllerModule } from './controllers/auth';
 import { UsersControllerModule } from './controllers/users';
+import { EventControllerModule } from './controllers/event/event.controller.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UsersControllerModule } from './controllers/users';
     GiftControllerModule,
     AuthControllerModule,
     UsersControllerModule,
+    EventControllerModule,
     //Logger
     LoggerModule.forRootAsync({
       inject: [AppConfig.KEY],

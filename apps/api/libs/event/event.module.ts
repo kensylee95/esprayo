@@ -13,4 +13,4 @@ import { Gift } from '@modules/gift/entities/gift.entity';
   providers: [EventService],
   exports: [EventService],
 })
-export class EventModule {}
+export class EventServiceModule {}
