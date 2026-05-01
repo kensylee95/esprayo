@@ -33,24 +33,29 @@ export function useEvent() {
     loading,
     error,
 
-    createEvent: (payload: EventDTO) =>
-      run(() => eventService.createEvent(payload)),
+    createEvent: (payload: EventDTO, token: string) =>
+      run(() => eventService(token).createEvent(payload)),
 
-    getEvent: (eventId: string) => run(() => eventService.getEvent(eventId)),
+    getEvent: (eventId: string, token: string) =>
+      run(() => eventService(token).getEvent(eventId)),
 
-    getBySlug: (slug: string) => run(() => eventService.getBySlug(slug)),
+    getBySlug: (slug: string, token: string) =>
+      run(() => eventService(token).getBySlug(slug)),
 
-    getMyEvents: () => run(() => eventService.getMyEvents()),
+    getMyEvents: (token: string) =>
+      run(() => eventService(token).getMyEvents()),
 
-    getStats: (eventId: string) => run(() => eventService.getStats(eventId)),
+    getStats: (eventId: string, token: string) =>
+      run(() => eventService(token).getStats(eventId)),
 
-    updateEvent: (eventId: string, payload: UpdateEventDto) =>
-      run(() => eventService.updateEvent(eventId, payload)),
+    updateEvent: (eventId: string, payload: UpdateEventDto, token: string) =>
+      run(() => eventService(token).updateEvent(eventId, payload)),
 
-    activateEvent: (eventId: string) =>
-      run(() => eventService.activateEvent(eventId)),
+    activateEvent: (eventId: string, token: string) =>
+      run(() => eventService(token).activateEvent(eventId)),
 
-    endEvent: (eventId: string) => run(() => eventService.endEvent(eventId)),
+    endEvent: (eventId: string, token: string) =>
+      run(() => eventService(token).endEvent(eventId)),
 
     clearError: () => setError(null),
   };

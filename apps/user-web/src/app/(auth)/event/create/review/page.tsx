@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { getTokenClient } from "@/helpers/request";
 import { useWizardStore } from "@/stores/create-event-stores/useWizardStore";
 import { useEvent } from "../../hooks/useEvents";
 import { useCreateEventStore } from "../useCreateEventStore";
@@ -29,14 +30,19 @@ export default function EventReviewScreen() {
 
   const onSubmit = async () => {
     if (!type) return;
+    const token = await getTokenClient();
+    if (!token) return;
     if (title === "" || venue === "" || welcomeMessage === "") return null;
     try {
-      await event.createEvent({
-        title,
-        type,
-        venue,
-        welcomeMessage,
-      });
+      await event.createEvent(
+        {
+          title,
+          type,
+          venue,
+          welcomeMessage,
+        },
+        token,
+      );
 
       // optional: clear wizard store here
       clearForm();
