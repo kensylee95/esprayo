@@ -18,8 +18,8 @@ export default function SerenadeLogin() {
   const handleGoogleLogin = async (res: CredentialResponse) => {
     try {
       if (!res.credential) return;
-      await handleGoogleCredential(res.credential);
-      router.push("/home");
+      const credential = await handleGoogleCredential(res.credential);
+      credential && router.push("/home");
     } catch (e) {
       console.log(e);
     }

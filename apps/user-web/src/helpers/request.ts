@@ -10,7 +10,8 @@ export async function saveToken(token: string): Promise<void> {
     path: "/",
     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
     sameSite: "none",
-  });
+    secure: true, // Required when sameSite is "none"
+  } as CookieInit);
 }
 
 export async function getTokenClient(): Promise<string | null> {
