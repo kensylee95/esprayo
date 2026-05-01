@@ -2,12 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import styles from "./NameScreen.module.scss";
+import { useEvent } from "@/app/(auth)/gift-room/[giftRoomSlug]/event.context";
 
-export default function NameScreen({ eventId }: { eventId: string }) {
+export default function NameScreen() {
   const router = useRouter();
+  const { slug } = useEvent();
 
   const handleCTAButton = () => {
-    router.push(`/gift-room/${eventId}`);
+    router.push(`/gift-room/${slug}`);
     return;
   };
   return (
