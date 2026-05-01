@@ -31,7 +31,7 @@ const eventService = (token?: string) => ({
   },
 
   // GET MY EVENTS
-  getMyEvents() {
+  getMyEvents(): Promise<IEvent[]> {
     return request("/events/host/me", { token });
   },
 

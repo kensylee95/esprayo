@@ -1,0 +1,234 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: vars.$void;
+}
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 88px;
+}
+
+// ── Header ────────────────────────────────────────────────────────────────────
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 20px 14px;
+}
+
+.pageTitle {
+  @include mixins.display;
+  font-size: 1.6rem;
+  color: vars.$text-1;
+  line-height: 1.15;
+}
+
+.pageSub {
+  font-family: vars.$font-body;
+  font-size: 11px;
+  color: vars.$text-3;
+  margin-top: 3px;
+}
+
+// ── Filter tabs ───────────────────────────────────────────────────────────────
+
+.tabs {
+  display: flex;
+  margin: 0 20px 16px;
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-2;
+  border-radius: vars.$radius-pill;
+  padding: 3px;
+  gap: 0;
+}
+
+.tab {
+  flex: 1;
+  padding: 7px 0;
+  border: none;
+  border-radius: vars.$radius-pill;
+  background: transparent;
+  font-family: vars.$font-body;
+  font-size: 11px;
+  color: vars.$text-3;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &:hover:not(.tabActive) { color: vars.$text-2; }
+}
+
+.tabActive {
+  background: vars.$surface-2;
+  color: vars.$text-1;
+}
+
+.tabLive { color: vars.$success; }
+
+// ── Event list ────────────────────────────────────────────────────────────────
+
+.eventList {
+  list-style: none;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eventCard {
+  width: 100%;
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-2;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease;
+
+  &:active { opacity: 0.85; }
+}
+
+.cardLive    { border-color: rgba(vars.$success, 0.18); }
+.cardDraft   { border-color: rgba(vars.$warning, 0.13); }
+.cardEnded   { opacity: 0.6; }
+
+// ── Event icon ────────────────────────────────────────────────────────────────
+
+.eventIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.icon_active   { background: linear-gradient(135deg, #1A2418, #243220); }
+.icon_draft    { background: linear-gradient(135deg, #221C10, #2E2414); }
+.icon_ended    { background: vars.$surface-1; }
+.icon_cancelled{ background: vars.$surface-1; }
+
+// ── Event info ────────────────────────────────────────────────────────────────
+
+.eventInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.eventTitle {
+  font-family: vars.$font-body;
+  font-size: 12px;
+  font-weight: 500;
+  color: vars.$text-1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventMeta {
+  font-family: vars.$font-body;
+  font-size: 10px;
+  color: vars.$text-3;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.eventRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.tokenCount {
+  font-family: vars.$font-mono;
+  font-size: 10px;
+  color: vars.$gold;
+}
+
+.tokenMuted { color: vars.$text-3; }
+
+// ── Badges ────────────────────────────────────────────────────────────────────
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: vars.$radius-pill;
+  padding: 3px 8px;
+  font-family: vars.$font-mono;
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+.badgeLive      { background: #1A2A1A; border: 0.5px solid rgba(vars.$success, 0.2); color: vars.$success; }
+.badgeDraft     { background: #2A1E10; border: 0.5px solid rgba(vars.$warning, 0.2); color: vars.$warning; }
+.badgeEnded     { background: vars.$surface-2; border: 0.5px solid vars.$surface-3; color: vars.$text-3; }
+.badgeCancelled { background: #1A1010; border: 0.5px solid rgba(vars.$danger, 0.2); color: vars.$danger; }
+
+// ── Empty state ───────────────────────────────────────────────────────────────
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.emptyIcon { font-size: 32px; margin-bottom: 12px; }
+
+.emptyText {
+  font-family: vars.$font-body;
+  font-size: 14px;
+  font-weight: 500;
+  color: vars.$text-2;
+  margin-bottom: 4px;
+}
+
+.emptySub {
+  font-family: vars.$font-body;
+  font-size: 11px;
+  color: vars.$text-3;
+}
+
+// ── FAB ───────────────────────────────────────────────────────────────────────
+
+.fab {
+  position: fixed;
+  bottom: 76px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, vars.$gold, vars.$gold-light);
+  border: none;
+  color: vars.$void;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(vars.$gold, 0.35);
+  z-index: 50;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover  { transform: scale(1.06); box-shadow: 0 6px 24px rgba(vars.$gold, 0.45); }
+  &:active { transform: scale(0.96); }
+}

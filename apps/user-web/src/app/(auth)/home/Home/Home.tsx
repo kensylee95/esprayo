@@ -24,7 +24,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     href: "/event/create/step-1",
   },
   { icon: "💸", label: "Fund wallet", sub: "Buy tokens", href: "/wallet/fund" },
-  { icon: "📊", label: "My events", sub: "View & manage", href: "/events" },
+  { icon: "📊", label: "My events", sub: "View & manage", href: "/event/view" },
 ];
 
 interface RecentEvent {
