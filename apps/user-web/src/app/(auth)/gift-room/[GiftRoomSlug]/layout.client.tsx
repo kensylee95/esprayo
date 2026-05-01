@@ -1,6 +1,6 @@
 "use client";
 
-import { EventProvider } from "./event.context";
+import { EventProvider } from "../event.context";
 
 export default function LayoutClient({
   slug,

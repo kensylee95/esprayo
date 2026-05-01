@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEvent } from "@/app/(auth)/gift-room/[giftRoomSlug]/event.context";
+import { useEvent } from "@/app/(auth)/gift-room/event.context";
 import styles from "./NameScreen.module.scss";
 
 export default function NameScreen() {
