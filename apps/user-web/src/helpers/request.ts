@@ -1,5 +1,5 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-export const TOKEN_NAME = "accessToken" as const;
+"use server";
+import { TOKEN_NAME } from "@/constants";
 
 export async function saveToken(token: string): Promise<void> {
   if (typeof window === "undefined" || !("cookieStore" in window)) return;
@@ -38,6 +38,7 @@ export async function request<T>(
   endpoint: string,
   options?: RequestInit & { token?: string },
 ): Promise<T> {
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const { token, ...fetchOptions } = options || {};
 
   const res = await fetch(`${BASE_URL}${endpoint}`, {
