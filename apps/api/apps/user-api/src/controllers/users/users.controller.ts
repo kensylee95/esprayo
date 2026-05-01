@@ -18,12 +18,7 @@ import type {
   UserDto,
   UserUpdateDto,
 } from './users.dto';
-import {
-  type ApiUser,
-  CurrentUser,
-  AuthService,
-  type UserPayload,
-} from '@modules/auth/src';
+import { CurrentUser, AuthService, type UserPayload } from '@modules/auth/src';
 
 @Controller('users')
 export class UsersController {
@@ -113,8 +108,7 @@ export class UsersController {
 
   @Post(':id')
   async updateUser(
-    @Param('id') id: string,
-    @CurrentUser() currentUser: ApiUser,
+    @CurrentUser() currentUser: UserPayload,
     @Body() updateDto: UserUpdateDto,
   ): Promise<UserDto> {
     const schema = Joi.object<UserUpdateDto>({
@@ -130,7 +124,7 @@ export class UsersController {
 
     const { firstName, lastName, status } = validationResult.value;
 
-    const user = await this.usersService.updateUser(id, {
+    const user = await this.usersService.updateUser(currentUser.id, {
       firstName,
       lastName,
       status,
