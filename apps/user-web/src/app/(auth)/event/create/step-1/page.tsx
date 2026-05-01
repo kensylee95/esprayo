@@ -2,10 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useWizardStore } from "@/stores/create-event-stores/useWizardStore";
 import { EventType } from "../review/types";
-import styles from "./StepOne.module.scss";
 import { useCreateEventStore } from "../useCreateEventStore";
+import styles from "./StepOne.module.scss";
 
 export default function Step1() {
   const router = useRouter();
@@ -36,59 +35,65 @@ export default function Step1() {
           </p>
 
           <div className={styles.grid}>
-            <div
+            <button
+              type="button"
               onClick={() => setType(EventType.WEDDING)}
               className={`${styles.chip} ${
                 type === EventType.WEDDING ? styles.active : ""
               }`}
             >
               💍 Wedding
-            </div>
+            </button>
 
-            <div
+            <button
+              type="button"
               onClick={() => setType(EventType.BIRTHDAY)}
               className={`${styles.chip} ${
                 type === EventType.BIRTHDAY ? styles.active : ""
               }`}
             >
               🎂 Birthday
-            </div>
+            </button>
 
-            <div
+            <button
+              type="button"
               onClick={() => setType(EventType.GRADUATION)}
               className={`${styles.chip} ${
                 type === EventType.GRADUATION ? styles.active : ""
               }`}
             >
               🎓 Graduation
-            </div>
+            </button>
 
-            <div
+            <button
+              type="button"
               onClick={() => setType(EventType.ANNIVERSARY)}
               className={`${styles.chip} ${
                 type === EventType.ANNIVERSARY ? styles.active : ""
               }`}
             >
               💑 Anniversary
-            </div>
+            </button>
 
-            <div
+            <button
+              type="button"
               onClick={() => setType(EventType.NAMING)}
               className={`${styles.chip} ${
                 type === EventType.NAMING ? styles.active : ""
               }`}
             >
               👶 Naming
-            </div>
+            </button>
 
-            <div
+            <button
+              type="button"
               onClick={() => setType(EventType.OTHER)}
               className={`${styles.chip} ${
                 type === EventType.OTHER ? styles.active : ""
               }`}
             >
               ✨ Other
-            </div>
+            </button>
           </div>
         </section>
 

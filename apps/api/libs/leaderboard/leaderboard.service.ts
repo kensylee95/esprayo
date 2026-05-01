@@ -1,22 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { RedisService, DEFAULT_REDIS } from '@liaoliaots/nestjs-redis'
-import Redis, { ChainableCommander } from 'ioredis'
+import { Injectable } from '@nestjs/common';
+import { RedisService, DEFAULT_REDIS } from '@liaoliaots/nestjs-redis';
+import Redis from 'ioredis';
 
 export interface LeaderboardEntry {
-  rank: number
-  userId: string
-  displayName: string
-  tokens: number
-  giftCount: number
-  lastGift: string
+  rank: number;
+  userId: string;
+  displayName: string;
+  tokens: number;
+  giftCount: number;
+  lastGift: string;
 }
 
 @Injectable()
 export class LeaderboardService {
-  private readonly redis: Redis
+  private readonly redis: Redis;
 
   constructor(private readonly redisService: RedisService) {
-    this.redis = this.redisService.getOrThrow(DEFAULT_REDIS)
+    this.redis = this.redisService.getOrThrow(DEFAULT_REDIS);
   }
 
   // -------------------------
@@ -24,21 +24,21 @@ export class LeaderboardService {
   // -------------------------
 
   private lbKey(eventId: string): string {
-    return `event:${eventId}:lb`
+    return `event:${eventId}:lb`;
   }
 
   private metaKey(eventId: string, userId: string): string {
-    return `event:${eventId}:user:${userId}`
+    return `event:${eventId}:user:${userId}`;
   }
 
   private totalKey(eventId: string): string {
-    return `event:${eventId}:total_tokens`
+    return `event:${eventId}:total_tokens`;
   }
 
   /** Tracks all user IDs that have participated in an event.
    *  Used instead of KEYS pattern-scan in setExpiry. */
   private usersSetKey(eventId: string): string {
-    return `event:${eventId}:users`
+    return `event:${eventId}:users`;
   }
 
   // -------------------------
@@ -54,15 +54,15 @@ export class LeaderboardService {
     context: string,
   ): void {
     if (!results) {
-      throw new Error(`Redis pipeline returned null — ${context}`)
+      throw new Error(`Redis pipeline returned null — ${context}`);
     }
 
     for (let i = 0; i < results.length; i++) {
-      const [err] = results[i]
+      const [err] = results[i];
       if (err) {
         throw new Error(
           `Redis pipeline command[${i}] failed in ${context}: ${err.message}`,
-        )
+        );
       }
     }
   }
@@ -91,31 +91,31 @@ export class LeaderboardService {
     tokens: number,
     giftName: string,
   ): Promise<number> {
-    const pipeline = this.redis.pipeline()
+    const pipeline = this.redis.pipeline();
 
     // [0] zincrby — returns the new score as a string
-    pipeline.zincrby(this.lbKey(eventId), tokens, userId)
+    pipeline.zincrby(this.lbKey(eventId), tokens, userId);
 
     // [1] hset — update display name + last gift
     pipeline.hset(this.metaKey(eventId, userId), {
       displayName,
       lastGift: giftName,
-    })
+    });
 
     // [2] hincrby — increment gift counter
-    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1)
+    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1);
 
     // [3] incrby — update event-wide total
-    pipeline.incrby(this.totalKey(eventId), tokens)
+    pipeline.incrby(this.totalKey(eventId), tokens);
 
     // [4] sadd — register userId so setExpiry can find it without KEYS
-    pipeline.sadd(this.usersSetKey(eventId), userId)
+    pipeline.sadd(this.usersSetKey(eventId), userId);
 
-    const results = await pipeline.exec()
-    this.assertPipelineResults(results, 'addGift')
+    const results = await pipeline.exec();
+    this.assertPipelineResults(results, 'addGift');
 
     // results[0][1] is the string value returned by zincrby
-    return parseFloat(results![0][1] as string)
+    return parseFloat(results![0][1] as string);
   }
 
   // -------------------------
@@ -136,24 +136,24 @@ export class LeaderboardService {
       limit - 1,
       'REV',
       'WITHSCORES',
-    )
+    );
 
-    if (raw.length === 0) return []
+    if (raw.length === 0) return [];
 
-    const pipeline = this.redis.pipeline()
-    const users: string[] = []
+    const pipeline = this.redis.pipeline();
+    const users: string[] = [];
 
     for (let i = 0; i < raw.length; i += 2) {
-      users.push(raw[i])
-      pipeline.hgetall(this.metaKey(eventId, raw[i]))
+      users.push(raw[i]);
+      pipeline.hgetall(this.metaKey(eventId, raw[i]));
     }
 
-    const metaResults = await pipeline.exec()
-    this.assertPipelineResults(metaResults, 'getTop')
+    const metaResults = await pipeline.exec();
+    this.assertPipelineResults(metaResults, 'getTop');
 
     return users.map((userId, index) => {
-      const score = parseFloat(raw[index * 2 + 1])
-      const meta = metaResults![index][1] as Record<string, string> | null
+      const score = parseFloat(raw[index * 2 + 1]);
+      const meta = metaResults![index][1] as Record<string, string> | null;
 
       return {
         rank: index + 1,
@@ -162,8 +162,8 @@ export class LeaderboardService {
         tokens: score,
         giftCount: parseInt(meta?.giftCount ?? '0', 10),
         lastGift: meta?.lastGift ?? '',
-      }
-    })
+      };
+    });
   }
 
   // -------------------------
@@ -177,14 +177,14 @@ export class LeaderboardService {
     const [rank, score] = await Promise.all([
       this.redis.zrevrank(this.lbKey(eventId), userId),
       this.redis.zscore(this.lbKey(eventId), userId),
-    ])
+    ]);
 
-    if (rank === null) return null
+    if (rank === null) return null;
 
     return {
       rank: rank + 1,
       tokens: parseFloat(score ?? '0'),
-    }
+    };
   }
 
   // -------------------------
@@ -192,9 +192,9 @@ export class LeaderboardService {
   // -------------------------
 
   async getTotalTokens(eventId: string): Promise<number> {
-    const val = await this.redis.get(this.totalKey(eventId))
+    const val = await this.redis.get(this.totalKey(eventId));
     // parseInt matches the INCRBY integer semantics of this key
-    return parseInt(val ?? '0', 10)
+    return parseInt(val ?? '0', 10);
   }
 
   // -------------------------
@@ -214,20 +214,20 @@ export class LeaderboardService {
    * controlled maintenance window.
    */
   async setExpiry(eventId: string, ttlSeconds = 86_400): Promise<void> {
-    const userIds = await this.redis.smembers(this.usersSetKey(eventId))
+    const userIds = await this.redis.smembers(this.usersSetKey(eventId));
 
-    const pipeline = this.redis.pipeline()
+    const pipeline = this.redis.pipeline();
 
-    pipeline.expire(this.lbKey(eventId), ttlSeconds)
-    pipeline.expire(this.totalKey(eventId), ttlSeconds)
-    pipeline.expire(this.usersSetKey(eventId), ttlSeconds)
+    pipeline.expire(this.lbKey(eventId), ttlSeconds);
+    pipeline.expire(this.totalKey(eventId), ttlSeconds);
+    pipeline.expire(this.usersSetKey(eventId), ttlSeconds);
 
     for (const userId of userIds) {
-      pipeline.expire(this.metaKey(eventId, userId), ttlSeconds)
+      pipeline.expire(this.metaKey(eventId, userId), ttlSeconds);
     }
 
-    const results = await pipeline.exec()
-    this.assertPipelineResults(results, 'setExpiry')
+    const results = await pipeline.exec();
+    this.assertPipelineResults(results, 'setExpiry');
   }
 
   // -------------------------
@@ -239,19 +239,19 @@ export class LeaderboardService {
    * Uses the same membership-set approach to avoid KEYS.
    */
   async resetEvent(eventId: string): Promise<void> {
-    const userIds = await this.redis.smembers(this.usersSetKey(eventId))
+    const userIds = await this.redis.smembers(this.usersSetKey(eventId));
 
-    const pipeline = this.redis.pipeline()
+    const pipeline = this.redis.pipeline();
 
-    pipeline.del(this.lbKey(eventId))
-    pipeline.del(this.totalKey(eventId))
-    pipeline.del(this.usersSetKey(eventId))
+    pipeline.del(this.lbKey(eventId));
+    pipeline.del(this.totalKey(eventId));
+    pipeline.del(this.usersSetKey(eventId));
 
     for (const userId of userIds) {
-      pipeline.del(this.metaKey(eventId, userId))
+      pipeline.del(this.metaKey(eventId, userId));
     }
 
-    const results = await pipeline.exec()
-    this.assertPipelineResults(results, 'resetEvent')
+    const results = await pipeline.exec();
+    this.assertPipelineResults(results, 'resetEvent');
   }
 }

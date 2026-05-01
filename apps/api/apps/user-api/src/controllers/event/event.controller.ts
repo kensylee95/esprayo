@@ -1,16 +1,7 @@
 import { CurrentUser } from '@modules/auth/src';
 import { EventService } from '@modules/event/event.service';
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import type { EventDTO, UpdateEventDto } from './dtos/event.controller.dtos';
-import { EventStatus } from '@modules/event/entities/event.entity';
-
 
 @Controller('events')
 export class EventController {
@@ -18,7 +9,7 @@ export class EventController {
 
   // CREATE EVENT
   @Post()
-  createEvent(@CurrentUser("id") userId:string, @Body() dto: EventDTO) {    
+  createEvent(@CurrentUser('id') userId: string, @Body() dto: EventDTO) {
     return this.eventService.createEvent(userId, dto);
   }
 
@@ -36,7 +27,7 @@ export class EventController {
 
   // GET HOST EVENTS
   @Get('host/me')
-  getMyEvents(@CurrentUser("id") userId: string) {
+  getMyEvents(@CurrentUser('id') userId: string) {
     return this.eventService.getHostEvents(userId);
   }
 
@@ -50,7 +41,7 @@ export class EventController {
   @Patch(':eventId')
   updateEvent(
     @Param('eventId') eventId: string,
-    @CurrentUser("id") userId: string,
+    @CurrentUser('id') userId: string,
     @Body() dto: UpdateEventDto,
   ) {
     return this.eventService.updateEvent(eventId, userId, dto);
@@ -60,7 +51,7 @@ export class EventController {
   @Post(':eventId/activate')
   activateEvent(
     @Param('eventId') eventId: string,
-    @CurrentUser("id") userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.eventService.activateEvent(eventId, userId);
   }
@@ -69,7 +60,7 @@ export class EventController {
   @Post(':eventId/end')
   endEvent(
     @Param('eventId') eventId: string,
-    @CurrentUser("id") userId: string,
+    @CurrentUser('id') userId: string,
   ) {
     return this.eventService.endEvent(eventId, userId);
   }

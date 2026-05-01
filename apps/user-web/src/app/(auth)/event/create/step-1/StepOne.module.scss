@@ -75,8 +75,11 @@
     text-align: center;
     padding: 1rem;
     background: vars.$surface-1;
+    appearance: none;
+    -webkit-appearance: none;
     border: 1px solid vars.$surface-3;
     cursor: pointer;
+    color: white;
     &.active{
         background-color: #1A1810;
          border: 1px solid rgba(201, 168, 76, 0.267);

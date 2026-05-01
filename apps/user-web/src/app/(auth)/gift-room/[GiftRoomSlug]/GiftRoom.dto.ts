@@ -9,6 +9,13 @@ export interface LeaderboardEntry {
   lastGift: string;
 }
 
+export interface GetWayRes {
+  leaderboard: LeaderboardEntry[];
+  totalTokens: number;
+  ok: boolean;
+  error: string;
+}
+
 export interface GiftItem {
   id: string;
   name: string;

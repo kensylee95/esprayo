@@ -1,12 +1,9 @@
-import { GiftServiceModule } from "@modules/gift/gift.module";
-import { Module } from "@nestjs/common";
-import { GiftController } from "./gift.controller";
-
+import { GiftServiceModule } from '@modules/gift/gift.module';
+import { Module } from '@nestjs/common';
+import { GiftController } from './gift.controller';
 
 @Module({
-  imports: [
-    GiftServiceModule
-  ],
+  imports: [GiftServiceModule],
   controllers: [GiftController],
 })
 export class GiftControllerModule {}

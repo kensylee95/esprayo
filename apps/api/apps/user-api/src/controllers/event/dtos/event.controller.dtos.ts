@@ -1,4 +1,4 @@
-import { EventStatus, EventType } from "@modules/event/entities/event.entity";
+import { EventStatus, EventType } from '@modules/event/entities/event.entity';
 
 export interface EventDTO {
   title: string;
@@ -9,10 +9,10 @@ export interface EventDTO {
 }
 
 export interface UpdateEventDto {
-  slug: string; 
-  title:string; 
-  description:string; 
-  status: EventStatus;  
-  type: EventType; 
-  welcomeMessage: string; 
+  slug: string;
+  title: string;
+  description: string;
+  status: EventStatus;
+  type: EventType;
+  welcomeMessage: string;
 }

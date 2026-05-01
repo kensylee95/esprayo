@@ -11,8 +11,8 @@ import Redis from 'ioredis';
 import { customAlphabet } from 'nanoid';
 
 import { Event, EventStatus } from './entities/event.entity';
-import { EventCreateDTO, IEvent} from './dtos/event.dto';
-import { EventRedisKeys } from './EventRedisKeys';
+import { EventCreateDTO } from './dtos/event.dto';
+import { EventRedisKeys } from '@app/redis-keys';
 import {
   ApplyGiftParams,
   ApplyGiftResult,
@@ -23,10 +23,11 @@ import {
   EndEventResponse,
   TopGifter,
   brandSlug,
-} from "./dtos/event.dto"
+} from './dtos/event.dto';
 import { Gift } from '@modules/gift/entities/gift.entity';
+import { Socket } from 'socket.io';
 
-const nanoid = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 8);
+const nanoid = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 5);
 
 @Injectable()
 export class EventService {
@@ -110,7 +111,8 @@ export class EventService {
 
     const ttl = Math.max(
       86400,
-      Math.floor((new Date(event.endsAt).getTime() - Date.now()) / 1000) + 86400,
+      Math.floor((new Date(event.endsAt).getTime() - Date.now()) / 1000) +
+        86400,
     );
     await this.redis.expire(EventRedisKeys.leaderboard(eventId), ttl);
 
@@ -198,7 +200,12 @@ export class EventService {
       await manager.save(Gift, gift);
 
       await manager.increment(Event, { id: eventId }, 'tokenBalance', tokens);
-      await manager.increment(Event, { id: eventId }, 'nairaBalance', nairaValue);
+      await manager.increment(
+        Event,
+        { id: eventId },
+        'nairaBalance',
+        nairaValue,
+      );
       await manager.increment(Event, { id: eventId }, 'giftCount', 1);
       if (isNewGifter) {
         await manager.increment(Event, { id: eventId }, 'gifterCount', 1);
@@ -258,7 +265,10 @@ export class EventService {
     });
 
     const topGifter: TopGifter | null = topGifterRaw
-      ? { displayName: topGifterRaw.displayName, total: Number(topGifterRaw.total) }
+      ? {
+          displayName: topGifterRaw.displayName,
+          total: Number(topGifterRaw.total),
+        }
       : null;
 
     const stats: EventStats = {
@@ -298,7 +308,9 @@ export class EventService {
 
   private assertHost(event: Event, hostId: string): void {
     if (event.hostId !== hostId) {
-      throw new ForbiddenException('Only the event host can perform this action');
+      throw new ForbiddenException(
+        'Only the event host can perform this action',
+      );
     }
   }
 
@@ -310,5 +322,40 @@ export class EventService {
       exists = !!(await this.eventRepo.findOneBy({ slug }));
     } while (exists);
     return slug;
+  }
+
+  async validateAndReseedEvent(eventId: string, client: Socket) {
+    // ── 1. Check event status from Redis (O(1), no DB) ──────────────────────
+    const status = await this.redis.hget(
+      EventRedisKeys.event(eventId),
+      'status',
+    );
+
+    // ── 2. Redis miss — re-hydrate from Postgres then re-check ───────────────
+    if (status !== EventStatus.ACTIVE) {
+      const event = await this.getEvent(eventId).catch(() => null);
+
+      if (!event) {
+        client.emit('room:error', { message: 'Event not found.' });
+        return;
+      }
+
+      // Re-seed Redis so future joins are fast
+      await this.redis.hset(
+        EventRedisKeys.event(EventRedisKeys.event(eventId)),
+        {
+          title: event.title,
+          hostId: event.hostId,
+          status: event.status as string,
+          slug: event.slug,
+          tokenBalance: String(event.tokenBalance),
+          nairaBalance: String(event.nairaBalance),
+          giftCount: String(event.giftCount),
+          gifterCount: String(event.gifterCount),
+        },
+      );
+      return event.status;
+    }
+    return status;
   }
 }

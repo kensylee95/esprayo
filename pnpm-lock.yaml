@@ -6,10 +6,20 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   apps/api:
     dependencies:
+      '@app/redis-keys':
+        specifier: workspace:*
+        version: link:../../packages/redis-keys
+      '@app/socket-events':
+        specifier: workspace:*
+        version: link:../../packages/socket-events
       '@liaoliaots/nestjs-redis':
         specifier: ^10.0.0
         version: 10.0.0(@nestjs/common@11.1.19(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(ioredis@5.10.1)
@@ -212,6 +222,9 @@ importers:
 
   apps/user-web:
     dependencies:
+      '@app/socket-events':
+        specifier: workspace:*
+        version: link:../../packages/socket-events
       '@app/styles':
         specifier: workspace:*
         version: link:../../packages/app_styles
@@ -338,6 +351,10 @@ importers:
         version: 5.9.3
 
   packages/app_styles: {}
+
+  packages/redis-keys: {}
+
+  packages/socket-events: {}
 
 packages:
 
@@ -5932,6 +5949,11 @@ packages:
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -12420,6 +12442,8 @@ snapshots:
       - supports-color
 
   typescript@5.9.3: {}
+
+  typescript@6.0.3: {}
 
   ua-is-frozen@0.1.2: {}
 

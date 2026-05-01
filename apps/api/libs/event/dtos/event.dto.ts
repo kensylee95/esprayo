@@ -1,7 +1,6 @@
-import { EventStatus, EventType } from "../entities/event.entity";
+import { EventStatus, EventType } from '../entities/event.entity';
 
-
-export interface EventCreateDTO{
+export interface EventCreateDTO {
   title: string;
   description?: string | undefined;
   type: EventType;
@@ -93,7 +92,7 @@ export interface EventRedisHash {
   hostId: string;
   status: EventStatus;
   slug: string;
-  tokenBalance: string;   // stored as string — parse with Number()
+  tokenBalance: string; // stored as string — parse with Number()
   nairaBalance: string;
   giftCount: string;
   gifterCount: string;
@@ -107,8 +106,6 @@ export interface EventBalanceRedisUpdate {
 }
 
 // ─── Controller response shapes ───────────────────────────────────────────────
-
-export interface CreateEventResponse extends IEvent {}
 
 export interface ActivateEventResponse {
   id: string;
@@ -133,4 +130,14 @@ export type EventSlug = string & { readonly __brand: 'EventSlug' };
 
 export function brandSlug(raw: string): EventSlug {
   return raw as EventSlug;
+}
+export interface ReSeed {
+  title: string;
+  hostId: string;
+  status: string;
+  slug: string;
+  tokenBalance: string;
+  nairaBalance: string;
+  giftCount: string;
+  gifterCount: string;
 }

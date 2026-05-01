@@ -1,15 +1,13 @@
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { Injectable } from '@nestjs/common';
+import { WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 
-@WebSocketGateway({
-  cors: { origin: '*' },
-  transports: ['websocket'],
-})
+@Injectable()
 export class RealtimeGatewayService {
   @WebSocketServer()
   server: Server;
 
-  emitToEvent(eventId: string, event: string, data: any) {
-    this.server?.to(`event:${eventId}`).emit(event, data);
+  emitTo(room: string, event: string, payload: any) {
+    this.server.to(room).emit(event, payload);
   }
 }

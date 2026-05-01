@@ -1,3 +1,6 @@
+import { Job } from 'bullmq';
+import { BROADCAST_GIFT_EVENT } from '../job.constants';
+
 export interface SaveGiftInput {
   eventId: string;
 
@@ -30,4 +33,51 @@ export interface SaveGiftInput {
 
   /** optional idempotency key to prevent duplicates */
   transactionId?: string;
+}
+export type GiftQueue = {
+  add<K extends keyof GiftQueueJobs>(
+    name: K,
+    data: GiftQueueJobs[K],
+  ): Promise<Job>;
+};
+export interface GiftQueueJobs {
+  [BROADCAST_GIFT_EVENT]: BroadcastGiftJob;
+}
+export interface BroadcastGiftJob {
+  eventId: string;
+  userId: string;
+  displayName: string;
+  giftId: string;
+  giftName: string;
+  giftEmoji: string;
+  tokens: number;
+  nairaValue: number;
+  newScore: number;
+  transactionId: string;
+}
+
+export interface GiftPayload {
+  eventId: string;
+  userId: string;
+  displayName: string;
+  giftId: string;
+  giftName: string;
+  giftEmoji: string;
+  tokens: number;
+  amount: number;
+  reference: string;
+}
+
+export interface GiftResult {
+  success: boolean;
+  newBalance: number;
+  newScore: number;
+  newRank: number;
+}
+
+export interface GiftCatalogItem {
+  id: string;
+  name: string;
+  emoji: string;
+  tokens: number;
 }

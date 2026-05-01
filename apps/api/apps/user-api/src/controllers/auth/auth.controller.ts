@@ -4,11 +4,11 @@ import {
   Body,
   UnauthorizedException,
   BadRequestException,
-} from '@nestjs/common'
-import * as Joi from 'joi'
-import type { AuthUser } from './auth.dto'
-import { AuthService, Public, UserPayload } from '@modules/auth/src'
-import { UsersService } from '@modules/users/src'
+} from '@nestjs/common';
+import * as Joi from 'joi';
+import type { AuthUser } from './auth.dto';
+import { AuthService, Public, UserPayload } from '@modules/auth/src';
+import { UsersService } from '@modules/users/src';
 
 @Controller('auth')
 export class AuthController {
@@ -22,52 +22,43 @@ export class AuthController {
   // -----------------------------------
   @Public()
   @Post('login')
-  async signIn(
-    @Body() loginDto: AuthUser,
-  ): Promise<{ accessToken: string }> {
+  async signIn(@Body() loginDto: AuthUser): Promise<{ accessToken: string }> {
     const schema = Joi.object<AuthUser>({
       email: Joi.string().required(),
       password: Joi.string().required(),
-    })
+    });
 
-    const { error, value } = schema.validate(loginDto)
+    const validationResult = schema.validate(loginDto);
 
-    if (error) {
-      throw new BadRequestException(error.message)
+    if (validationResult.error) {
+      throw new BadRequestException(validationResult.error.message);
     }
 
-    const user =
-      await this.userService.findUserByEmail(
-        value.email,
-      )
+    const user = await this.userService.findUserByEmail(
+      validationResult.value.email,
+    );
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException(
-        'Invalid credentials supplied',
-      )
+      throw new UnauthorizedException('Invalid credentials supplied');
     }
 
-    const isPasswordValid =
-      await this.authService.comparePasswords(
-        value.password,
-        user.passwordHash,
-      )
+    const isPasswordValid = await this.authService.comparePasswords(
+      validationResult.value.password,
+      user.passwordHash,
+    );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException(
-        'Invalid credentials supplied',
-      )
+      throw new UnauthorizedException('Invalid credentials supplied');
     }
 
     const payload: UserPayload = {
       id: user.id,
       email: user.email,
-    }
+    };
 
     return {
-      accessToken:
-        this.authService.generateToken(payload),
-    }
+      accessToken: this.authService.generateToken(payload),
+    };
   }
 
   // -----------------------------------
@@ -78,57 +69,49 @@ export class AuthController {
   async googleSignIn(
     @Body() body: { token: string },
   ): Promise<{ accessToken: string }> {
-    const schema = Joi.object({
+    const schema = Joi.object<{ token: string }>({
       token: Joi.string().required(),
-    })
+    });
 
-    const { error, value } = schema.validate(body)
+    const validationResult = schema.validate(body);
 
-    if (error) {
-      throw new BadRequestException(error.message)
+    if (validationResult.error) {
+      throw new BadRequestException(validationResult.error.message);
     }
 
-    const googlePayload =
-      await this.authService.VerifyGoogleToken(
-        value.token,
-      )
+    const googlePayload = await this.authService.VerifyGoogleToken(
+      validationResult.value.token,
+    );
 
     if (!googlePayload) {
-      throw new UnauthorizedException(
-        'Google authentication failed',
-      )
+      throw new UnauthorizedException('Google authentication failed');
     }
 
-    const { email, name, sub } = googlePayload
+    const { email, name, sub } = googlePayload;
 
     if (!email || !name) {
-      throw new BadRequestException(
-        'Invalid Google account data',
-      )
+      throw new BadRequestException('Invalid Google account data');
     }
 
-    const parts = name.trim().split(/\s+/)
+    const parts = name.trim().split(/\s+/);
 
-    const firstName = parts[0] || ''
-    const lastName =
-      parts.slice(1).join(' ') || ''
+    const firstName = parts[0] || '';
+    const lastName = parts.slice(1).join(' ') || '';
 
-    const user =
-      await this.userService.createGoogleUser({
-        email,
-        firstName,
-        lastName,
-        googleId: sub,
-      })
+    const user = await this.userService.createGoogleUser({
+      email,
+      firstName,
+      lastName,
+      googleId: sub,
+    });
 
     const payload: UserPayload = {
       id: user.id,
       email: user.email,
-    }
+    };
 
     return {
-      accessToken:
-        this.authService.generateToken(payload),
-    }
+      accessToken: this.authService.generateToken(payload),
+    };
   }
 }

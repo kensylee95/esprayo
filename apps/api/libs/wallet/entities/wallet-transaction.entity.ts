@@ -4,7 +4,7 @@ import {
   Column,
   Index,
   CreateDateColumn,
-} from 'typeorm'
+} from 'typeorm';
 
 export enum WalletTransactionType {
   CREDIT = 'credit',
@@ -22,21 +22,21 @@ export enum WalletTransactionStatus {
 @Entity({ name: 'wallet_transactions' })
 export class WalletTransaction {
   constructor(partial?: Partial<WalletTransaction>) {
-    Object.assign(this, partial)
+    Object.assign(this, partial);
   }
 
   // -------------------------
   // PRIMARY KEY
   // -------------------------
   @PrimaryGeneratedColumn('uuid')
-  id: string
+  id: string;
 
   // -------------------------
   // USER
   // -------------------------
   @Index()
   @Column({ name: 'user_id', type: 'uuid' })
-  userId: string
+  userId: string;
 
   // -------------------------
   // TRANSACTION TYPE
@@ -45,13 +45,13 @@ export class WalletTransaction {
     type: 'enum',
     enum: WalletTransactionType,
   })
-  type: WalletTransactionType
+  type: WalletTransactionType;
 
   // -------------------------
   // AMOUNT
   // -------------------------
   @Column({ type: 'int' })
-  amount: number
+  amount: number;
 
   // -------------------------
   // STATUS
@@ -61,24 +61,24 @@ export class WalletTransaction {
     enum: WalletTransactionStatus,
     default: WalletTransactionStatus.SUCCESS,
   })
-  status: WalletTransactionStatus
+  status: WalletTransactionStatus;
 
   // -------------------------
   // UNIQUE REFERENCE (IDEMPOTENCY KEY)
   // -------------------------
   @Index({ unique: true })
   @Column({ type: 'varchar', unique: true })
-  reference: string
+  reference: string;
 
   // -------------------------
   // EXTRA DATA (GIFT INFO, PAYSTACK RESPONSE, ETC)
   // -------------------------
   @Column({ type: 'json', nullable: true })
-  meta: Record<string, any> | null
+  meta: Record<string, any> | null;
 
   // -------------------------
   // TIMESTAMP
   // -------------------------
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date
+  createdAt: Date;
 }

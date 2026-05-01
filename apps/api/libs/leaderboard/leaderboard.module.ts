@@ -1,5 +1,5 @@
-import { Module } from "@nestjs/common";
-import { LeaderboardService } from "./leaderboard.service";
+import { Module } from '@nestjs/common';
+import { LeaderboardService } from './leaderboard.service';
 
 @Module({
   providers: [LeaderboardService],

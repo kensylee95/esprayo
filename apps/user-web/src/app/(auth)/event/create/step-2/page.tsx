@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useWizardStore } from "@/stores/create-event-stores/useWizardStore";
 import Input from "@/ui/components/InputWithLabel/InputWithLabel";
-import styles from "./StepTwo.module.scss";
 import { useCreateEventStore } from "../useCreateEventStore";
+import styles from "./StepTwo.module.scss";
 
 export default function Page() {
   const router = useRouter();

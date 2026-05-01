@@ -5,12 +5,14 @@ export type RedisConfigOptions = {
   redisHost: string;
   redisPort: number;
   redisPassword?: string;
+  redisTls?: string;
 };
 
 export type RedisConfigEnv = {
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_PASSWORD: string;
+  REDIS_TLS: string;
 };
 
 export default registerAs<RedisConfigOptions>('redis', () => {
@@ -18,6 +20,7 @@ export default registerAs<RedisConfigOptions>('redis', () => {
     REDIS_HOST: Joi.string().required(),
     REDIS_PORT: Joi.number().required(),
     REDIS_PASSWORD: Joi.string().allow('', null).optional(),
+    REDIS_TLS: Joi.string().allow('', null).optional(),
   });
 
   const result = schema.validate(process.env, {
@@ -34,5 +37,6 @@ export default registerAs<RedisConfigOptions>('redis', () => {
     redisHost: result.value.REDIS_HOST,
     redisPort: result.value.REDIS_PORT,
     redisPassword: result.value.REDIS_PASSWORD,
+    redisTls: result.value.REDIS_TLS,
   };
 });

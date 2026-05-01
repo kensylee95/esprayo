@@ -2,5 +2,8 @@
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "clean": "rm -rf node_modules apps/*/node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
   }
 }

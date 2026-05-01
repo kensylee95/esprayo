@@ -14,6 +14,7 @@ import { OrmModule } from '@modules/orm/src';
 import { AuthControllerModule } from './controllers/auth';
 import { UsersControllerModule } from './controllers/users';
 import { EventControllerModule } from './controllers/event/event.controller.module';
+import { EventGatewayModule } from './getway/event/event.gateway.module';
 
 @Module({
   imports: [
@@ -23,18 +24,18 @@ import { EventControllerModule } from './controllers/event/event.controller.modu
       envFilePath: ['.env'],
       load: [AppConfig, RedisConfig],
     }),
-    
+
     AuthModule,
     OrmModule,
     RedisProviderModule,
-   BullModule.forRootAsync({
-     imports: [ConfigModule.forFeature(RedisConfig)],
+    BullModule.forRootAsync({
+      imports: [ConfigModule.forFeature(RedisConfig)],
       inject: [RedisConfig.KEY],
       useFactory: (config: ConfigType<typeof RedisConfig>) => ({
         connection: {
           host: config.redisHost,
           port: Number(config.redisPort),
-          password: config.redisPassword || undefined
+          password: config.redisPassword || undefined,
         },
       }),
     }),
@@ -42,6 +43,8 @@ import { EventControllerModule } from './controllers/event/event.controller.modu
     AuthControllerModule,
     UsersControllerModule,
     EventControllerModule,
+
+    EventGatewayModule,
     //Logger
     LoggerModule.forRootAsync({
       inject: [AppConfig.KEY],
@@ -57,13 +60,12 @@ import { EventControllerModule } from './controllers/event/event.controller.modu
         },
       }),
     }),
-   
   ],
-   providers: [
+  providers: [
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

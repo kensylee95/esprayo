@@ -7,6 +7,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { getTokenClient } from "@/helpers/request";
+import eventService from "@/services/Event/Event";
+import { EventStatus } from "@/services/Event/Event.dto";
 import styles from "./join.module.scss";
 
 const CODE_LENGTH = 5;
@@ -33,22 +36,28 @@ export default function JoinEventPage() {
   // Simulate event lookup — replace with GET /events/join/:slug
   async function lookupCode(fullCode: string) {
     if (fullCode.length !== CODE_LENGTH) return;
-    setLoading(true);
-    setError("");
-    await new Promise((r) => setTimeout(r, 600));
-    if (fullCode.toUpperCase() === "ADC20") {
+    const token = await getTokenClient();
+    if (!token) return;
+    try {
+      setLoading(true);
+      setError("");
+
+      const service = eventService(token);
+      const event = await service.getBySlug(fullCode);
       setPreview({
-        id: "evt12",
-        emoji: "💍",
-        title: "Adaeze & Chidi's Wedding",
-        sub: "47 guests active",
-        status: "live",
+        id: event.id,
+        emoji: "",
+        title: event.title,
+        sub: event.gifterCount.toString(),
+        status: event.status === EventStatus.ACTIVE ? "live" : "draft",
       });
-    } else {
-      setError("No event found with that code. Check and try again.");
+      setLoading(false);
+    } catch (e) {
+      console.log(e);
       setPreview(null);
+      setError("No event found with that code. Check and try again.");
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   function handleDigitChange(index: number, value: string) {
@@ -161,14 +170,14 @@ export default function JoinEventPage() {
       </div>
 
       {/* ── Divider ── */}
-      <div className={styles.dividerRow}>
+      {/*<div className={styles.dividerRow}>
         <div className={styles.divLine} />
         <span className={styles.divText}>or</span>
         <div className={styles.divLine} />
-      </div>
+      </div>*/}
 
       {/* ── QR zone ── */}
-      <button type="button" className={styles.qrZone} aria-label="Scan QR code">
+      {/*<button type="button" className={styles.qrZone} aria-label="Scan QR code">
         <span className={styles.qrIcon} aria-hidden="true">
           📷
         </span>
@@ -176,7 +185,7 @@ export default function JoinEventPage() {
         <span className={styles.qrSub}>
           Point your camera at the QR at the venue
         </span>
-      </button>
+      </button>*/}
 
       {/* ── Event preview ── */}
       {preview && (

@@ -7,32 +7,32 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
-} from 'typeorm'
-import { User } from '@modules/users/src/entities/user.entity'
+} from 'typeorm';
+import { User } from '@modules/users/src/entities/user.entity';
 
 @Entity({ name: 'wallets' })
 export class Wallet {
   constructor(partial: Partial<Wallet>) {
-    Object.assign(this, partial)
+    Object.assign(this, partial);
   }
 
   @PrimaryGeneratedColumn('uuid')
-  id: string
-  
+  id: string;
+
   @Index({ unique: true })
   @Column({ name: 'user_id', type: 'uuid', unique: true })
-  userId: string
+  userId: string;
 
   @Column({ type: 'int', default: 0 })
-  balance: number
+  balance: number;
 
   @OneToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user: User
+  user: User;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date
+  updatedAt: Date;
 }

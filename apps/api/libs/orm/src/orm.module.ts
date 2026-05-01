@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common'
-import { ConfigModule, ConfigType } from '@nestjs/config'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import OrmConfig from './orm.config'
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigType } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import OrmConfig from './orm.config';
 
 @Module({
   imports: [
@@ -19,10 +19,10 @@ import OrmConfig from './orm.config'
           synchronize: false,
           schema: 'public',
           entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
-        }
+        };
       },
       inject: [OrmConfig.KEY],
     }),
   ],
 })
-export class OrmModule { }
+export class OrmModule {}

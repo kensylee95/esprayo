@@ -1,6 +1,6 @@
 // stores/create-event-stores/useWizardStore.ts
 import { create } from "zustand";
-import { EventType } from "./review/types";
+import type { EventType } from "./review/types";
 
 export type CreateEventState = {
   step: number;
@@ -16,7 +16,7 @@ export type CreateEventState = {
   setType: (type: EventType) => void;
   setField: (
     field: "title" | "venue" | "welcomeMessage",
-    value: string
+    value: string,
   ) => void;
 
   resetForm: () => void;

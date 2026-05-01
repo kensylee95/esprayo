@@ -3,10 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useWizardStore } from "@/stores/create-event-stores/useWizardStore";
+import { useEvent } from "../../hooks/useEvents";
+import { useCreateEventStore } from "../useCreateEventStore";
 import styles from "./Review.module.scss";
 import { EVENT_TYPE_EMOJI } from "./types";
-import { useCreateEventStore } from "../useCreateEventStore";
-import { useEvent } from "../../hooks/useEvents";
 
 export default function EventReviewScreen() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function EventReviewScreen() {
   const welcomeMessage = useCreateEventStore((s) => s.welcomeMessage);
   const clearForm = useCreateEventStore((s) => s.resetForm);
 
-  const { createEvent, loading, error } = useEvent();
+  const event = useEvent();
 
   useEffect(() => {
     setStep(3);
@@ -28,10 +28,10 @@ export default function EventReviewScreen() {
   const emoji = type ? EVENT_TYPE_EMOJI[type] : "✨";
 
   const onSubmit = async () => {
-    if(!type) return
-    if(title==="" || venue==="" || welcomeMessage==="") return null
+    if (!type) return;
+    if (title === "" || venue === "" || welcomeMessage === "") return null;
     try {
-      await createEvent({
+      await event.createEvent({
         title,
         type,
         venue,
@@ -39,17 +39,15 @@ export default function EventReviewScreen() {
       });
 
       // optional: clear wizard store here
-      clearForm()
-      router.push("success");
+      clearForm();
+      router.push("/event/success");
     } catch (e) {
       // error already stored in hook if needed
       console.error(e);
     }
   };
 
-  const formatType = type
-    ? type.charAt(0).toUpperCase() + type.slice(1)
-    : "—";
+  const formatType = type ? type.charAt(0).toUpperCase() + type.slice(1) : "—";
 
   return (
     <div className={styles.screen}>
@@ -87,9 +85,7 @@ export default function EventReviewScreen() {
 
               <div className={styles.row}>
                 <span className={styles.rowKey}>Welcome Message:</span>
-                <span className={styles.rowVal}>
-                  {welcomeMessage || "—"}
-                </span>
+                <span className={styles.rowVal}>{welcomeMessage || "—"}</span>
               </div>
             </div>
           </div>
@@ -101,21 +97,21 @@ export default function EventReviewScreen() {
           type="button"
           className={styles.btn}
           onClick={onSubmit}
-          disabled={loading}
+          disabled={event.loading}
         >
-          {loading ? "Creating…" : "Create event"}
+          {event.loading ? "Creating…" : "Create event"}
         </button>
 
         <button
           type="button"
           className={styles.ghost}
           onClick={() => router.back()}
-          disabled={loading}
+          disabled={event.loading}
         >
           Edit details
         </button>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {event.error && <p className={styles.error}>{event.error}</p>}
       </div>
     </div>
   );

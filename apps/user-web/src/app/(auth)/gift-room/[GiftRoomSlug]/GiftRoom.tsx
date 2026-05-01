@@ -1,10 +1,13 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { SocketEvents } from "@app/socket-events";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { getTokenClient } from "@/helpers/request";
 import WalletFundOverlay from "../../../../ui/components/WalletFundOverlay/WalletFundOverlay";
 import type {
+  GetWayRes,
   GiftItem,
   LeaderboardEntry,
   Overlay,
@@ -12,20 +15,18 @@ import type {
 } from "./GiftRoom.dto";
 import styles from "./GiftRoom.module.scss";
 import LeaderboardTab from "./LeaderboardTab";
-import { leaderboardData } from "./mockData";
 import SprayTab from "./SprayTab";
 
 export default function GiftRoomPage({
   eventData,
 }: {
-  eventData: { eventName: string };
+  eventData: { eventName: string; eventId: string };
 }) {
-  const params = useParams<{ eventId: string }>();
+  const { eventId } = eventData;
   const router = useRouter();
-  const eventId = params.eventId;
 
   const [tab, setTab] = useState<Overlay | null>(null);
-  const [leaderboard, setLb] = useState<LeaderboardEntry[]>(leaderboardData);
+  const [leaderboard, setLb] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<RoomStats>({
     guestCount: 0,
     totalTokens: 0,
@@ -35,58 +36,74 @@ export default function GiftRoomPage({
   });
   const [walletBalance, setWallet] = useState(0);
   const [isSending, setIsSending] = useState(false);
+  const [roomError, setRoomError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [sentGift, setSentGift] = useState<{
     gift: GiftItem;
     newRank: number;
   } | null>(null);
   const [displayName] = useState("Chief Okafor");
 
+  useEffect(() => {
+    getTokenClient().then(setToken);
+  }, []);
+
   // ── WebSocket ────────────────────────────────────────────────────────────
   useEffect(() => {
-    const token = localStorage.getItem("serenade_token") ?? "";
+    if (!token) {
+      return;
+    }
+
     const socket: Socket = io(`${process.env.NEXT_PUBLIC_API_URL}/gift-room`, {
       auth: { token },
       transports: ["websocket"],
     });
 
-    socket.on("connect", () => {
-      socket.emit("room:join", { eventId, role: "guest" });
+    // ── JOIN ROOM (initial hydration via ACK) ───────────────
+    socket.emit(SocketEvents.roomJoin, { eventId }, (res: GetWayRes) => {
+      if (!res?.ok) {
+        setRoomError(res?.error ?? "Failed to join room.");
+        return;
+      }
+
+      setLb(res.leaderboard);
+      setStats((s) => ({ ...s, totalTokens: res.totalTokens }));
     });
 
-    socket.on("leaderboard:snapshot", ({ leaderboard, totalTokens, _role }) => {
-      setLb(leaderboard);
-      setStats((s) => ({ ...s, totalTokens }));
-    });
+    // ── LIVE UPDATES ────────────────────────────────────────
+    const handleUpdate = (payload: {
+      leaderboard: LeaderboardEntry[];
+      eventTokenBalance: number;
+    }) => {
+      setLb(payload.leaderboard);
+      setStats((s) => ({ ...s, totalTokens: payload.eventTokenBalance }));
+    };
 
-    socket.on(
-      "leaderboard:update",
-      ({ leaderboard, eventTokenBalance, _latestGift }) => {
-        setLb(leaderboard);
-        setStats((s) => ({ ...s, totalTokens: eventTokenBalance }));
-      },
-    );
+    socket.on(SocketEvents.leaderboardUpdate, handleUpdate);
 
+    // ── CLEANUP ─────────────────────────────────────────────
     return () => {
-      socket.emit("room:leave", { eventId });
+      socket.off(SocketEvents.leaderboardUpdate, handleUpdate);
+      socket.emit(SocketEvents.roomLeave, { eventId });
       socket.disconnect();
     };
-  }, [eventId]);
+  }, [eventId, token]);
 
   // ── Fetch initial wallet balance ─────────────────────────────────────────
   useEffect(() => {
+    if (!token) return;
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/gift-room/wallet`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("serenade_token")}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
       .then(({ balance }) => setWallet(balance))
       .catch(console.error);
-  }, []);
+  }, [token]);
 
   // ── Send gift ────────────────────────────────────────────────────────────
   const handleSend = useCallback(
     async (gift: GiftItem) => {
+      if (!token) return null;
       setIsSending(true);
       try {
         const res = await fetch(
@@ -95,7 +112,7 @@ export default function GiftRoomPage({
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("serenade_token")}`,
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ eventId, giftId: gift.id, displayName }),
           },
@@ -110,12 +127,30 @@ export default function GiftRoomPage({
         setIsSending(false);
       }
     },
-    [eventId, displayName],
+    [eventId, displayName, token],
   );
 
   const ROOM_TABS: { key: Overlay; icon: string; label: string }[] = [
     { key: "spray", icon: "🎁", label: "Spray" },
   ];
+
+  // ── Room error state ─────────────────────────────────────────────────────
+  if (roomError) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.errorState}>
+          <p className={styles.errorMessage}>{roomError}</p>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => router.push("/home")}
+          >
+            Go back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -156,7 +191,9 @@ export default function GiftRoomPage({
           </div>
         </div>
       )}
+
       <LeaderboardTab entries={leaderboard} stats={stats} />
+
       {tab === "spray" && (
         <SprayTab
           walletBalance={walletBalance}

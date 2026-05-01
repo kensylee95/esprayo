@@ -1,19 +1,34 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-import { UserPayload } from '../auth.dto'
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { Request } from 'express';
+import { Socket } from 'socket.io';
+import { UserPayload } from '../auth.dto';
 
-interface AuthenticatedRequest extends Request {
-  user: UserPayload
-}
+type HttpRequest = Request & {
+  user: UserPayload;
+};
 
-export type ApiUser = {
-  id: string
-  email: string
-}
+type WsClient = Socket & {
+  request: {
+    user?: UserPayload;
+  };
+};
 
-export const CurrentUser = createParamDecorator((property: keyof UserPayload | undefined, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>()
+export const CurrentUser = createParamDecorator(
+  (property: keyof UserPayload | undefined, ctx: ExecutionContext) => {
+    let user: UserPayload | undefined;
 
-  const user = request.user
+    const type = ctx.getType<'http' | 'ws' | 'rpc'>();
 
-  return property ? user?.[property] : user
-})
+    if (type === 'http') {
+      const request = ctx.switchToHttp().getRequest<HttpRequest>();
+      user = request.user as UserPayload | undefined;
+    }
+
+    if (type === 'ws') {
+      const client = ctx.switchToWs().getClient<WsClient>();
+      user = client.request?.user;
+    }
+
+    return property ? user?.[property] : user;
+  },
+);

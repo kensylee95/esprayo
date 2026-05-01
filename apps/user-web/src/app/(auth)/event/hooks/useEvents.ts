@@ -1,8 +1,11 @@
 // hooks/useEvent.ts
 "use client";
 
-import eventService, { EventDTO, UpdateEventDto } from "@/services/Event/Event";
-import { useCallback, useState } from "react"
+import { useCallback, useState } from "react";
+import eventService, {
+  type EventDTO,
+  type UpdateEventDto,
+} from "@/services/Event/Event";
 
 export function useEvent() {
   const [loading, setLoading] = useState(false);
@@ -33,17 +36,13 @@ export function useEvent() {
     createEvent: (payload: EventDTO) =>
       run(() => eventService.createEvent(payload)),
 
-    getEvent: (eventId: string) =>
-      run(() => eventService.getEvent(eventId)),
+    getEvent: (eventId: string) => run(() => eventService.getEvent(eventId)),
 
-    getBySlug: (slug: string) =>
-      run(() => eventService.getBySlug(slug)),
+    getBySlug: (slug: string) => run(() => eventService.getBySlug(slug)),
 
-    getMyEvents: () =>
-      run(() => eventService.getMyEvents()),
+    getMyEvents: () => run(() => eventService.getMyEvents()),
 
-    getStats: (eventId: string) =>
-      run(() => eventService.getStats(eventId)),
+    getStats: (eventId: string) => run(() => eventService.getStats(eventId)),
 
     updateEvent: (eventId: string, payload: UpdateEventDto) =>
       run(() => eventService.updateEvent(eventId, payload)),
@@ -51,8 +50,7 @@ export function useEvent() {
     activateEvent: (eventId: string) =>
       run(() => eventService.activateEvent(eventId)),
 
-    endEvent: (eventId: string) =>
-      run(() => eventService.endEvent(eventId)),
+    endEvent: (eventId: string) => run(() => eventService.endEvent(eventId)),
 
     clearError: () => setError(null),
   };

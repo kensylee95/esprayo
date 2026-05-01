@@ -1,1 +1,1 @@
-export * from './users.controller.module'
+export * from './users.controller.module';

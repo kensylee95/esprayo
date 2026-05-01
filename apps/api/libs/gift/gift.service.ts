@@ -8,45 +8,25 @@ import { DEFAULT_REDIS, RedisService } from '@liaoliaots/nestjs-redis';
 import { Gift } from './entities/gift.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SaveGiftInput } from './dtos/gift.dto';
-import { UUID } from 'typeorm/driver/mongodb/bson.typings.js';
+import {
+  GiftCatalogItem,
+  GiftPayload,
+  GiftQueueJobs,
+  GiftResult,
+  SaveGiftInput,
+} from './dtos/gift.dto';
 import { randomUUID } from 'crypto';
-
-export interface GiftPayload {
-  eventId: string;
-  userId: string;
-  displayName: string;
-  giftId: string;
-  giftName: string;
-  giftEmoji: string;
-  tokens: number;
-  amount: number;
-  reference: string;
-}
-
-export interface GiftResult {
-  success: boolean;
-  newBalance: number;
-  newScore: number;
-  newRank: number;
-}
-
-export interface GiftCatalogItem {
-  id: string;
-  name: string;
-  emoji: string;
-  tokens: number;
-}
+import { BROADCAST_GIFT_EVENT } from './job.constants';
 
 const DEFAULT_CATALOG: GiftCatalogItem[] = [
-  { id: 'bouquet',   name: 'Bouquet',     emoji: '💐', tokens: 50   },
-  { id: 'champagne', name: 'Champagne',   emoji: '🍾', tokens: 120  },
-  { id: 'diamond',   name: 'Diamond',     emoji: '💎', tokens: 500  },
-  { id: 'car',       name: 'Car Key',     emoji: '🚗', tokens: 2000 },
-  { id: 'house',     name: 'House Key',   emoji: '🏠', tokens: 5000 },
-  { id: 'mystery',   name: 'Mystery Box', emoji: '🎁', tokens: 80   },
-  { id: 'travel',    name: 'Travel',      emoji: '✈️', tokens: 300  },
-  { id: 'crown',     name: 'Crown',       emoji: '👑', tokens: 800  },
+  { id: 'bouquet', name: 'Bouquet', emoji: '💐', tokens: 50 },
+  { id: 'champagne', name: 'Champagne', emoji: '🍾', tokens: 120 },
+  { id: 'diamond', name: 'Diamond', emoji: '💎', tokens: 500 },
+  { id: 'car', name: 'Car Key', emoji: '🚗', tokens: 2000 },
+  { id: 'house', name: 'House Key', emoji: '🏠', tokens: 5000 },
+  { id: 'mystery', name: 'Mystery Box', emoji: '🎁', tokens: 80 },
+  { id: 'travel', name: 'Travel', emoji: '✈️', tokens: 300 },
+  { id: 'crown', name: 'Crown', emoji: '👑', tokens: 800 },
 ];
 
 @Injectable()
@@ -60,7 +40,8 @@ export class GiftService {
     private readonly walletService: WalletService,
     private readonly leaderboardService: LeaderboardService,
     private readonly redisService: RedisService,
-    @InjectQueue('gifts') private readonly giftQueue: Queue,
+    @InjectQueue('gifts')
+    private readonly giftQueue: Queue,
   ) {
     this.redis = this.redisService.getOrThrow(DEFAULT_REDIS);
   }
@@ -97,17 +78,17 @@ export class GiftService {
    *
    */
   async sendGift(payload: GiftPayload): Promise<GiftResult> {
-    
-    const { eventId, userId, displayName, giftName, giftEmoji, tokens } = payload;
+    const { eventId, userId, displayName, giftName, giftEmoji, tokens } =
+      payload;
 
     // Step 1 — debit wallet. If this throws (insufficient balance, etc.) we
     // stop here; nothing else has been touched.
-   const newBalance =  await this.walletService.debit({
+    const newBalance = await this.walletService.debit({
       userId: payload.userId,
       amount: payload.amount,
       reference: payload.reference,
-    })
-  
+    });
+
     try {
       // Step 2 — concurrent writes + rank fetch.
       //
@@ -135,15 +116,18 @@ export class GiftService {
       // failure must not roll back an already-recorded gift. The worker should
       // have its own retry/DLQ strategy.
       await this.giftQueue
-        .add('broadcast', {
+        .add(BROADCAST_GIFT_EVENT, {
           eventId,
           userId,
           displayName,
           giftName,
           giftEmoji,
           tokens,
+          nairaValue: payload.amount,
           newScore,
-        })
+          giftId: payload.giftId,
+          transactionId: '',
+        } satisfies GiftQueueJobs[typeof BROADCAST_GIFT_EVENT])
         .catch((err: unknown) =>
           this.logger.error(
             `broadcast enqueue failed — gift was recorded, worker retry expected | eventId=${eventId} userId=${userId}`,
@@ -157,7 +141,6 @@ export class GiftService {
         newScore,
         newRank: rankData?.rank ?? 0,
       };
-
     } catch (err) {
       // Compensating transaction — credit the tokens back since the debit
       // already succeeded but the subsequent writes failed.
@@ -167,7 +150,7 @@ export class GiftService {
       );
 
       await this.walletService
-        .credit({userId, amount:tokens, reference:""})
+        .credit({ userId, amount: tokens, reference: '' })
         .catch((refundErr: unknown) =>
           // Refund itself failed — requires manual ops intervention.
           this.logger.error(
@@ -180,28 +163,32 @@ export class GiftService {
     }
   }
 
-  async getWalletBalance (userId:string){
-    return this.walletService.getBalance(userId)
+  async getWalletBalance(userId: string) {
+    return this.walletService.getBalance(userId);
   }
 
-  async creditUserAccount (userId:string, tokens: number, paymentReference: string){
+  async creditUserAccount(
+    userId: string,
+    tokens: number,
+    paymentReference: string,
+  ) {
     return await this.walletService.credit({
-        userId,
-        amount: tokens,
-        reference: paymentReference,
-      })
+      userId,
+      amount: tokens,
+      reference: paymentReference,
+    });
   }
 
-   /**
+  /**
    * Persists a gift event to the database.
    * This should be called from BullMQ worker (recommended).
    */
   async saveGift(input: SaveGiftInput): Promise<Gift> {
     const existing = await this.giftRepo.findOneBy({
-    transactionId: input.transactionId
-  });
+      transactionId: input.transactionId,
+    });
 
-  if (existing) return existing;
+    if (existing) return existing;
     const gift = this.giftRepo.create({
       eventId: input.eventId,
       guestId: input.userId,
@@ -232,22 +219,16 @@ export class GiftService {
     return parseInt(val ?? '0', 10);
   }
 
-  async getLeaderBoard(eventId:string, limit: number){
-     const [leaderboard, totalTokens] =
-          await Promise.all([
-            this.leaderboardService.getTop(
-              eventId,
-              +limit,
-            ),
-            this.leaderboardService.getTotalTokens(
-              eventId,
-            ),
-          ])
-    
-        return {
-          leaderboard,
-          totalTokens,
-        }
+  async getLeaderBoard(eventId: string, limit: number) {
+    const [leaderboard, totalTokens] = await Promise.all([
+      this.leaderboardService.getTop(eventId, +limit),
+      this.leaderboardService.getTotalTokens(eventId),
+    ]);
+
+    return {
+      leaderboard,
+      totalTokens,
+    };
   }
 
   // -------------------------
@@ -266,7 +247,7 @@ export class GiftService {
   // GIFT CATALOG
   // -------------------------
 
-/**
+  /**
    * Returns the gift catalog for an event.
    *
    * FIX: eventId parameter is now used — per-event overrides can be loaded
@@ -274,11 +255,11 @@ export class GiftService {
    *
    * TODO: Implement per-event catalog storage (e.g. Redis hash or DB table).
    */
-  async getGiftCatalog(): Promise<GiftCatalogItem[]> {
+  getGiftCatalog(): GiftCatalogItem[] {
     // Per-event catalog lookup (extend when ready):
     // const override = await this.redis.get(`event:${eventId}:catalog`);
     // if (override) return JSON.parse(override);
-     
+
     //console.log(eventId); // acknowledged — used in the lookup above when implemented
     return DEFAULT_CATALOG;
   }

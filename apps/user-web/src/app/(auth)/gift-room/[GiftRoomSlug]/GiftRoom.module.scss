@@ -692,3 +692,26 @@
 .roomNavActive .roomNavLabel {
     color: vars.$gold;
 }
+
+.errorState{
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    min-width: 300px;
+    min-height: 100% ;
+    margin: 16px;
+}
+.errorMessage{
+     font-family: vars.$font-mono;
+    text-align: center;
+    font-size: 18px;
+    color: vars.$text-1;
+    letter-spacing: 0.5px;
+    color: white;
+}
+
+.backBtn{
+    @include mixins.btn-primary
+}

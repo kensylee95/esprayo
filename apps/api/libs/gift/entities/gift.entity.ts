@@ -1,4 +1,4 @@
-import { Event } from "@modules/event/entities/event.entity";
+import { Event } from '@modules/event/entities/event.entity';
 import {
   Column,
   CreateDateColumn,
@@ -7,16 +7,15 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
-} from "typeorm";
+} from 'typeorm';
 
 @Entity('gifts')
 @Index(['eventId', 'createdAt'])
 @Index(['eventId', 'guestId'])
-@Index(['transactionId'], { unique: true }) // 👈 important for idempotency
+@Index(['transactionId'], { unique: true })
 export class Gift {
   @PrimaryGeneratedColumn('uuid')
   id: string;
-
   @Column('uuid')
   @Index()
   eventId: string;
@@ -29,7 +28,7 @@ export class Gift {
   @Column('uuid', { nullable: true })
   guestId: string;
 
-  /** 🔑 Unique id for idempotency (prevents duplicate processing) */
+  /** Unique id for idempotency (prevents duplicate processing) */
   @Column({ type: 'uuid' })
   @Index({ unique: true })
   transactionId: string;

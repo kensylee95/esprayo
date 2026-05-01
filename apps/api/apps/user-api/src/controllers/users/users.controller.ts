@@ -1,46 +1,65 @@
-import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Post, Query } from '@nestjs/common'
-import { UsersService, UserStatusEnum } from '@modules/users/src'
-import * as uuid from 'uuid'
-import * as Joi from 'joi'
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { UsersService, UserStatusEnum } from '@modules/users/src';
+import * as uuid from 'uuid';
+import * as Joi from 'joi';
 import type {
   CreateUserDto,
   GetUsersQueryParams,
   PaginatedUsersResponse,
   UserDto,
   UserUpdateDto,
-} from './users.dto'
-import { type ApiUser, CurrentUser, AuthService, type UserPayload } from '@modules/auth/src'
+} from './users.dto';
+import {
+  type ApiUser,
+  CurrentUser,
+  AuthService,
+  type UserPayload,
+} from '@modules/auth/src';
 
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
   ) {}
 
   @Post()
-  async createUser(@CurrentUser() currentUser: UserPayload, @Body() createUserDto: CreateUserDto): Promise<UserDto> {
+  async createUser(
+    @CurrentUser() currentUser: UserPayload,
+    @Body() createUserDto: CreateUserDto,
+  ): Promise<UserDto> {
     const schema = Joi.object<CreateUserDto>({
       firstName: Joi.string().required(),
       lastName: Joi.string().required(),
       email: Joi.string().required(),
       password: Joi.string().required(),
-    })
+    });
 
-    const validationResult = schema.validate(createUserDto)
+    const validationResult = schema.validate(createUserDto);
 
     if (validationResult.error) {
-      throw new BadRequestException(validationResult.error.message)
+      throw new BadRequestException(validationResult.error.message);
     }
-    const hashedPassword = await this.authService.hashPassword(validationResult.value.password)
+    const hashedPassword = await this.authService.hashPassword(
+      validationResult.value.password,
+    );
 
     const user = await this.usersService.createLocalUser(
       {
         ...validationResult.value,
         password: hashedPassword,
       },
-      currentUser
-    )
+      currentUser,
+    );
 
     return {
       id: user.id,
@@ -50,7 +69,7 @@ export class UsersController {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       status: user.status,
-    }
+    };
   }
 
   @Get()
@@ -60,52 +79,62 @@ export class UsersController {
     const paginationSchema = Joi.object<GetUsersQueryParams>({
       page: Joi.number().integer().min(1).default(1),
       limit: Joi.number().integer().min(1).max(200).default(10),
-      status: Joi.string().trim().valid(UserStatusEnum.Active, UserStatusEnum.Inactive).optional(),
-    })
-    const validationResult = paginationSchema.validate(paginationData)
+      status: Joi.string()
+        .trim()
+        .valid(UserStatusEnum.Active, UserStatusEnum.Inactive)
+        .optional(),
+    });
+    const validationResult = paginationSchema.validate(paginationData);
     if (validationResult.error) {
-      throw new BadRequestException(validationResult.error.message)
+      throw new BadRequestException(validationResult.error.message);
     }
-    const { limit, page, ...filters } = validationResult.value
-    return await this.usersService.findUsersPaginated({...filters }, { limit, page })
+    const { limit, page, ...filters } = validationResult.value;
+    return await this.usersService.findUsersPaginated(
+      { ...filters },
+      { limit, page },
+    );
   }
 
   @Get(':id')
   async findOne(@Param() params: { id: string }): Promise<UserDto | null> {
-    console.log(params.id)
+    console.log(params.id);
 
     if (!uuid.validate(params.id)) {
-      throw new NotFoundException('User not found')
+      throw new NotFoundException('User not found');
     }
 
-    const user = await this.usersService.findUser({ id: params.id })
+    const user = await this.usersService.findUser({ id: params.id });
     if (!user) {
-      throw new NotFoundException('User not found')
+      throw new NotFoundException('User not found');
     }
 
-    return user
+    return user;
   }
 
   @Post(':id')
   async updateUser(
     @Param('id') id: string,
     @CurrentUser() currentUser: ApiUser,
-    @Body() updateDto: UserUpdateDto
+    @Body() updateDto: UserUpdateDto,
   ): Promise<UserDto> {
     const schema = Joi.object<UserUpdateDto>({
       firstName: Joi.string().trim().required(),
       lastName: Joi.string().allow('').trim().required(),
       status: Joi.string().valid(...Object.values(UserStatusEnum)),
-    })
+    });
 
-    const validationResult = schema.validate(updateDto)
+    const validationResult = schema.validate(updateDto);
     if (validationResult.error) {
-      throw new BadRequestException(validationResult.error.message)
+      throw new BadRequestException(validationResult.error.message);
     }
 
-    const { firstName, lastName, status } = validationResult.value
+    const { firstName, lastName, status } = validationResult.value;
 
-    const user = await this.usersService.updateUser(id, { firstName, lastName, status })
+    const user = await this.usersService.updateUser(id, {
+      firstName,
+      lastName,
+      status,
+    });
 
     return {
       id: user.id,
@@ -115,6 +144,6 @@ export class UsersController {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       status: user.status,
-    }
+    };
   }
 }
