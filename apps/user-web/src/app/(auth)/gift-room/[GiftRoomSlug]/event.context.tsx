@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { createContext, useContext } from 'react';
+import { createContext, useContext } from "react";
 
 type EventContextType = {
   slug: string;
@@ -16,9 +16,7 @@ export function EventProvider({
   children: React.ReactNode;
 }) {
   return (
-    <EventContext.Provider value={{ slug }}>
-      {children}
-    </EventContext.Provider>
+    <EventContext.Provider value={{ slug }}>{children}</EventContext.Provider>
   );
 }
 
@@ -26,7 +24,7 @@ export function useEvent() {
   const ctx = useContext(EventContext);
 
   if (!ctx) {
-    throw new Error('useEvent must be used inside EventProvider');
+    throw new Error("useEvent must be used inside EventProvider");
   }
 
   return ctx;
