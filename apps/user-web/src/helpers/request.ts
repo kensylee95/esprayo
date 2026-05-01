@@ -9,7 +9,7 @@ export async function saveToken(token: string): Promise<void> {
     value: token,
     path: "/",
     expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-    sameSite: "strict",
+    sameSite: "none",
   });
 }
 
