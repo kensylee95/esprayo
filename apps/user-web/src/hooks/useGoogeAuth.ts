@@ -29,7 +29,9 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       return accessToken;
     } catch (err) {
       const authErr = err as AuthError;
-      setError(authErr.message || "Something went wrong. Please try again.");
+      const message =
+        authErr.message || "Something went wrong. Please try again.";
+      setError(message);
       setStatus("error");
     }
   }, []);

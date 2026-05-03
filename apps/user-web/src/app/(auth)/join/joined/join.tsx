@@ -51,11 +51,14 @@ export default function JoinEventPage() {
         sub: event.gifterCount.toString(),
         status: event.status === EventStatus.ACTIVE ? "live" : "draft",
       });
-      setLoading(false);
+      inputRefs.current.forEach((el) => {
+        el?.blur();
+      });
     } catch (e) {
       console.log(e);
       setPreview(null);
       setError("No event found with that code. Check and try again.");
+    } finally {
       setLoading(false);
     }
   }
@@ -74,7 +77,7 @@ export default function JoinEventPage() {
     }
 
     const full = next.join("");
-    if (full.length === CODE_LENGTH && next.every(Boolean)) {
+    if (next.every(Boolean)) {
       lookupCode(full);
     }
   }
@@ -133,7 +136,7 @@ export default function JoinEventPage() {
           gift room.
         </h1>
         <p className={styles.sub}>
-          Enter the 7-letter code or scan the QR at the venue
+          Enter the 5-letter code or scan the QR at the venue
         </p>
       </div>
 

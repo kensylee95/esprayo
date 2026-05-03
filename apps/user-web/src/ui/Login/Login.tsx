@@ -1,28 +1,27 @@
 "use client";
 import { type CredentialResponse, GoogleLogin } from "@react-oauth/google";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DmMono, outfit } from "@/font";
 import { useGoogleAuth } from "@/hooks/useGoogeAuth";
 import { NumericKeyboard } from "../NumericKeypad/NumericKeypad";
 import styles from "./Login.module.scss";
 
 export default function SerenadeLogin() {
-  const { handleGoogleCredential } = useGoogleAuth();
+  const { handleGoogleCredential, status } = useGoogleAuth();
   const [showKeyBoard, setShowKeyboard] = useState(false);
   const router = useRouter();
 
   const [phone, setPhone] = useState("0812129877");
-
+  useEffect(() => {
+    if (status === "success") {
+      router.push("/home");
+    }
+  }, [status, router]);
   const digits = phone.replace(/\D/g, "");
   const handleGoogleLogin = async (res: CredentialResponse) => {
-    try {
-      if (!res.credential) return;
-      const credential = await handleGoogleCredential(res.credential);
-      credential && router.push("/home");
-    } catch (e) {
-      console.log(e);
-    }
+    if (!res.credential) return;
+    await handleGoogleCredential(res.credential);
   };
   const onKeyPress = (key: string) => {
     if (key === "⌫") {
@@ -82,23 +81,32 @@ export default function SerenadeLogin() {
         <div
           style={{ position: "relative", width: "100%", marginBottom: "14px" }}
         >
-          <button type="button" className={styles.ctaGoogle}>
-            Continue with Google
-          </button>
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              opacity: 0,
-              overflow: "hidden",
-            }}
+          <button
+            disabled={status === "loading"}
+            type="button"
+            className={styles.ctaGoogle}
           >
-            <GoogleLogin
-              onSuccess={handleGoogleLogin}
-              onError={() => {}}
-              width="500"
-            />
-          </div>
+            {status === "loading"
+              ? "Authenticating..."
+              : "Continue with Google"}
+          </button>
+
+          {status !== "loading" && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                opacity: 0,
+                overflow: "hidden",
+              }}
+            >
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => {}}
+                width="500"
+              />
+            </div>
+          )}
         </div>
       </div>
       {showKeyBoard && (

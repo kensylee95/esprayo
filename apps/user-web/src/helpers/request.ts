@@ -1,4 +1,3 @@
-"use server";
 import { TOKEN_NAME } from "@/constants";
 
 export async function saveToken(token: string): Promise<void> {
