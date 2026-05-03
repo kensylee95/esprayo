@@ -72,6 +72,7 @@ export default function HomePage() {
 
   // In production: fetch from useAuth() hook
   const user = { initials: "CO", tokenBalance: 1250 };
+  //clearToken()
 
   return (
     <div className={styles.page}>

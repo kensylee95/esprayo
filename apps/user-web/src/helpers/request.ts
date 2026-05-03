@@ -1,7 +1,7 @@
-import { TOKEN_NAME } from "@/constants";
+import { TOKEN_NAME } from "../../constants";
 
 export async function saveToken(token: string): Promise<void> {
-  if (typeof window === "undefined" || !("cookieStore" in window)) return;
+  if (typeof window === "undefined") return;
 
   await cookieStore.set({
     name: TOKEN_NAME,
@@ -16,22 +16,17 @@ export async function saveToken(token: string): Promise<void> {
 export async function getTokenClient(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 
-  if ("cookieStore" in window) {
-    const cookie = await cookieStore.get("accessToken");
-    return cookie?.value ?? null;
-  }
-  return null;
+  const cookie = await cookieStore.get(TOKEN_NAME);
+  return cookie?.value ?? null;
 }
 
 export async function clearToken(): Promise<void> {
   if (typeof window === "undefined") return;
 
-  if ("cookieStore" in window) {
-    await cookieStore.delete({
-      name: TOKEN_NAME,
-      path: "/",
-    });
-  }
+  await cookieStore.delete({
+    name: TOKEN_NAME,
+    path: "/",
+  });
 }
 export async function request<T>(
   endpoint: string,
