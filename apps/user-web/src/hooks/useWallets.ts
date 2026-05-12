@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTokenClient } from "@/helpers/request";
 import walletService from "@/services/Wallet/Wallet";
 import type { WalletResponse } from "@/services/Wallet/Wallet.dto";
@@ -10,49 +10,70 @@ export const useWallet = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Prevent duplicate fetch (React 18/19 Strict Mode safe)
+  const hasFetched = useRef(false);
+
   // -------------------------
-  // LOAD TOKEN
+  // LOAD TOKEN (runs once)
   // -------------------------
   useEffect(() => {
+    let mounted = true;
+
     const loadToken = async () => {
       try {
         const t = await getTokenClient();
-        setToken(t);
+        if (mounted) setToken(t);
       } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-          return;
-        }
-        setError("Failed to load token");
+        setError(err instanceof Error ? err.message : "Failed to load token");
       }
     };
 
     loadToken();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const walletApi = token ? walletService(token) : null;
+  // -------------------------
+  // STABLE WALLET SERVICE
+  // -------------------------
+  const walletApi = useMemo(() => {
+    if (!token) return null;
+    return walletService(token);
+  }, [token]);
 
   // -------------------------
-  // FETCH WALLET
+  // FETCH WALLET (STABLE)
   // -------------------------
   const fetchWallet = useCallback(async () => {
     if (!walletApi) return;
 
     try {
       setLoading(true);
+
       const data = await walletApi.getWallet();
+
       setWallet(data);
       setBalance(data.balance);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-        return;
-      }
-      setError("Failed to fetch wallet");
+      setError(err instanceof Error ? err.message : "Failed to fetch wallet");
     } finally {
       setLoading(false);
     }
   }, [walletApi]);
+
+  // -------------------------
+  // AUTO FETCH ONCE TOKEN IS READY
+  // -------------------------
+  useEffect(() => {
+    if (!token) return;
+    if (!walletApi) return;
+    if (hasFetched.current) return;
+
+    hasFetched.current = true;
+    fetchWallet();
+  }, [token, walletApi, fetchWallet]);
 
   // -------------------------
   // CREDIT
@@ -62,36 +83,25 @@ export const useWallet = () => {
 
     try {
       setLoading(true);
+
       const res = await walletApi.credit(payload);
+
       setBalance(res.balance);
       return res;
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err?.message);
-        throw err;
-      }
-      setError("Credit failed");
+      setError(err instanceof Error ? err.message : "Credit failed");
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // -------------------------
-  // AUTO FETCH WHEN TOKEN READY
-  // -------------------------
-  useEffect(() => {
-    if (token) {
-      fetchWallet();
-    }
-  }, [token, fetchWallet]);
-
   return {
     wallet,
     balance,
     loading,
     error,
-    ready: !!token, // 👈 important
+    ready: !!token,
 
     fetchWallet,
     credit,
