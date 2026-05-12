@@ -2,9 +2,10 @@
 
 import { SocketEvents } from "@app/socket-events";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { getTokenClient } from "@/helpers/request";
+import { useWallet } from "@/hooks/useWallets";
 import WalletFundOverlay from "../../../../ui/components/WalletFundOverlay/WalletFundOverlay";
 import type {
   GetWayRes,
@@ -26,6 +27,7 @@ export default function GiftRoomPage({
   const router = useRouter();
 
   const [tab, setTab] = useState<Overlay | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [leaderboard, setLb] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<RoomStats>({
     guestCount: 0,
@@ -34,14 +36,25 @@ export default function GiftRoomPage({
     eventTitle: eventData.eventName,
     eventEmoji: "🎁",
   });
-  const [walletBalance, setWallet] = useState(0);
+  const wallet = useWallet();
   const [isSending, setIsSending] = useState(false);
   const [roomError, setRoomError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
+
+  // Shown to the sender via HTTP response (immediate feedback)
   const [sentGift, setSentGift] = useState<{
     gift: GiftItem;
     newRank: number;
   } | null>(null);
+
+  // Shown to ALL clients in the room via socket (gift:received event)
+  const [liveGift, setLiveGift] = useState<{
+    displayName: string;
+    giftName: string;
+    giftEmoji: string;
+    tokens: number;
+  } | null>(null);
+
   const [displayName] = useState("Chief Okafor");
 
   useEffect(() => {
@@ -50,55 +63,56 @@ export default function GiftRoomPage({
 
   // ── WebSocket ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
-    const socket: Socket = io(`${process.env.NEXT_PUBLIC_API_URL}/gift-room`, {
+    // Don't create a second socket if one already exists for this token
+    if (socketRef.current?.connected) return;
+
+    const socket = io(`${process.env.NEXT_PUBLIC_API_URL}/gift-room`, {
       auth: { token },
       transports: ["websocket"],
     });
 
-    // ── JOIN ROOM (initial hydration via ACK) ───────────────
+    socketRef.current = socket;
+
     socket.emit(SocketEvents.roomJoin, { eventId }, (res: GetWayRes) => {
       if (!res?.ok) {
         setRoomError(res?.error ?? "Failed to join room.");
         return;
       }
-
       setLb(res.leaderboard);
       setStats((s) => ({ ...s, totalTokens: res.totalTokens }));
     });
 
-    // ── LIVE UPDATES ────────────────────────────────────────
     const handleUpdate = (payload: {
       leaderboard: LeaderboardEntry[];
-      eventTokenBalance: number;
+      totalTokens: number;
     }) => {
       setLb(payload.leaderboard);
-      setStats((s) => ({ ...s, totalTokens: payload.eventTokenBalance }));
+      setStats((s) => ({ ...s, totalTokens: payload.totalTokens }));
+    };
+
+    const handleGiftReceived = (payload: {
+      displayName: string;
+      giftName: string;
+      giftEmoji: string;
+      tokens: number;
+    }) => {
+      setLiveGift(payload);
+      setTimeout(() => setLiveGift(null), 3000);
     };
 
     socket.on(SocketEvents.leaderboardUpdate, handleUpdate);
+    socket.on(SocketEvents.giftReceived, handleGiftReceived);
 
-    // ── CLEANUP ─────────────────────────────────────────────
     return () => {
       socket.off(SocketEvents.leaderboardUpdate, handleUpdate);
+      socket.off(SocketEvents.giftReceived, handleGiftReceived);
       socket.emit(SocketEvents.roomLeave, { eventId });
       socket.disconnect();
+      socketRef.current = null;
     };
   }, [eventId, token]);
-
-  // ── Fetch initial wallet balance ─────────────────────────────────────────
-  useEffect(() => {
-    if (!token) return;
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/gift-room/wallet`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then(({ balance }) => setWallet(balance))
-      .catch(console.error);
-  }, [token]);
 
   // ── Send gift ────────────────────────────────────────────────────────────
   const handleSend = useCallback(
@@ -119,7 +133,7 @@ export default function GiftRoomPage({
         );
         const data = await res.json();
         if (!res.ok) throw new Error(data.message);
-        setWallet(data.newBalance);
+        wallet.fetchWallet();
         setSentGift({ gift, newRank: data.newRank });
       } catch (err) {
         console.error(err);
@@ -127,7 +141,7 @@ export default function GiftRoomPage({
         setIsSending(false);
       }
     },
-    [eventId, displayName, token],
+    [eventId, displayName, token, wallet.fetchWallet],
   );
 
   const ROOM_TABS: { key: Overlay; icon: string; label: string }[] = [
@@ -170,7 +184,18 @@ export default function GiftRoomPage({
         <span className={styles.liveBadge}>● LIVE</span>
       </header>
 
-      {/* ── Gift sent confirmation ── */}
+      {/* ── Live gift banner (visible to ALL clients in the room) ── */}
+      {liveGift && (
+        <div className={styles.liveGiftBanner}>
+          <span>{liveGift.giftEmoji}</span>
+          <p>
+            <strong>{liveGift.displayName}</strong> sprayed{" "}
+            <strong>{liveGift.giftName}</strong>!
+          </p>
+        </div>
+      )}
+
+      {/* ── Gift sent confirmation (sender only, via HTTP response) ── */}
       {sentGift && (
         <div className={styles.sentOverlay}>
           <div className={styles.sentCard}>
@@ -196,7 +221,7 @@ export default function GiftRoomPage({
 
       {tab === "spray" && (
         <SprayTab
-          walletBalance={walletBalance}
+          walletBalance={wallet.balance ?? 0.0}
           onSend={handleSend}
           isSending={isSending}
           onRecharge={() => setTab("wallet")}
@@ -206,7 +231,7 @@ export default function GiftRoomPage({
       {tab === "wallet" && (
         <WalletFundOverlay
           closeWalletOverlay={() => setTab(null)}
-          balance={walletBalance}
+          balance={wallet.balance ?? 0.0}
         />
       )}
 

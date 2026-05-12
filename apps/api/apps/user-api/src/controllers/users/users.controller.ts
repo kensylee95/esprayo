@@ -18,12 +18,14 @@ import type {
   UserUpdateDto,
 } from './users.dto';
 import { CurrentUser, AuthService, type UserPayload } from '@modules/auth/src';
+import { WalletService } from '@modules/wallet/wallet.service';
 
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly authService: AuthService,
+    private readonly walletService: WalletService,
   ) {}
 
   @Post()
@@ -54,6 +56,7 @@ export class UsersController {
       },
       currentUser,
     );
+    await this.walletService.createWallet(user.id);
 
     return {
       id: user.id,

@@ -115,7 +115,7 @@ export class GiftService {
       // Step 3 — enqueue broadcast. Treated as best-effort: a transient queue
       // failure must not roll back an already-recorded gift. The worker should
       // have its own retry/DLQ strategy.
-      await this.giftQueue
+      this.giftQueue
         .add(BROADCAST_GIFT_EVENT, {
           eventId,
           userId,
@@ -126,7 +126,7 @@ export class GiftService {
           nairaValue: payload.amount,
           newScore,
           giftId: payload.giftId,
-          transactionId: '',
+          transactionId: randomUUID(),
         } satisfies GiftQueueJobs[typeof BROADCAST_GIFT_EVENT])
         .catch((err: unknown) =>
           this.logger.error(
@@ -150,7 +150,11 @@ export class GiftService {
       );
 
       await this.walletService
-        .credit({ userId, amount: tokens, reference: '' })
+        .credit({
+          userId,
+          amount: tokens,
+          reference: `refund_${payload.reference}`,
+        })
         .catch((refundErr: unknown) =>
           // Refund itself failed — requires manual ops intervention.
           this.logger.error(

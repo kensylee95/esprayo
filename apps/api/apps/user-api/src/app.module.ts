@@ -15,15 +15,20 @@ import { AuthControllerModule } from './controllers/auth';
 import { UsersControllerModule } from './controllers/users';
 import { EventControllerModule } from './controllers/event/event.controller.module';
 import { EventGatewayModule } from './getway/event/event.gateway.module';
+import { WalletsControllerModule } from './controllers/wallet/wallet.controller.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { RealtimeModule } from '@modules/RealtimeGateway/RealtimeGateway.module';
 
 @Module({
   imports: [
+    RealtimeModule,
     //Config
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env'],
       load: [AppConfig, RedisConfig],
     }),
+    EventEmitterModule.forRoot(),
 
     AuthModule,
     OrmModule,
@@ -43,6 +48,7 @@ import { EventGatewayModule } from './getway/event/event.gateway.module';
     AuthControllerModule,
     UsersControllerModule,
     EventControllerModule,
+    WalletsControllerModule,
 
     EventGatewayModule,
     //Logger

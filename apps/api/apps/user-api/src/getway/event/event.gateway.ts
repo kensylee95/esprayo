@@ -1,46 +1,63 @@
 import {
   ConnectedSocket,
   MessageBody,
-  SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
+  SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 
 import { EventService } from '@modules/event/event.service';
 import { LeaderboardService } from '@modules/leaderboard/leaderboard.service';
 import { EventStatus } from '@modules/event/entities/event.entity';
-import { RealtimeGatewayService } from '@modules/RealtimeGateway/RealtimeGateway.service';
 import { SocketEvents } from '@app/socket-events';
-import { EventRedisKeys } from '@app/redis-keys';
-import { LeaderboardEntry } from './event.interface';
+import { RealtimeGatewayService } from '@modules/RealtimeGateway/RealtimeGateway.service';
+
+const socketRoom = (eventId: string) => `gift-room:${eventId}`;
 
 @WebSocketGateway({
   cors: { origin: '*' },
+  transports: ['websocket'],
   namespace: '/gift-room',
 })
-export class EventGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class EventGateway
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
+{
+  @WebSocketServer()
+  private readonly server: Server;
+
   constructor(
     private readonly eventService: EventService,
     private readonly leaderboardService: LeaderboardService,
-    private readonly realTimeService: RealtimeGatewayService,
+    private readonly realtimeGatewayService: RealtimeGatewayService,
   ) {}
 
+  // Called by NestJS after the WebSocket server is fully initialized.
+  // This is the only place where `this.server` is guaranteed to be set,
+  // so we hand it to RealtimeGatewayService here so the worker can use it.
+  afterInit(server: Server) {
+    console.log('After init was fired!');
+    this.realtimeGatewayService.setServer(server);
+  }
+
   handleConnection(client: Socket) {
-    console.log(`[WS] connected: ${client.id}`);
+    console.log(`[WS /gift-room] connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`[WS] disconnected: ${client.id}`);
+    console.log(`[WS /gift-room] disconnected: ${client.id}`);
   }
 
   @SubscribeMessage(SocketEvents.roomJoin)
   async handleJoin(
-    @MessageBody() dto: { eventId: string },
+    @MessageBody()
+    dto: { eventId: string; role?: 'guest' | 'display' | 'host' },
     @ConnectedSocket() client: Socket,
   ) {
-    const { eventId } = dto;
+    const { eventId, role = 'guest' } = dto;
 
     const status = await this.eventService.validateAndReseedEvent(
       eventId,
@@ -48,13 +65,13 @@ export class EventGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     if (status !== EventStatus.ACTIVE) {
-      return {
-        ok: false,
-        error:
-          status === EventStatus.DRAFT
-            ? 'This gift room has not opened yet.'
-            : 'This gift room has ended.',
-      };
+      const error =
+        status === EventStatus.DRAFT
+          ? 'This gift room has not opened yet.'
+          : 'This gift room has ended.';
+
+      client.emit(SocketEvents.roomError, { message: error });
+      return { ok: false, error };
     }
 
     const [leaderboard, totalTokens] = await Promise.all([
@@ -62,7 +79,13 @@ export class EventGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.leaderboardService.getTotalTokens(eventId),
     ]);
 
-    await client.join(EventRedisKeys.event(eventId));
+    await client.join(socketRoom(eventId));
+
+    client.emit(SocketEvents.leaderboardSnapshot, {
+      leaderboard,
+      totalTokens,
+      role,
+    });
 
     return { ok: true, leaderboard, totalTokens };
   }
@@ -72,27 +95,6 @@ export class EventGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { eventId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    await client.leave(EventRedisKeys.event(data.eventId));
-  }
-
-  broadcastUpdate(
-    eventId: string,
-    payload: {
-      leaderboard: LeaderboardEntry[];
-      eventTokenBalance: number;
-      eventNairaBalance: number;
-      latestGift: {
-        displayName: string;
-        giftName: string;
-        giftEmoji: string;
-        tokens: number;
-      };
-    },
-  ) {
-    this.realTimeService.emitTo(
-      EventRedisKeys.event(eventId),
-      SocketEvents.leaderboardUpdate,
-      payload,
-    );
+    await client.leave(socketRoom(data.eventId));
   }
 }

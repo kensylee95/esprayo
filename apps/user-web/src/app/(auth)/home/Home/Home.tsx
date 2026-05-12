@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useWallet } from "@/hooks/useWallets";
 import styles from "./Home.module.scss";
 
 interface QuickAction {
@@ -71,7 +72,8 @@ export default function HomePage() {
   const router = useRouter();
 
   // In production: fetch from useAuth() hook
-  const user = { initials: "CO", tokenBalance: 1250 };
+  const user = { initials: "CO" };
+  const wallet = useWallet();
   //clearToken()
 
   return (
@@ -102,10 +104,15 @@ export default function HomePage() {
           <div className={styles.balOrb} aria-hidden="true" />
           <p className={styles.balLabel}>Token balance</p>
           <p className={styles.balValue}>
-            {user.tokenBalance.toLocaleString()}
+            {wallet.balance ? wallet.balance.toLocaleString() : 0.0}
           </p>
           <p className={styles.balSub}>
-            ≈ ₦{(user.tokenBalance * 10).toLocaleString()} · tap to fund
+            ≈ ₦
+            {(wallet.balance
+              ? wallet.balance.toLocaleString()
+              : 0.0 * 10
+            ).toLocaleString()}{" "}
+            · tap to fund
           </p>
         </div>
 

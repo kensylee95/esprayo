@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
-
 import { GiftService } from '@modules/gift/gift.service';
 import { CurrentUser, Public } from '@modules/auth/src';
+import { randomUUID } from 'crypto';
 
 // -------------------------
 // DTOs
@@ -34,7 +34,7 @@ export class GiftController {
       throw new Error('Gift not found');
     }
 
-    return this.giftService.sendGift({
+    return await this.giftService.sendGift({
       eventId: dto.eventId,
       userId,
       displayName: dto.displayName,
@@ -43,7 +43,7 @@ export class GiftController {
       giftEmoji: item.emoji,
       tokens: item.tokens,
       amount: item.tokens,
-      reference: `gift_${dto.eventId}_${Date.now()}`,
+      reference: `gift_${dto.eventId}_${randomUUID()}`,
     });
   }
 

@@ -9,12 +9,14 @@ import * as Joi from 'joi';
 import type { AuthUser } from './auth.dto';
 import { AuthService, Public, UserPayload } from '@modules/auth/src';
 import { UsersService } from '@modules/users/src';
+import { WalletService } from '@modules/wallet/wallet.service';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UsersService,
+    private readonly walletService: WalletService,
   ) {}
 
   // -----------------------------------
@@ -104,6 +106,8 @@ export class AuthController {
       lastName,
       googleId: sub,
     });
+
+    await this.walletService.createWallet(user.id);
 
     const payload: UserPayload = {
       id: user.id,

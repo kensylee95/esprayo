@@ -25,6 +25,8 @@ export class WalletService {
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
 
+    // txRepository is kept for reads (e.g. transaction history queries).
+    // All writes go through the DataSource transaction manager.
     @InjectRepository(WalletTransaction)
     private readonly txRepository: Repository<WalletTransaction>,
 
@@ -51,6 +53,29 @@ export class WalletService {
   // -------------------------
   private balanceKey(userId: string) {
     return `wallet:${userId}:balance`;
+  }
+
+  // -------------------------
+  // CREATE WALLET
+  // -------------------------
+  async createWallet(userId: string): Promise<Wallet> {
+    const existing = await this.walletRepository.findOne({
+      where: { userId },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const wallet = this.walletRepository.create({
+      userId,
+      balance: 0,
+    });
+
+    await this.walletRepository.save(wallet);
+    await this.redis.set(this.balanceKey(userId), 0);
+
+    return wallet;
   }
 
   // -------------------------
@@ -83,7 +108,6 @@ export class WalletService {
     });
 
     const balance = wallet?.balance ?? 0;
-
     await this.redis.set(this.balanceKey(userId), balance);
 
     return balance;
@@ -99,7 +123,10 @@ export class WalletService {
   }): Promise<number> {
     const { userId, amount, reference } = input;
 
-    return this.dataSource.transaction(async (manager) => {
+    // FIX 1: Redis update moved outside the transaction so it only runs on
+    // successful commit. Previously it ran inside the callback, meaning a
+    // subsequent rollback would leave Redis with a stale/wrong balance.
+    const newBalance = await this.dataSource.transaction(async (manager) => {
       const wallet = await manager.findOne(Wallet, {
         where: { userId },
         lock: { mode: 'pessimistic_write' },
@@ -112,7 +139,11 @@ export class WalletService {
       wallet.balance += amount;
       await manager.save(wallet);
 
-      await this.txRepository.save({
+      // FIX 2: Transaction record written through the transaction manager so
+      // it's atomic with the balance update. Previously used the injected
+      // txRepository which is outside the DB transaction — a failure there
+      // would leave the balance changed but unrecorded.
+      await manager.save(WalletTransaction, {
         userId,
         type: WalletTransactionType.CREDIT,
         amount,
@@ -120,10 +151,11 @@ export class WalletService {
         status: WalletTransactionStatus.SUCCESS,
       });
 
-      await this.redis.set(this.balanceKey(userId), wallet.balance);
-
       return wallet.balance;
     });
+
+    await this.redis.set(this.balanceKey(userId), newBalance);
+    return newBalance;
   }
 
   // -------------------------
@@ -136,7 +168,9 @@ export class WalletService {
   }): Promise<number> {
     const { userId, amount, reference } = input;
 
-    return this.dataSource.transaction(async (manager) => {
+    // FIX 1 + 2: Same fixes as credit — Redis update outside transaction,
+    // transaction record written through manager.
+    const newBalance = await this.dataSource.transaction(async (manager) => {
       const wallet = await manager.findOne(Wallet, {
         where: { userId },
         lock: { mode: 'pessimistic_write' },
@@ -153,7 +187,7 @@ export class WalletService {
       wallet.balance -= amount;
       await manager.save(wallet);
 
-      await this.txRepository.save({
+      await manager.save(WalletTransaction, {
         userId,
         type: WalletTransactionType.DEBIT,
         amount,
@@ -161,10 +195,11 @@ export class WalletService {
         status: WalletTransactionStatus.SUCCESS,
       });
 
-      await this.redis.set(this.balanceKey(userId), wallet.balance);
-
       return wallet.balance;
     });
+
+    await this.redis.set(this.balanceKey(userId), newBalance);
+    return newBalance;
   }
 
   // -------------------------
@@ -178,52 +213,76 @@ export class WalletService {
   }): Promise<boolean> {
     const { fromUserId, toUserId, amount, reference } = input;
 
-    return this.dataSource.transaction(async (manager) => {
-      const sender = await manager.findOne(Wallet, {
-        where: { userId: fromUserId },
-        lock: { mode: 'pessimistic_write' },
+    // FIX 3: Deadlock prevention — always acquire locks in a consistent
+    // alphabetical order regardless of which direction the transfer flows.
+    // Without this, two concurrent A→B and B→A transfers will deadlock:
+    // each holds one lock and waits for the other indefinitely.
+    const [firstId, secondId] = [fromUserId, toUserId].sort();
+
+    const { senderBalance, receiverBalance } =
+      await this.dataSource.transaction(async (manager) => {
+        const firstWallet = await manager.findOne(Wallet, {
+          where: { userId: firstId },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        const secondWallet = await manager.findOne(Wallet, {
+          where: { userId: secondId },
+          lock: { mode: 'pessimistic_write' },
+        });
+
+        if (!firstWallet || !secondWallet) {
+          throw new NotFoundException('Wallet not found');
+        }
+
+        const sender = firstId === fromUserId ? firstWallet : secondWallet;
+        const receiver = firstId === fromUserId ? secondWallet : firstWallet;
+
+        if (sender.balance < amount) {
+          throw new BadRequestException('Insufficient balance');
+        }
+
+        sender.balance -= amount;
+        receiver.balance += amount;
+
+        await manager.save([sender, receiver]);
+
+        // FIX 2: Both transaction records written through manager so they're
+        // atomic with the balance updates.
+        await manager.save(WalletTransaction, [
+          {
+            userId: fromUserId,
+            type: WalletTransactionType.DEBIT,
+            amount,
+            reference,
+            status: WalletTransactionStatus.SUCCESS,
+          },
+          {
+            userId: toUserId,
+            type: WalletTransactionType.CREDIT,
+            amount,
+            reference,
+            status: WalletTransactionStatus.SUCCESS,
+          },
+        ]);
+
+        return {
+          senderBalance: sender.balance,
+          receiverBalance: receiver.balance,
+        };
       });
 
-      const receiver = await manager.findOne(Wallet, {
-        where: { userId: toUserId },
-        lock: { mode: 'pessimistic_write' },
-      });
+    // FIX 1: Redis updates after commit, not inside the transaction.
+    // FIX 4: mset batches both writes into one round trip instead of two
+    // serial awaits.
+    await this.redis.mset(
+      this.balanceKey(fromUserId),
+      senderBalance,
+      this.balanceKey(toUserId),
+      receiverBalance,
+    );
 
-      if (!sender || !receiver) {
-        throw new NotFoundException('Wallet not found');
-      }
-
-      if (sender.balance < amount) {
-        throw new BadRequestException('Insufficient balance');
-      }
-
-      sender.balance -= amount;
-      receiver.balance += amount;
-
-      await manager.save([sender, receiver]);
-
-      await this.txRepository.save([
-        {
-          userId: fromUserId,
-          type: WalletTransactionType.DEBIT,
-          amount,
-          reference,
-          status: WalletTransactionStatus.SUCCESS,
-        },
-        {
-          userId: toUserId,
-          type: WalletTransactionType.CREDIT,
-          amount,
-          reference,
-          status: WalletTransactionStatus.SUCCESS,
-        },
-      ]);
-
-      await this.redis.set(this.balanceKey(fromUserId), sender.balance);
-      await this.redis.set(this.balanceKey(toUserId), receiver.balance);
-
-      return true;
-    });
+    return true;
   }
 
   // -------------------------
