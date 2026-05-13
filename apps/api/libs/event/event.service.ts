@@ -3,10 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { DEFAULT_REDIS, RedisService } from '@liaoliaots/nestjs-redis';
+
 import Redis from 'ioredis';
 import { customAlphabet } from 'nanoid';
 
@@ -26,14 +27,15 @@ import {
 } from './dtos/event.dto';
 import { Gift } from '@modules/gift/entities/gift.entity';
 import { Socket } from 'socket.io';
+import { REDIS_CLIENT } from '@modules/redis/redis.module';
 
 const nanoid = customAlphabet('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 5);
 
 @Injectable()
 export class EventService {
-  private readonly redis: Redis;
-
   constructor(
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis,
     @InjectRepository(Event)
     private readonly eventRepo: Repository<Event>,
 
@@ -41,10 +43,7 @@ export class EventService {
     private readonly giftRepo: Repository<Gift>,
 
     private readonly dataSource: DataSource,
-    private readonly redisService: RedisService,
-  ) {
-    this.redis = this.redisService.getOrThrow(DEFAULT_REDIS);
-  }
+  ) {}
 
   // ─── Create ──────────────────────────────────────────────────────────────
 

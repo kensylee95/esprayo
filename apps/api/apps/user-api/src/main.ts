@@ -20,12 +20,12 @@ async function bootstrap() {
   app.useBodyParser('json', { limit: '5mb' });
   app.useBodyParser('urlencoded', { limit: '5mb', extended: true });
 
-  const appConfig = configService.get<AppConfigOptions>(
+  /*const appConfig = configService.get<AppConfigOptions>(
     'app',
   ) as AppConfigOptions;
+   */
 
-  const port = process.env.PORT || appConfig.port || 8080;
-
-  await app.listen(port, '0.0.0.0');
+  //const port = process.env.PORT || appConfig.port || 8080;
+  await app.listen(3001, '0.0.0.0');
 }
 bootstrap();

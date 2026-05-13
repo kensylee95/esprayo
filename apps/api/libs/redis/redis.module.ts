@@ -1,24 +1,28 @@
-import { Module, Global } from '@nestjs/common';
-import { RedisModule, RedisModuleOptions } from '@liaoliaots/nestjs-redis';
+// redis.provider.ts
+import { Global, Module } from '@nestjs/common';
+import Redis from 'ioredis';
 import RedisConfig from './redis.config';
 import { ConfigModule, ConfigType } from '@nestjs/config';
+import redisConfig from './redis.config';
 
+export const REDIS_CLIENT = 'REDIS_CLIENT';
 @Global()
 @Module({
-  imports: [
-    RedisModule.forRootAsync({
-      imports: [ConfigModule.forFeature(RedisConfig)],
+  imports: [ConfigModule.forFeature(RedisConfig)],
+  providers: [
+    {
+      provide: REDIS_CLIENT,
       inject: [RedisConfig.KEY],
-      useFactory: (...args: unknown[]): RedisModuleOptions => {
-        const config = args[0] as ConfigType<typeof RedisConfig>;
-        return {
-          config: {
-            url: config.redisUrl
-          },
-        };
+      useFactory: (config: ConfigType<typeof RedisConfig>) => {
+        return new Redis(config.redisUrl, {
+          lazyConnect: false,
+          keepAlive: 30000,
+          // Required by BullMQ workers
+          maxRetriesPerRequest: null,
+        });
       },
-    }),
+    },
   ],
-  exports: [RedisModule],
+  exports: [REDIS_CLIENT],
 })
-export class RedisProviderModule {}
+export class RedisProviderModule { }

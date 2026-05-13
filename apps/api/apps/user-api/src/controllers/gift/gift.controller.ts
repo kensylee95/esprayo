@@ -26,7 +26,7 @@ export class GiftController {
   // -------------------------
   @Post('gift')
   async sendGift(@Body() dto: SendGiftDto, @CurrentUser('id') userId: string) {
-    const catalog = this.giftService.getGiftCatalog();
+    const catalog = await this.giftService.getGiftCatalog();
 
     const item = catalog.find((g) => g.id === dto.giftId);
 

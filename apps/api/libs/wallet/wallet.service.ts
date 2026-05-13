@@ -2,10 +2,11 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { DEFAULT_REDIS, RedisService } from '@liaoliaots/nestjs-redis';
+
 import Redis from 'ioredis';
 
 import { Wallet } from '@modules/wallet/entities/wallet.entity';
@@ -14,20 +15,22 @@ import {
   WalletTransactionType,
   WalletTransactionStatus,
 } from '@modules/wallet/entities/wallet-transaction.entity';
+import { REDIS_CLIENT } from '@modules/redis/redis.module';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class WalletService {
-  private readonly redis: Redis;
-
   constructor(
-    private readonly redisService: RedisService,
-
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
+      @InjectQueue('wallet')
+  private readonly walletQueue: Queue,
 
     private readonly dataSource: DataSource,
   ) {
-    this.redis = this.redisService.getOrThrow(DEFAULT_REDIS);
   }
 
   // -------------------------
@@ -163,71 +166,37 @@ async debit(input: {
 }): Promise<number> {
   const { userId, amount, reference } = input;
 
-  const t0 = performance.now();
+  // Atomic check-and-deduct in a single Redis round-trip
+  const luaScript = `
+    local balance = tonumber(redis.call('GET', KEYS[1]))
+    if balance == nil then return -2 end
+    if balance < tonumber(ARGV[1]) then return -1 end
+    return redis.call('DECRBY', KEYS[1], ARGV[1])
+  `;
 
-  // DB
-  const tSql = performance.now();
-
-  const result = await this.dataSource.query(
-    `
-    WITH updated AS (
-      UPDATE wallets
-      SET balance = balance - $1
-      WHERE user_id = $2
-      AND balance >= $1
-      RETURNING user_id, balance
-    )
-    INSERT INTO wallet_transactions
-      (user_id, type, amount, reference, status)
-    SELECT
-      user_id,
-      $3,
-      $1,
-      $4,
-      $5
-    FROM updated
-    RETURNING (
-      SELECT balance FROM updated
-    ) AS balance;
-    `,
-    [
-      amount,
-      userId,
-      WalletTransactionType.DEBIT,
-      reference,
-      WalletTransactionStatus.SUCCESS,
-    ],
-  );
-
-  console.log(
-    `wallet.sql: ${(performance.now() - tSql).toFixed(2)}ms`,
-  );
-
-  if (!result.length) {
-    throw new BadRequestException(
-      'Insufficient balance or wallet not found',
-    );
-  }
-
-  const newBalance = result[0].balance;
-
-  // Redis
-  const tRedis = performance.now();
-
-  void this.redis.set(
+  const result = await this.redis.eval(
+    luaScript,
+    1,
     this.balanceKey(userId),
-    newBalance,
+    amount,
+  ) as number;
+
+  if (result === -2) throw new BadRequestException('Wallet not found — join the room first');
+  if (result === -1) throw new BadRequestException('Insufficient balance');
+
+  // Queue DB sync — processor handles UPDATE + INSERT atomically
+  void this.walletQueue.add(
+    'debit',
+    { userId, amount, reference, newBalance: result },
+    {
+      attempts: 10,
+      backoff: { type: 'exponential', delay: 500 },
+      removeOnComplete: true,
+      removeOnFail: false,
+    },
   );
 
-   console.log(
-    `wallet.redis.schedule: ${(performance.now() - tRedis).toFixed(2)}ms`,
-  );
-
-   console.log(
-    `wallet.total: ${(performance.now() - t0).toFixed(2)}ms`,
-  );
-
-  return newBalance;
+  return result;
 }
   // -------------------------
   // TRANSFER (GIFTING)

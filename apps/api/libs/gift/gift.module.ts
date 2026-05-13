@@ -6,12 +6,14 @@ import { WalletModule } from '@modules/wallet/wallet.module';
 import { BullModule } from '@nestjs/bullmq';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Gift } from './entities/gift.entity';
+import { RedisProviderModule } from '@modules/redis/redis.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Gift]),
     LeaderboardServiceModule,
-    WalletModule,
+    WalletModule, 
+    RedisProviderModule,
     BullModule.registerQueue({
       name: 'gifts',
     }),

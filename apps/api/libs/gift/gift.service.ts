@@ -1,10 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { WalletService } from '../wallet/wallet.service';
 import Redis from 'ioredis';
 import { LeaderboardService } from '@modules/leaderboard/leaderboard.service';
-import { DEFAULT_REDIS, RedisService } from '@liaoliaots/nestjs-redis';
 import { Gift } from './entities/gift.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,46 +13,43 @@ import {
   GiftResult,
   SaveGiftInput,
 } from './dtos/gift.dto';
-import { randomUUID } from 'crypto';
 import { BROADCAST_GIFT_EVENT } from './job.constants';
+import { REDIS_CLIENT } from '@modules/redis/redis.module';
 
 const DEFAULT_CATALOG: GiftCatalogItem[] = [
-  { id: 'bouquet', name: 'Bouquet', emoji: '💐', tokens: 50 },
-  { id: 'champagne', name: 'Champagne', emoji: '🍾', tokens: 120 },
-  { id: 'diamond', name: 'Diamond', emoji: '💎', tokens: 500 },
-  { id: 'car', name: 'Car Key', emoji: '🚗', tokens: 2000 },
-  { id: 'house', name: 'House Key', emoji: '🏠', tokens: 5000 },
-  { id: 'mystery', name: 'Mystery Box', emoji: '🎁', tokens: 80 },
-  { id: 'travel', name: 'Travel', emoji: '✈️', tokens: 300 },
-  { id: 'crown', name: 'Crown', emoji: '👑', tokens: 800 },
+  { id: 'bouquet',   name: 'Bouquet',     emoji: '💐', tokens: 50   },
+  { id: 'champagne', name: 'Champagne',   emoji: '🍾', tokens: 120  },
+  { id: 'diamond',   name: 'Diamond',     emoji: '💎', tokens: 500  },
+  { id: 'car',       name: 'Car Key',     emoji: '🚗', tokens: 2000 },
+  { id: 'house',     name: 'House Key',   emoji: '🏠', tokens: 5000 },
+  { id: 'mystery',   name: 'Mystery Box', emoji: '🎁', tokens: 80   },
+  { id: 'travel',    name: 'Travel',      emoji: '✈️', tokens: 300  },
+  { id: 'crown',     name: 'Crown',       emoji: '👑', tokens: 800  },
 ];
 
 @Injectable()
 export class GiftService {
   private readonly logger = new Logger(GiftService.name);
-  private readonly redis: Redis;
 
   constructor(
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis,
     @InjectRepository(Gift)
     private readonly giftRepo: Repository<Gift>,
     private readonly walletService: WalletService,
     private readonly leaderboardService: LeaderboardService,
-    private readonly redisService: RedisService,
     @InjectQueue('gifts')
     private readonly giftQueue: Queue,
-  ) {
-    this.redis = this.redisService.getOrThrow(DEFAULT_REDIS);
+  ) {}
+
+  // -------------------------
+  // KEYS
+  // -------------------------
+
+  private giftLockKey(reference: string): string {
+    return `gift:lock:${reference}`;
   }
 
-  // -------------------------
-  // GIFT KEY
-  // -------------------------
-
-  /**
-   * Owned here rather than in LeaderboardService because giftCount is an
-   * event-level counter that GiftService is responsible for, not the
-   * leaderboard. Follows the same namespacing convention as LeaderboardService.
-   */
   private giftCountKey(eventId: string): string {
     return `event:${eventId}:gift_count`;
   }
@@ -65,110 +61,93 @@ export class GiftService {
   /**
    * Processes a gift end-to-end:
    *
-   *  1. Debit wallet (throws on insufficient balance — nothing else runs)
-   *  2. Concurrently:
-   *     a. addGift  — leaderboard increment + total_tokens (single pipeline)
-   *     b. hincrby  — event gift counter
-   *     c. getUserRank — fetch rank optimistically alongside writes
-   *  3. Enqueue broadcast job (non-fatal if queue is temporarily unavailable)
+   *  1. Acquire idempotency lock (SET NX) — returns null if duplicate
+   *  2. Debit wallet (throws on insufficient balance — nothing else runs)
+   *  3. Enqueue broadcast job — worker handles leaderboard, saveGift, realtime
    *
-   * On any failure after the debit, a compensating credit is issued. If the
-   * refund itself fails, the error is logged at CRITICAL level for ops to act on.
-   *
+   * On any failure after the lock is acquired, the lock is released so the
+   * client can retry.
    */
-async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
-  const t0 = performance.now();
+  async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
+    const t0 = performance.now();
 
-  // ─────────────────────────────
-  // Redis SET NX
-  // ─────────────────────────────
-  const tRedisSet = performance.now();
+    // ─────────────────────────────
+    // Idempotency lock
+    // ─────────────────────────────
+    const tRedisSet = performance.now();
 
-  const locked = await this.redis.set(
-    `gift:${payload.reference}`,
-    '1',
-    'EX',
-    86400,
-    'NX',
-  );
-
-  this.logger.log(
-    `gift.redis.set: ${(performance.now() - tRedisSet).toFixed(2)}ms`,
-  );
-
-  if (!locked) {
-    this.logger.log(
-      `gift.total (locked): ${(performance.now() - t0).toFixed(2)}ms`,
+    const locked = await this.redis.set(
+      this.giftLockKey(payload.reference),
+      '1',
+      'EX',
+      86400,
+      'NX',
     );
 
-    return null;
-  }
+    this.logger.log(`gift.redis.set: ${(performance.now() - tRedisSet).toFixed(2)}ms`);
 
-  try {
-    // ─────────────────────────────
-    // Wallet debit
-    // ─────────────────────────────
-    const tDebit = performance.now();
+    if (!locked) {
+      this.logger.log(`gift.total (locked): ${(performance.now() - t0).toFixed(2)}ms`);
+      return null;
+    }
 
-    const newBalance = await this.walletService.debit({
-      userId: payload.userId,
-      amount: payload.amount,
-      reference: payload.reference,
-    });
+    try {
+      // ─────────────────────────────
+      // Wallet debit
+      // ─────────────────────────────
+      const tDebit = performance.now();
 
-    this.logger.log(
-      `gift.wallet.debit: ${(performance.now() - tDebit).toFixed(2)}ms`,
-    );
-
-    // ─────────────────────────────
-    // Queue add
-    // ─────────────────────────────
-    const tQueue = performance.now();
-
-   void this.giftQueue.add(
-      BROADCAST_GIFT_EVENT,
-      {
-        eventId: payload.eventId,
+      const newBalance = await this.walletService.debit({
         userId: payload.userId,
-        displayName: payload.displayName,
-        giftName: payload.giftName,
-        giftEmoji: payload.giftEmoji,
-        tokens: payload.tokens,
-        nairaValue: payload.amount,
-        giftId: payload.giftId,
-        transactionId: payload.reference,
-      },
-    );
+        amount: payload.amount,
+        reference: payload.reference,
+      });
 
-    this.logger.log(
-      `gift.queue.add: ${(performance.now() - tQueue).toFixed(2)}ms`,
-    );
+      this.logger.log(`gift.wallet.debit: ${(performance.now() - tDebit).toFixed(2)}ms`);
 
-    // ─────────────────────────────
-    // Total
-    // ─────────────────────────────
-    this.logger.log(
-      `gift.total: ${(performance.now() - t0).toFixed(2)}ms`,
-    );
+      // ─────────────────────────────
+      // Broadcast queue — worker handles leaderboard, saveGift, and realtime
+      // ─────────────────────────────
+      const tQueue = performance.now();
 
-    return {
-      success: true,
-      newBalance,
-    };
-  } catch (err) {
-    const tCleanup = performance.now();
+      void this.giftQueue.add(
+        BROADCAST_GIFT_EVENT,
+        {
+          eventId:       payload.eventId,
+          userId:        payload.userId,
+          displayName:   payload.displayName,
+          giftName:      payload.giftName,
+          giftEmoji:     payload.giftEmoji,
+          tokens:        payload.tokens,
+          nairaValue:    payload.amount,
+          giftId:        payload.giftId,
+          transactionId: payload.reference,
+        },
+        {
+          attempts: 5,
+          backoff: { type: 'exponential', delay: 1000 },
+          removeOnComplete: true,
+        },
+      );
 
-    await this.redis.del(
-      `gift:${payload.reference}`,
-    );
+      this.logger.log(`gift.queue.add: ${(performance.now() - tQueue).toFixed(2)}ms`);
+      this.logger.log(`gift.total: ${(performance.now() - t0).toFixed(2)}ms`);
 
-    this.logger.log(
-      `gift.cleanup: ${(performance.now() - tCleanup).toFixed(2)}ms`,
-    );
+      return { success: true, newBalance };
 
-    throw err;
+    } catch (err) {
+      // Release lock so the client can retry
+      this.redis
+        .del(this.giftLockKey(payload.reference))
+        .catch(e => this.logger.error('gift.cleanup failed', { e }));
+
+      throw err;
+    }
   }
-}
+
+  // -------------------------
+  // WALLET
+  // -------------------------
 
   async getWalletBalance(userId: string) {
     return this.walletService.getBalance(userId);
@@ -179,52 +158,61 @@ async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
     tokens: number,
     paymentReference: string,
   ) {
-    return await this.walletService.credit({
+    return this.walletService.credit({
       userId,
       amount: tokens,
       reference: paymentReference,
     });
   }
 
+  // -------------------------
+  // SAVE GIFT (worker)
+  // -------------------------
+
   /**
    * Persists a gift event to the database.
-   * This should be called from BullMQ worker (recommended).
+   * Called from the BullMQ worker — uses INSERT ... ON CONFLICT DO NOTHING
+   * to guarantee idempotency without a separate SELECT round-trip.
    */
   async saveGift(input: SaveGiftInput): Promise<Gift> {
-    const existing = await this.giftRepo.findOneBy({
-      transactionId: input.transactionId,
-    });
+    const result = await this.giftRepo
+      .createQueryBuilder()
+      .insert()
+      .into(Gift)
+      .values({
+        eventId:          input.eventId,
+        guestId:          input.userId,
+        displayName:      input.displayName,
+        giftId:           input.giftId,
+        giftName:         input.giftName,
+        giftEmoji:        input.giftEmoji,
+        tokens:           input.tokens,
+        nairaValue:       input.nairaValue,
+        cumulativeTokens: input.cumulativeTokens ?? 0,
+        transactionId:    input.transactionId,
+        rankAtTime:       input.rankAtTime,
+      })
+      .orIgnore()
+      .returning('*')
+      .execute();
 
-    if (existing) return existing;
-    const gift = this.giftRepo.create({
-      eventId: input.eventId,
-      guestId: input.userId,
-      displayName: input.displayName,
-      giftId: input.giftId,
-      giftName: input.giftName,
-      giftEmoji: input.giftEmoji,
-      tokens: input.tokens,
-      nairaValue: input.nairaValue,
-      cumulativeTokens: input.cumulativeTokens ?? 0,
-      transactionId: randomUUID(),
-      rankAtTime: input.rankAtTime,
-    });
+    if (result.raw.length) return result.raw[0] as Gift;
 
-    return this.giftRepo.save(gift);
+    return this.giftRepo.findOneByOrFail({ transactionId: input.transactionId });
   }
 
   // -------------------------
   // GIFT COUNT
   // -------------------------
 
-  /**
-   * Returns the total number of gifts sent in an event.
-   * Separated from LeaderboardService because GiftService owns this counter.
-   */
   async getEventGiftCount(eventId: string): Promise<number> {
     const val = await this.redis.get(this.giftCountKey(eventId));
     return parseInt(val ?? '0', 10);
   }
+
+  // -------------------------
+  // LEADERBOARD
+  // -------------------------
 
   async getLeaderBoard(eventId: string, limit: number) {
     const [leaderboard, totalTokens] = await Promise.all([
@@ -232,10 +220,7 @@ async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
       this.leaderboardService.getTotalTokens(eventId),
     ]);
 
-    return {
-      leaderboard,
-      totalTokens,
-    };
+    return { leaderboard, totalTokens };
   }
 
   // -------------------------
@@ -244,7 +229,7 @@ async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
 
   /**
    * Extends TTL on the gift_count key to match leaderboard expiry.
-   * Call this alongside LeaderboardService.setExpiry so no keys are orphaned.
+   * Call alongside LeaderboardService.setExpiry so no keys are orphaned.
    */
   async setExpiry(eventId: string, ttlSeconds = 86_400): Promise<void> {
     await this.redis.expire(this.giftCountKey(eventId), ttlSeconds);
@@ -256,18 +241,13 @@ async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
 
   /**
    * Returns the gift catalog for an event.
+   * Async-ready for per-event overrides when implemented.
    *
-   * FIX: eventId parameter is now used — per-event overrides can be loaded
-   * from Redis/DB. Falls back to the static default catalog.
-   *
-   * TODO: Implement per-event catalog storage (e.g. Redis hash or DB table).
+   * TODO: load per-event catalog from Redis/DB:
+   *   const override = await this.redis.get(`event:${eventId}:catalog`);
+   *   if (override) return JSON.parse(override);
    */
-  getGiftCatalog(): GiftCatalogItem[] {
-    // Per-event catalog lookup (extend when ready):
-    // const override = await this.redis.get(`event:${eventId}:catalog`);
-    // if (override) return JSON.parse(override);
-
-    //console.log(eventId); // acknowledged — used in the lookup above when implemented
+  async getGiftCatalog(): Promise<GiftCatalogItem[]> {
     return DEFAULT_CATALOG;
   }
 }

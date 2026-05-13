@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
-import { RedisService, DEFAULT_REDIS } from '@liaoliaots/nestjs-redis';
+import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
+import { REDIS_CLIENT } from '@modules/redis/redis.module';
 
 export interface LeaderboardEntry {
   rank: number;
@@ -13,12 +13,11 @@ export interface LeaderboardEntry {
 
 @Injectable()
 export class LeaderboardService {
-  private readonly redis: Redis;
 
-  constructor(private readonly redisService: RedisService) {
-    this.redis = this.redisService.getOrThrow(DEFAULT_REDIS);
-  }
-
+  constructor( 
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis
+  ) {}
   // -------------------------
   // KEYS
   // -------------------------

@@ -1,5 +1,5 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { LeaderboardService } from '@modules/leaderboard/leaderboard.service';
 import { GiftService } from './gift.service';
@@ -7,84 +7,88 @@ import { RealtimeGatewayService } from '@modules/RealtimeGateway/RealtimeGateway
 import { SocketEvents } from '@app/socket-events';
 import { BROADCAST_GIFT_EVENT } from './job.constants';
 import { BroadcastGiftJob } from './dtos/gift.dto';
+import { REDIS_CLIENT } from '@modules/redis/redis.module';
 import Redis from 'ioredis';
-import { RedisService } from '@liaoliaots/nestjs-redis';
 
 @Processor('gifts')
 export class GiftProcessor extends WorkerHost {
   private readonly logger = new Logger(GiftProcessor.name);
-  private readonly redis: Redis;
+
   constructor(
     private readonly leaderboardService: LeaderboardService,
     private readonly giftService: GiftService,
     private readonly realtime: RealtimeGatewayService,
-
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis,
   ) {
     super();
   }
 
-async process(job: Job<BroadcastGiftJob>): Promise<void> {
-  if (job.name !== BROADCAST_GIFT_EVENT) return;
+  async process(job: Job<BroadcastGiftJob>): Promise<void> {
+    if (job.name !== BROADCAST_GIFT_EVENT) return;
 
-  const {
-    eventId,
-    displayName,
-    giftName,
-    giftEmoji,
-    tokens,
-    giftId,
-    userId,
-  } = job.data;
-
-  const lock = await this.redis.set(
-    `gift:processed:${giftId}`,
-    '1',
-    'EX',
-    86400,
-    'NX',
-  );
-
-  if (!lock) return;
-
-  try {
-    // 1. state mutation (safe, once only)
-    const updated = await this.leaderboardService.addGift(
+    const {
       eventId,
-      userId,
       displayName,
-      tokens,
+      giftName,
       giftEmoji,
+      tokens,
+      giftId,
+      userId,
+      transactionId,
+    } = job.data;
+
+    const lock = await this.redis.set(
+      `gift:processed:${transactionId}`,
+      '1',
+      'EX',
+      86400,
+      'NX',
     );
 
-    await this.giftService.saveGift(job.data);
+    if (!lock) return;
 
-    // 2. read side
-    const [leaderboard, totalTokens] = await Promise.all([
-      this.leaderboardService.getTop(eventId, 20),
-      this.leaderboardService.getTotalTokens(eventId),
-    ]);
+    try {
+      // 1. State mutation — leaderboard + persist
+      const [updated] = await Promise.all([
+        this.leaderboardService.addGift(
+          eventId,
+          userId,
+          displayName,
+          tokens,
+          giftEmoji,
+        ),
+        this.giftService.saveGift(job.data),
+      ]);
 
-    // 3. broadcast
-    this.realtime.emitTo(
-      `gift-room:${eventId}`,
-      SocketEvents.leaderboardUpdate,
-      { leaderboard, totalTokens },
-    );
+      // 2. Read side
+      const [leaderboard, totalTokens] = await Promise.all([
+        this.leaderboardService.getTop(eventId, 20),
+        this.leaderboardService.getTotalTokens(eventId),
+      ]);
 
-    this.realtime.emitTo(
-      `gift-room:${eventId}`,
-      SocketEvents.giftReceived,
-      {
-        displayName,
-        giftName,
-        giftEmoji,
-        tokens,
-        newScore: updated.score,
-        giftId,
-      },
-    );
-  } catch (err) {
-    this.logger.error('Gift processing failed', err);
+      // 3. Broadcast
+      this.realtime.emitTo(
+        `gift-room:${eventId}`,
+        SocketEvents.leaderboardUpdate,
+        { leaderboard, totalTokens },
+      );
+
+      this.realtime.emitTo(
+        `gift-room:${eventId}`,
+        SocketEvents.giftReceived,
+        {
+          displayName,
+          giftName,
+          giftEmoji,
+          tokens,
+          newScore: updated.score,
+          giftId,
+        },
+      );
+    } catch (err) {
+      console.error('Gift processing failed', { jobId: job.id, err });
+      throw err;
+    }
   }
-}
-}
+} 
