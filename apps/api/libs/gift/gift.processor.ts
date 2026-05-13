@@ -7,68 +7,84 @@ import { RealtimeGatewayService } from '@modules/RealtimeGateway/RealtimeGateway
 import { SocketEvents } from '@app/socket-events';
 import { BROADCAST_GIFT_EVENT } from './job.constants';
 import { BroadcastGiftJob } from './dtos/gift.dto';
+import Redis from 'ioredis';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 
 @Processor('gifts')
 export class GiftProcessor extends WorkerHost {
   private readonly logger = new Logger(GiftProcessor.name);
-
+  private readonly redis: Redis;
   constructor(
     private readonly leaderboardService: LeaderboardService,
     private readonly giftService: GiftService,
     private readonly realtime: RealtimeGatewayService,
+
   ) {
     super();
   }
 
-  async process(job: Job<BroadcastGiftJob>): Promise<void> {
-    if (job.name !== BROADCAST_GIFT_EVENT) return;
+async process(job: Job<BroadcastGiftJob>): Promise<void> {
+  if (job.name !== BROADCAST_GIFT_EVENT) return;
 
-    const {
+  const {
+    eventId,
+    displayName,
+    giftName,
+    giftEmoji,
+    tokens,
+    giftId,
+    userId,
+  } = job.data;
+
+  const lock = await this.redis.set(
+    `gift:processed:${giftId}`,
+    '1',
+    'EX',
+    86400,
+    'NX',
+  );
+
+  if (!lock) return;
+
+  try {
+    // 1. state mutation (safe, once only)
+    const updated = await this.leaderboardService.addGift(
       eventId,
+      userId,
       displayName,
-      giftName,
-      giftEmoji,
       tokens,
-      newScore,
-      giftId,
-    } = job.data;
+      giftEmoji,
+    );
 
-    // 1. Persist gift record — isolated so a DB failure doesn't block broadcast
-    try {
-      await this.giftService.saveGift(job.data);
-      console.log('🎁 Processing job', job.name, job.data.eventId);
-    } catch (err) {
-      this.logger.error(
-        `saveGift failed — continuing to broadcast | eventId=${eventId}`,
-        err instanceof Error ? err.stack : err,
-      );
-    }
+    await this.giftService.saveGift(job.data);
 
-    // 2. Fetch fresh leaderboard + total tokens concurrently
+    // 2. read side
     const [leaderboard, totalTokens] = await Promise.all([
       this.leaderboardService.getTop(eventId, 20),
       this.leaderboardService.getTotalTokens(eventId),
     ]);
 
-    // 3. Broadcast leaderboard update to all clients in the room
+    // 3. broadcast
     this.realtime.emitTo(
       `gift-room:${eventId}`,
       SocketEvents.leaderboardUpdate,
-      {
-        leaderboard,
-        totalTokens,
-      },
+      { leaderboard, totalTokens },
     );
 
-    // 4. Broadcast gift notification separately so all clients can show
-    //    the gift animation/banner, not just the sender
-    this.realtime.emitTo(`gift-room:${eventId}`, SocketEvents.giftReceived, {
-      displayName,
-      giftName,
-      giftEmoji,
-      tokens,
-      newScore,
-      giftId,
-    });
+    this.realtime.emitTo(
+      `gift-room:${eventId}`,
+      SocketEvents.giftReceived,
+      {
+        displayName,
+        giftName,
+        giftEmoji,
+        tokens,
+        newScore: updated.score,
+        giftId,
+      },
+    );
+  } catch (err) {
+    this.logger.error('Gift processing failed', err);
   }
+}
 }

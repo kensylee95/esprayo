@@ -2,25 +2,16 @@ import { registerAs } from '@nestjs/config';
 import * as Joi from 'joi';
 
 export type RedisConfigOptions = {
-  redisHost: string;
-  redisPort: number;
-  redisPassword?: string;
-  redisTls?: string;
+  redisUrl: string;
 };
 
 export type RedisConfigEnv = {
-  REDIS_HOST: string;
-  REDIS_PORT: number;
-  REDIS_PASSWORD: string;
-  REDIS_TLS: string;
+  REDIS_URL: string;
 };
 
 export default registerAs<RedisConfigOptions>('redis', () => {
   const schema = Joi.object<RedisConfigEnv>({
-    REDIS_HOST: Joi.string().required(),
-    REDIS_PORT: Joi.number().required(),
-    REDIS_PASSWORD: Joi.string().allow('', null).optional(),
-    REDIS_TLS: Joi.string().allow('', null).optional(),
+    REDIS_URL: Joi.string().uri().required(),
   });
 
   const result = schema.validate(process.env, {
@@ -34,9 +25,6 @@ export default registerAs<RedisConfigOptions>('redis', () => {
   }
 
   return {
-    redisHost: result.value.REDIS_HOST,
-    redisPort: result.value.REDIS_PORT,
-    redisPassword: result.value.REDIS_PASSWORD,
-    redisTls: result.value.REDIS_TLS,
+    redisUrl: result.value.REDIS_URL,
   };
 });

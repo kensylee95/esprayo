@@ -24,7 +24,7 @@ async function bootstrap() {
     'app',
   ) as AppConfigOptions;
 
-  const port = process.env.PORT || appConfig.port || 3001;
+  const port = process.env.PORT || appConfig.port || 8080;
 
   await app.listen(port, '0.0.0.0');
 }

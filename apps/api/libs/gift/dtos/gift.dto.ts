@@ -71,8 +71,6 @@ export interface GiftPayload {
 export interface GiftResult {
   success: boolean;
   newBalance: number;
-  newScore: number;
-  newRank: number;
 }
 
 export interface GiftCatalogItem {

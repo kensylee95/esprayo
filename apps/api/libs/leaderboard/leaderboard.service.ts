@@ -84,39 +84,58 @@ export class LeaderboardService {
    * FIX: Reads the new score directly from the zincrby pipeline result
    * instead of making a separate zscore round-trip.
    */
-  async addGift(
-    eventId: string,
-    userId: string,
-    displayName: string,
-    tokens: number,
-    giftName: string,
-  ): Promise<number> {
-    const pipeline = this.redis.pipeline();
+async addGift(
+  eventId: string,
+  userId: string,
+  displayName: string,
+  tokens: number,
+  giftName: string,
+): Promise<{ score: number; rank: number }> {
+  const pipeline = this.redis.pipeline();
 
-    // [0] zincrby — returns the new score as a string
-    pipeline.zincrby(this.lbKey(eventId), tokens, userId);
+  // [0] update score
+  pipeline.zincrby(this.lbKey(eventId), tokens, userId);
 
-    // [1] hset — update display name + last gift
-    pipeline.hset(this.metaKey(eventId, userId), {
-      displayName,
-      lastGift: giftName,
-    });
+  // [1] rank AFTER score update
+  pipeline.zrevrank(this.lbKey(eventId), userId);
 
-    // [2] hincrby — increment gift counter
-    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1);
+  // [2]
+  pipeline.hset(this.metaKey(eventId, userId), {
+    displayName,
+    lastGift: giftName,
+  });
 
-    // [3] incrby — update event-wide total
-    pipeline.incrby(this.totalKey(eventId), tokens);
+  // [3]
+  pipeline.hincrby(
+    this.metaKey(eventId, userId),
+    'giftCount',
+    1,
+  );
 
-    // [4] sadd — register userId so setExpiry can find it without KEYS
-    pipeline.sadd(this.usersSetKey(eventId), userId);
+  // [4]
+  pipeline.incrby(
+    this.totalKey(eventId),
+    tokens,
+  );
 
-    const results = await pipeline.exec();
-    this.assertPipelineResults(results, 'addGift');
+  // [5]
+  pipeline.sadd(
+    this.usersSetKey(eventId),
+    userId,
+  );
 
-    // results[0][1] is the string value returned by zincrby
-    return parseFloat(results![0][1] as string);
-  }
+  const results = await pipeline.exec();
+
+  this.assertPipelineResults(results, 'addGift');
+
+  const score = Number(results![0][1]);
+  const rank = Number(results![1][1]) + 1;
+
+  return {
+    score,
+    rank,
+  };
+}
 
   // -------------------------
   // GET TOP
@@ -170,22 +189,17 @@ export class LeaderboardService {
   // USER RANK
   // -------------------------
 
-  async getUserRank(
-    eventId: string,
-    userId: string,
-  ): Promise<{ rank: number; tokens: number } | null> {
-    const [rank, score] = await Promise.all([
-      this.redis.zrevrank(this.lbKey(eventId), userId),
-      this.redis.zscore(this.lbKey(eventId), userId),
-    ]);
+async getUserRank(
+  eventId: string,
+  userId: string,
+): Promise<number | null> {
+  const rank = await this.redis.zrevrank(
+    this.lbKey(eventId),
+    userId,
+  );
 
-    if (rank === null) return null;
-
-    return {
-      rank: rank + 1,
-      tokens: parseFloat(score ?? '0'),
-    };
-  }
+  return rank === null ? null : rank + 1;
+}
 
   // -------------------------
   // TOTAL TOKENS

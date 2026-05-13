@@ -11,7 +11,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   GiftCatalogItem,
   GiftPayload,
-  GiftQueueJobs,
   GiftResult,
   SaveGiftInput,
 } from './dtos/gift.dto';
@@ -77,95 +76,99 @@ export class GiftService {
    * refund itself fails, the error is logged at CRITICAL level for ops to act on.
    *
    */
-  async sendGift(payload: GiftPayload): Promise<GiftResult> {
-    const { eventId, userId, displayName, giftName, giftEmoji, tokens } =
-      payload;
+async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
+  const t0 = performance.now();
 
-    // Step 1 — debit wallet. If this throws (insufficient balance, etc.) we
-    // stop here; nothing else has been touched.
+  // ─────────────────────────────
+  // Redis SET NX
+  // ─────────────────────────────
+  const tRedisSet = performance.now();
+
+  const locked = await this.redis.set(
+    `gift:${payload.reference}`,
+    '1',
+    'EX',
+    86400,
+    'NX',
+  );
+
+  this.logger.log(
+    `gift.redis.set: ${(performance.now() - tRedisSet).toFixed(2)}ms`,
+  );
+
+  if (!locked) {
+    this.logger.log(
+      `gift.total (locked): ${(performance.now() - t0).toFixed(2)}ms`,
+    );
+
+    return null;
+  }
+
+  try {
+    // ─────────────────────────────
+    // Wallet debit
+    // ─────────────────────────────
+    const tDebit = performance.now();
+
     const newBalance = await this.walletService.debit({
       userId: payload.userId,
       amount: payload.amount,
       reference: payload.reference,
     });
 
-    try {
-      // Step 2 — concurrent writes + rank fetch.
-      //
-      // getUserRank is issued at the same time as the writes. Its result may
-      // lag by one position if the sorted-set write hasn't flushed yet, but
-      // that is acceptable — the client will reconcile on the next leaderboard
-      // poll. Issuing it concurrently removes a full serial round-trip.
-      //
-      // addGift internally runs:
-      //   zincrby + hset + hincrby(giftCount) + incrby(total_tokens) + sadd(users)
-      // in a single pipeline — no separate incrementTotalTokens call needed.
-      const [newScore, , rankData] = await Promise.all([
-        this.leaderboardService.addGift(
-          eventId,
-          userId,
-          displayName,
-          tokens,
-          giftEmoji,
-        ),
-        this.redis.incr(this.giftCountKey(eventId)),
-        this.leaderboardService.getUserRank(eventId, userId),
-      ]);
+    this.logger.log(
+      `gift.wallet.debit: ${(performance.now() - tDebit).toFixed(2)}ms`,
+    );
 
-      // Step 3 — enqueue broadcast. Treated as best-effort: a transient queue
-      // failure must not roll back an already-recorded gift. The worker should
-      // have its own retry/DLQ strategy.
-      this.giftQueue
-        .add(BROADCAST_GIFT_EVENT, {
-          eventId,
-          userId,
-          displayName,
-          giftName,
-          giftEmoji,
-          tokens,
-          nairaValue: payload.amount,
-          newScore,
-          giftId: payload.giftId,
-          transactionId: randomUUID(),
-        } satisfies GiftQueueJobs[typeof BROADCAST_GIFT_EVENT])
-        .catch((err: unknown) =>
-          this.logger.error(
-            `broadcast enqueue failed — gift was recorded, worker retry expected | eventId=${eventId} userId=${userId}`,
-            err,
-          ),
-        );
+    // ─────────────────────────────
+    // Queue add
+    // ─────────────────────────────
+    const tQueue = performance.now();
 
-      return {
-        success: true,
-        newBalance,
-        newScore,
-        newRank: rankData?.rank ?? 0,
-      };
-    } catch (err) {
-      // Compensating transaction — credit the tokens back since the debit
-      // already succeeded but the subsequent writes failed.
-      this.logger.error(
-        `sendGift failed after debit — attempting refund | userId=${userId} tokens=${tokens}`,
-        err,
-      );
+   void this.giftQueue.add(
+      BROADCAST_GIFT_EVENT,
+      {
+        eventId: payload.eventId,
+        userId: payload.userId,
+        displayName: payload.displayName,
+        giftName: payload.giftName,
+        giftEmoji: payload.giftEmoji,
+        tokens: payload.tokens,
+        nairaValue: payload.amount,
+        giftId: payload.giftId,
+        transactionId: payload.reference,
+      },
+    );
 
-      await this.walletService
-        .credit({
-          userId,
-          amount: tokens,
-          reference: `refund_${payload.reference}`,
-        })
-        .catch((refundErr: unknown) =>
-          // Refund itself failed — requires manual ops intervention.
-          this.logger.error(
-            `CRITICAL: debit succeeded but refund failed — manual reconciliation required | userId=${userId} tokens=${tokens}`,
-            refundErr,
-          ),
-        );
+    this.logger.log(
+      `gift.queue.add: ${(performance.now() - tQueue).toFixed(2)}ms`,
+    );
 
-      throw err;
-    }
+    // ─────────────────────────────
+    // Total
+    // ─────────────────────────────
+    this.logger.log(
+      `gift.total: ${(performance.now() - t0).toFixed(2)}ms`,
+    );
+
+    return {
+      success: true,
+      newBalance,
+    };
+  } catch (err) {
+    const tCleanup = performance.now();
+
+    await this.redis.del(
+      `gift:${payload.reference}`,
+    );
+
+    this.logger.log(
+      `gift.cleanup: ${(performance.now() - tCleanup).toFixed(2)}ms`,
+    );
+
+    throw err;
   }
+}
 
   async getWalletBalance(userId: string) {
     return this.walletService.getBalance(userId);

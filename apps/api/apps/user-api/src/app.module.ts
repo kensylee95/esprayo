@@ -38,9 +38,7 @@ import { RealtimeModule } from '@modules/RealtimeGateway/RealtimeGateway.module'
       inject: [RedisConfig.KEY],
       useFactory: (config: ConfigType<typeof RedisConfig>) => ({
         connection: {
-          host: config.redisHost,
-          port: Number(config.redisPort),
-          password: config.redisPassword || undefined,
+          url: config.redisUrl
         },
       }),
     }),

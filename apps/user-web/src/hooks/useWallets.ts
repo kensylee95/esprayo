@@ -7,7 +7,6 @@ export const useWallet = () => {
   const [token, setToken] = useState<string | null>(null);
   const [balance, setBalance] = useState<number | null>(null);
   const [wallet, setWallet] = useState<WalletResponse | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Prevent duplicate fetch (React 18/19 Strict Mode safe)
@@ -49,8 +48,7 @@ export const useWallet = () => {
   const fetchWallet = useCallback(async () => {
     if (!walletApi) return;
 
-    try {
-      setLoading(true);
+    try {;
 
       const data = await walletApi.getWallet();
 
@@ -58,9 +56,7 @@ export const useWallet = () => {
       setBalance(data.balance);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch wallet");
-    } finally {
-      setLoading(false);
-    }
+    } 
   }, [walletApi]);
 
   // -------------------------
@@ -82,7 +78,6 @@ export const useWallet = () => {
     if (!walletApi) throw new Error("Token not ready");
 
     try {
-      setLoading(true);
 
       const res = await walletApi.credit(payload);
 
@@ -91,18 +86,15 @@ export const useWallet = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Credit failed");
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
   return {
     wallet,
     balance,
-    loading,
     error,
     ready: !!token,
-
+    setBalance,
     fetchWallet,
     credit,
   };

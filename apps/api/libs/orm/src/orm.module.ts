@@ -10,12 +10,7 @@ import OrmConfig from './orm.config';
       useFactory: (config: ConfigType<typeof OrmConfig>) => {
         return {
           type: 'postgres',
-          host: config.host,
-          port: config.port,
-          username: config.username,
-          password: config.password,
-          database: config.database,
-          ssl: config.ssl,
+          url: config.databaseUrl,
           synchronize: false,
           schema: 'public',
           entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
@@ -25,4 +20,4 @@ import OrmConfig from './orm.config';
     }),
   ],
 })
-export class OrmModule {}
+export class OrmModule { }

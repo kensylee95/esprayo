@@ -25,11 +25,6 @@ export class WalletService {
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
 
-    // txRepository is kept for reads (e.g. transaction history queries).
-    // All writes go through the DataSource transaction manager.
-    @InjectRepository(WalletTransaction)
-    private readonly txRepository: Repository<WalletTransaction>,
-
     private readonly dataSource: DataSource,
   ) {
     this.redis = this.redisService.getOrThrow(DEFAULT_REDIS);
@@ -161,47 +156,79 @@ export class WalletService {
   // -------------------------
   // DEBIT
   // -------------------------
-  async debit(input: {
-    userId: string;
-    amount: number;
-    reference: string;
-  }): Promise<number> {
-    const { userId, amount, reference } = input;
+async debit(input: {
+  userId: string;
+  amount: number;
+  reference: string;
+}): Promise<number> {
+  const { userId, amount, reference } = input;
 
-    // FIX 1 + 2: Same fixes as credit — Redis update outside transaction,
-    // transaction record written through manager.
-    const newBalance = await this.dataSource.transaction(async (manager) => {
-      const wallet = await manager.findOne(Wallet, {
-        where: { userId },
-        lock: { mode: 'pessimistic_write' },
-      });
+  const t0 = performance.now();
 
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
+  // DB
+  const tSql = performance.now();
 
-      if (wallet.balance < amount) {
-        throw new BadRequestException('Insufficient balance');
-      }
+  const result = await this.dataSource.query(
+    `
+    WITH updated AS (
+      UPDATE wallets
+      SET balance = balance - $1
+      WHERE user_id = $2
+      AND balance >= $1
+      RETURNING user_id, balance
+    )
+    INSERT INTO wallet_transactions
+      (user_id, type, amount, reference, status)
+    SELECT
+      user_id,
+      $3,
+      $1,
+      $4,
+      $5
+    FROM updated
+    RETURNING (
+      SELECT balance FROM updated
+    ) AS balance;
+    `,
+    [
+      amount,
+      userId,
+      WalletTransactionType.DEBIT,
+      reference,
+      WalletTransactionStatus.SUCCESS,
+    ],
+  );
 
-      wallet.balance -= amount;
-      await manager.save(wallet);
+  console.log(
+    `wallet.sql: ${(performance.now() - tSql).toFixed(2)}ms`,
+  );
 
-      await manager.save(WalletTransaction, {
-        userId,
-        type: WalletTransactionType.DEBIT,
-        amount,
-        reference,
-        status: WalletTransactionStatus.SUCCESS,
-      });
-
-      return wallet.balance;
-    });
-
-    await this.redis.set(this.balanceKey(userId), newBalance);
-    return newBalance;
+  if (!result.length) {
+    throw new BadRequestException(
+      'Insufficient balance or wallet not found',
+    );
   }
 
+  const newBalance = result[0].balance;
+
+  // Redis
+  const tRedis = performance.now();
+
+  void this.redis.set(
+    this.balanceKey(userId),
+    newBalance,
+  );
+
+   console.log(
+    `wallet.redis.schedule: ${(performance.now() - tRedis).toFixed(2)}ms`,
+  );
+
+   console.log(
+    `wallet.total: ${(performance.now() - t0).toFixed(2)}ms`,
+  );
+
+  return newBalance;
+}
   // -------------------------
   // TRANSFER (GIFTING)
   // -------------------------

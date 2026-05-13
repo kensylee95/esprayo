@@ -31,7 +31,11 @@ export const useGiftSender = (token?: string | null) => {
           },
         );
 
-        return await res.json();
+        if (!res.ok) throw new Error("Gift failed");
+
+        const dataPromise = res.json();
+
+        return dataPromise;
       } finally {
         setSending(false);
       }

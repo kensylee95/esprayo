@@ -13,10 +13,7 @@ import { ConfigModule, ConfigType } from '@nestjs/config';
         const config = args[0] as ConfigType<typeof RedisConfig>;
         return {
           config: {
-            host: config.redisHost,
-            port: config.redisPort,
-            password: config.redisPassword,
-            tls: config.redisTls ? {} : undefined,
+            url: config.redisUrl
           },
         };
       },

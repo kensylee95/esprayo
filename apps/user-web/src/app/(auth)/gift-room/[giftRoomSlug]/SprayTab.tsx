@@ -13,15 +13,20 @@ export default function SprayTab({
   isSending,
   closeSprayOverlay,
   onRecharge,
+  streak = 0,
 }: {
   walletBalance: number;
   onSend: (gift: GiftItem) => void;
   isSending: boolean;
   closeSprayOverlay: () => void;
   onRecharge: () => void;
+  streak?: number;
 }) {
   const [selected, setSelected] = useState<GiftItem | null>(null);
   const [openTopModal, setTopModal] = useState(false);
+
+  const isOnFire = streak >= 3;
+
   return createPortal(
     <div
       className={styles.portal}
@@ -38,13 +43,20 @@ export default function SprayTab({
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && e.stopPropagation()}
       >
-        y
         <div className={styles.sprayHeader}>
           <span className={styles.sprayBalLabel}>Balance</span>
           <span className={styles.sprayBalVal}>
             {walletBalance.toLocaleString()} tkn
           </span>
+
+          {/* Streak badge — only shows when active */}
+          {streak > 1 && (
+            <span className={styles.streakBadge}>
+              🔥 x{streak}
+            </span>
+          )}
         </div>
+
         <div className={styles.giftGrid}>
           {GIFT_CATALOG.map((gift) => (
             <button
@@ -59,7 +71,6 @@ export default function SprayTab({
               disabled={walletBalance < gift.tokens}
             >
               {gift.featured && <span className={styles.topTag}>TOP</span>}
-
               <span className={styles.giftEmoji}>{gift.emoji}</span>
               <span className={styles.giftName}>{gift.name}</span>
               <span className={styles.giftCost}>{gift.tokens} tkn</span>
@@ -82,14 +93,15 @@ export default function SprayTab({
 
           <button
             type="button"
-            className={styles.stripBtn}
+            className={`${styles.stripBtn} ${isOnFire ? styles.stripBtnFire : ""}`}
             onClick={() => onSend(selected)}
             disabled={isSending}
           >
-            {isSending ? "…" : "Spray"}
+            {isSending ? "…" : isOnFire ? `🔥 Spray` : "Spray"}
           </button>
         </div>
       )}
+
       {walletBalance <= 0 && openTopModal && (
         <TopUpModalCTA
           onRecharge={onRecharge}
