@@ -13,10 +13,9 @@ export interface LeaderboardEntry {
 
 @Injectable()
 export class LeaderboardService {
-
-  constructor( 
+  constructor(
     @Inject(REDIS_CLIENT)
-    private readonly redis: Redis
+    private readonly redis: Redis,
   ) {}
   // -------------------------
   // KEYS
@@ -83,58 +82,48 @@ export class LeaderboardService {
    * FIX: Reads the new score directly from the zincrby pipeline result
    * instead of making a separate zscore round-trip.
    */
-async addGift(
-  eventId: string,
-  userId: string,
-  displayName: string,
-  tokens: number,
-  giftName: string,
-): Promise<{ score: number; rank: number }> {
-  const pipeline = this.redis.pipeline();
+  async addGift(
+    eventId: string,
+    userId: string,
+    displayName: string,
+    tokens: number,
+    giftName: string,
+  ): Promise<{ score: number; rank: number }> {
+    const pipeline = this.redis.pipeline();
 
-  // [0] update score
-  pipeline.zincrby(this.lbKey(eventId), tokens, userId);
+    // [0] update score
+    pipeline.zincrby(this.lbKey(eventId), tokens, userId);
 
-  // [1] rank AFTER score update
-  pipeline.zrevrank(this.lbKey(eventId), userId);
+    // [1] rank AFTER score update
+    pipeline.zrevrank(this.lbKey(eventId), userId);
 
-  // [2]
-  pipeline.hset(this.metaKey(eventId, userId), {
-    displayName,
-    lastGift: giftName,
-  });
+    // [2]
+    pipeline.hset(this.metaKey(eventId, userId), {
+      displayName,
+      lastGift: giftName,
+    });
 
-  // [3]
-  pipeline.hincrby(
-    this.metaKey(eventId, userId),
-    'giftCount',
-    1,
-  );
+    // [3]
+    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1);
 
-  // [4]
-  pipeline.incrby(
-    this.totalKey(eventId),
-    tokens,
-  );
+    // [4]
+    pipeline.incrby(this.totalKey(eventId), tokens);
 
-  // [5]
-  pipeline.sadd(
-    this.usersSetKey(eventId),
-    userId,
-  );
+    // [5]
+    pipeline.sadd(this.usersSetKey(eventId), userId);
 
-  const results = await pipeline.exec();
+    const results = await pipeline.exec();
 
-  this.assertPipelineResults(results, 'addGift');
+    this.assertPipelineResults(results, 'addGift');
 
-  const score = Number(results![0][1]);
-  const rank = Number(results![1][1]) + 1;
+    const score = Number(results![0][1]);
+    const rank = Number(results![1][1]) + 1;
 
-  return {
-    score,
-    rank,
-  };
-}
+    return {
+      score,
+      rank,
+    };
+  }
 
   // -------------------------
   // GET TOP
@@ -188,17 +177,11 @@ async addGift(
   // USER RANK
   // -------------------------
 
-async getUserRank(
-  eventId: string,
-  userId: string,
-): Promise<number | null> {
-  const rank = await this.redis.zrevrank(
-    this.lbKey(eventId),
-    userId,
-  );
+  async getUserRank(eventId: string, userId: string): Promise<number | null> {
+    const rank = await this.redis.zrevrank(this.lbKey(eventId), userId);
 
-  return rank === null ? null : rank + 1;
-}
+    return rank === null ? null : rank + 1;
+  }
 
   // -------------------------
   // TOTAL TOKENS

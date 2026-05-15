@@ -10,6 +10,7 @@ import {
 import { getTokenClient } from "@/helpers/request";
 import eventService from "@/services/Event/Event";
 import { EventStatus } from "@/services/Event/Event.dto";
+import BackButton from "@/ui/components/BackButton/BackButton";
 import styles from "./join.module.scss";
 
 const CODE_LENGTH = 5;
@@ -120,16 +121,9 @@ export default function JoinEventPage() {
   return (
     <div className={styles.page}>
       <div className={styles.orb} aria-hidden="true" />
-
-      <button
-        type="button"
-        className={styles.back}
-        onClick={() => router.back()}
-        aria-label="Go back"
-      >
-        ←
-      </button>
-
+      <div className={styles.alignButton}>
+        <BackButton onClick={() => router.back()} />
+      </div>
       <div className={styles.hero}>
         <h1 className={styles.title}>
           Join a<br />

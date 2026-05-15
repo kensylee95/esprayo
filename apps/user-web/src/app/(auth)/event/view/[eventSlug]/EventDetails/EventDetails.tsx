@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import BackButton from "@/ui/components/BackButton/BackButton";
 import styles from "./EventDetail.module.scss";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -22,14 +23,14 @@ interface EventDetail {
   welcomeMessage: string | null;
 }
 
-const EVENT_TYPE_EMOJI: Record<string, string> = {
+/*const EVENT_TYPE_EMOJI: Record<string, string> = {
   wedding: "💍",
   birthday: "🎂",
   graduation: "🎓",
   anniversary: "💑",
   naming: "👶",
   other: "✨",
-};
+};*/
 
 // ─── Cancel sheet ─────────────────────────────────────────────────────────────
 
@@ -132,7 +133,7 @@ export default function EventDetailPage({
   const handleCopy = useCallback(async () => {
     if (!event) return;
     await navigator.clipboard.writeText(
-      `${process.env.NEXT_PUBLIC_APP_URL}/join?code=${event.slug}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/join?code=${event.slug}`,
     );
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -173,7 +174,6 @@ export default function EventDetailPage({
     );
   }
 
-  const emoji = EVENT_TYPE_EMOJI[event.type] ?? "✨";
   const isActive = event.status === "active";
   const isDraft = event.status === "draft";
   const isEnded = event.status === "ended" || event.status === "cancelled";
@@ -183,17 +183,7 @@ export default function EventDetailPage({
     <div className={styles.page}>
       {/* ── Cover ── */}
       <div className={`${styles.cover} ${isEnded ? styles.coverMuted : ""}`}>
-        <button
-          type="button"
-          className={styles.coverBack}
-          onClick={() => router.push("/events")}
-          aria-label="Back to events"
-        >
-          ←
-        </button>
-        <span className={styles.coverEmoji} aria-hidden="true">
-          {emoji}
-        </span>
+        <BackButton onClick={() => router.back()} />
       </div>
 
       {/* ── Body ── */}

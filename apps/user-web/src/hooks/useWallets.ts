@@ -48,15 +48,16 @@ export const useWallet = () => {
   const fetchWallet = useCallback(async () => {
     if (!walletApi) return;
 
-    try {;
-
-      const data = await walletApi.getWallet();
-
+    try {
+      const [data, userBalance] = await Promise.all([
+        walletApi.getWallet(),
+        walletApi.getBalance(),
+      ]);
       setWallet(data);
-      setBalance(data.balance);
+      setBalance(userBalance);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch wallet");
-    } 
+    }
   }, [walletApi]);
 
   // -------------------------
@@ -78,7 +79,6 @@ export const useWallet = () => {
     if (!walletApi) throw new Error("Token not ready");
 
     try {
-
       const res = await walletApi.credit(payload);
 
       setBalance(res.balance);

@@ -21,7 +21,7 @@ const walletService = (token?: string) => ({
   },
 
   // GET BALANCE
-  getBalance(): Promise<{ balance: number }> {
+  getBalance(): Promise<number> {
     return request("/wallet/balance", { token });
   },
 

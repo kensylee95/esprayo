@@ -1,0 +1,26 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+.iconStyle{
+color:  rgba(255,255,255,0.80);
+}
+.backBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent !important;
+    padding: 4px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s ease;
+
+    &:hover {
+        color: vars.$text-2;
+    }
+}

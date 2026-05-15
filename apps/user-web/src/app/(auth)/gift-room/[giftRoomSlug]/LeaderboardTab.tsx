@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { avatarColour, initials } from "./GiftRoom.constants";
 import type { LeaderboardEntry, RoomStats } from "./GiftRoom.dto";
@@ -50,8 +50,8 @@ export default function LeaderboardTab({
 
             return (
               <motion.li
-                key={entry.userId}        // key stays on userId — drives layout tracking
-                layout                    // animates position when rank order changes
+                key={entry.userId} // key stays on userId — drives layout tracking
+                layout // animates position when rank order changes
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 16 }}
@@ -67,7 +67,7 @@ export default function LeaderboardTab({
                     style={{
                       width: `${pct}%`,
                       background: entry.rank <= 3 ? colour : "#5A5570",
-                      transition: "width 0.6s ease",  // smooth bar growth
+                      transition: "width 0.6s ease", // smooth bar growth
                     }}
                   />
 
@@ -76,7 +76,7 @@ export default function LeaderboardTab({
                     className={styles.lbRank}
                     key={`rank-${entry.userId}-${entry.rank}`}
                     initial={{ scale: 1.4, color: "#FFD700" }}
-                    animate={{ scale: 1, color: "inherit" }}
+                    animate={{ scale: 1, color: "#ffffff" }}
                     transition={{ duration: 0.35 }}
                   >
                     {entry.rank}
@@ -95,8 +95,8 @@ export default function LeaderboardTab({
                   <div className={styles.lbInfo}>
                     <p className={styles.lbName}>{entry.displayName}</p>
                     <p className={styles.lbSub}>
-                      {entry.giftCount} gift{entry.giftCount !== 1 ? "s" : ""}{" "}
-                      · {entry.lastGift}
+                      {entry.giftCount} gift{entry.giftCount !== 1 ? "s" : ""} ·{" "}
+                      {entry.lastGift}
                     </p>
                   </div>
 
@@ -105,7 +105,7 @@ export default function LeaderboardTab({
                     className={styles.lbScore}
                     key={`score-${entry.userId}-${entry.tokens}`}
                     initial={{ scale: 1.25, color: "#FFD700" }}
-                    animate={{ scale: 1, color: "inherit" }}
+                    animate={{ scale: 1, color: "#ffffff" }}
                     transition={{ duration: 0.4 }}
                   >
                     {entry.tokens.toLocaleString()}

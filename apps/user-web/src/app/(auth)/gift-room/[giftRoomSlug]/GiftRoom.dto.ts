@@ -12,6 +12,8 @@ export interface LeaderboardEntry {
 export interface GetWayRes {
   leaderboard: LeaderboardEntry[];
   totalTokens: number;
+  totalGifts: number;
+  guestCount: number;
   ok: boolean;
   error: string;
 }

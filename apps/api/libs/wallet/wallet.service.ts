@@ -26,12 +26,10 @@ export class WalletService {
     private readonly redis: Redis,
     @InjectRepository(Wallet)
     private readonly walletRepository: Repository<Wallet>,
-      @InjectQueue('wallet')
-  private readonly walletQueue: Queue,
-
+    @InjectQueue('wallet')
+    private readonly walletQueue: Queue,
     private readonly dataSource: DataSource,
-  ) {
-  }
+  ) {}
 
   // -------------------------
   // MAPPER
@@ -95,22 +93,25 @@ export class WalletService {
   // GET BALANCE (CACHE → DB)
   // -------------------------
   async getBalance(userId: string): Promise<number> {
+    console.log('redis instance:', this.redis);
     const cached = await this.redis.get(this.balanceKey(userId));
-
-    if (cached !== null) {
-      return Number(cached);
-    }
+    if (cached !== null) return Number(cached);
 
     const wallet = await this.walletRepository.findOne({
       where: { userId },
     });
 
-    const balance = wallet?.balance ?? 0;
-    await this.redis.set(this.balanceKey(userId), balance);
+    if (!wallet) throw new NotFoundException('Wallet not found');
 
-    return balance;
+    // Fire and forget — a Redis hiccup shouldn't block the balance read
+    this.redis
+      .set(this.balanceKey(userId), wallet.balance, 'EX', 86400)
+      .catch((err: unknown) =>
+        console.error('wallet.redis.set failed', { userId, err }),
+      );
+
+    return wallet.balance;
   }
-
   // -------------------------
   // CREDIT
   // -------------------------
@@ -121,26 +122,16 @@ export class WalletService {
   }): Promise<number> {
     const { userId, amount, reference } = input;
 
-    // FIX 1: Redis update moved outside the transaction so it only runs on
-    // successful commit. Previously it ran inside the callback, meaning a
-    // subsequent rollback would leave Redis with a stale/wrong balance.
     const newBalance = await this.dataSource.transaction(async (manager) => {
       const wallet = await manager.findOne(Wallet, {
         where: { userId },
-        lock: { mode: 'pessimistic_write' },
       });
 
-      if (!wallet) {
-        throw new NotFoundException('Wallet not found');
-      }
+      if (!wallet) throw new NotFoundException('Wallet not found');
 
       wallet.balance += amount;
       await manager.save(wallet);
 
-      // FIX 2: Transaction record written through the transaction manager so
-      // it's atomic with the balance update. Previously used the injected
-      // txRepository which is outside the DB transaction — a failure there
-      // would leave the balance changed but unrecorded.
       await manager.save(WalletTransaction, {
         userId,
         type: WalletTransactionType.CREDIT,
@@ -152,52 +143,59 @@ export class WalletService {
       return wallet.balance;
     });
 
-    await this.redis.set(this.balanceKey(userId), newBalance);
+    // Fire and forget — DB is source of truth for credits
+    this.redis
+      .set(this.balanceKey(userId), newBalance, 'EX', 86400)
+      .catch((err: unknown) =>
+        console.error('wallet.redis.set failed', { userId, err }),
+      );
+
     return newBalance;
   }
 
   // -------------------------
   // DEBIT
   // -------------------------
-async debit(input: {
-  userId: string;
-  amount: number;
-  reference: string;
-}): Promise<number> {
-  const { userId, amount, reference } = input;
+  async debit(input: {
+    userId: string;
+    amount: number;
+    reference: string;
+  }): Promise<number> {
+    const { userId, amount, reference } = input;
 
-  // Atomic check-and-deduct in a single Redis round-trip
-  const luaScript = `
+    // Atomic check-and-deduct in a single Redis round-trip
+    const luaScript = `
     local balance = tonumber(redis.call('GET', KEYS[1]))
     if balance == nil then return -2 end
     if balance < tonumber(ARGV[1]) then return -1 end
     return redis.call('DECRBY', KEYS[1], ARGV[1])
   `;
 
-  const result = await this.redis.eval(
-    luaScript,
-    1,
-    this.balanceKey(userId),
-    amount,
-  ) as number;
+    const result = (await this.redis.eval(
+      luaScript,
+      1,
+      this.balanceKey(userId),
+      amount,
+    )) as number;
 
-  if (result === -2) throw new BadRequestException('Wallet not found — join the room first');
-  if (result === -1) throw new BadRequestException('Insufficient balance');
+    if (result === -2)
+      throw new BadRequestException('Wallet not found — join the room first');
+    if (result === -1) throw new BadRequestException('Insufficient balance');
 
-  // Queue DB sync — processor handles UPDATE + INSERT atomically
-  void this.walletQueue.add(
-    'debit',
-    { userId, amount, reference, newBalance: result },
-    {
-      attempts: 10,
-      backoff: { type: 'exponential', delay: 500 },
-      removeOnComplete: true,
-      removeOnFail: false,
-    },
-  );
+    // Queue DB sync — processor handles UPDATE + INSERT atomically
+    void this.walletQueue.add(
+      'debit',
+      { userId, amount, reference, newBalance: result },
+      {
+        attempts: 10,
+        backoff: { type: 'exponential', delay: 500 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    );
 
-  return result;
-}
+    return result;
+  }
   // -------------------------
   // TRANSFER (GIFTING)
   // -------------------------

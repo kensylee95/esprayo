@@ -12,7 +12,7 @@ import { RedisProviderModule } from '@modules/redis/redis.module';
   imports: [
     TypeOrmModule.forFeature([Gift]),
     LeaderboardServiceModule,
-    WalletModule, 
+    WalletModule,
     RedisProviderModule,
     BullModule.registerQueue({
       name: 'gifts',

@@ -9,8 +9,9 @@ import { BROADCAST_GIFT_EVENT } from './job.constants';
 import { BroadcastGiftJob } from './dtos/gift.dto';
 import { REDIS_CLIENT } from '@modules/redis/redis.module';
 import Redis from 'ioredis';
+import { giftCountKey } from '../../constants';
 
-@Processor('gifts')
+@Processor('gifts', { concurrency: 2 })
 export class GiftProcessor extends WorkerHost {
   private readonly logger = new Logger(GiftProcessor.name);
 
@@ -38,6 +39,8 @@ export class GiftProcessor extends WorkerHost {
       transactionId,
     } = job.data;
 
+    // Idempotency check — if already processed, skip everything including broadcast
+    // Use SET NX so only the first worker through does the work
     const lock = await this.redis.set(
       `gift:processed:${transactionId}`,
       '1',
@@ -46,10 +49,18 @@ export class GiftProcessor extends WorkerHost {
       'NX',
     );
 
-    if (!lock) return;
+    if (!lock) {
+      this.logger.log('gift.already.processed', {
+        jobId: job.id,
+        transactionId,
+      });
+      return;
+    }
 
     try {
-      // 1. State mutation — leaderboard + persist
+      // 1. State mutation — leaderboard + persist concurrently
+      // saveGift uses ON CONFLICT DO NOTHING so safe on retry
+      // leaderboardService.addGift uses Redis ZADD so also idempotent
       const [updated] = await Promise.all([
         this.leaderboardService.addGift(
           eventId,
@@ -59,36 +70,46 @@ export class GiftProcessor extends WorkerHost {
           giftEmoji,
         ),
         this.giftService.saveGift(job.data),
+        this.redis.incr(giftCountKey(eventId)),
       ]);
 
       // 2. Read side
-      const [leaderboard, totalTokens] = await Promise.all([
+      const [leaderboard, totalTokens, totalGifts] = await Promise.all([
         this.leaderboardService.getTop(eventId, 20),
         this.leaderboardService.getTotalTokens(eventId),
+        this.giftService.getEventGiftCount(eventId),
       ]);
 
       // 3. Broadcast
       this.realtime.emitTo(
         `gift-room:${eventId}`,
         SocketEvents.leaderboardUpdate,
-        { leaderboard, totalTokens },
+        { leaderboard, totalTokens, totalGifts },
       );
 
-      this.realtime.emitTo(
-        `gift-room:${eventId}`,
-        SocketEvents.giftReceived,
-        {
-          displayName,
-          giftName,
-          giftEmoji,
-          tokens,
-          newScore: updated.score,
-          giftId,
-        },
+      this.realtime.emitTo(`gift-room:${eventId}`, SocketEvents.giftReceived, {
+        displayName,
+        giftName,
+        giftEmoji,
+        tokens,
+        newScore: updated.score,
+        giftId,
+      });
+    } catch (err: unknown) {
+      // Release lock on failure so the job can be retried cleanly
+      await this.redis.del(`gift:processed:${transactionId}`).catch((e) => {
+        if (e instanceof Error) {
+          this.logger.error(e.message, { e });
+        }
+        this.logger.error('gift.lock.cleanup.failed');
+      });
+
+      this.logger.error(
+        `Gift processing failed (jobId=${job.id})`,
+        err instanceof Error ? err.stack : String(err),
       );
-    } catch (err) {
-      console.error('Gift processing failed', { jobId: job.id, err });
+
       throw err;
     }
   }
-} 
+}

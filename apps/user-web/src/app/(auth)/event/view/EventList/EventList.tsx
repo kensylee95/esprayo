@@ -180,7 +180,7 @@ export default function EventsList({ userEvents }: { userEvents: IEvent[] }) {
               <li key={event.id}>
                 <EventCard
                   event={event}
-                  onClick={() => router.push(`/events/${event.id}`)}
+                  onClick={() => router.push(`/event/view/${event.id}`)}
                 />
               </li>
             ))}

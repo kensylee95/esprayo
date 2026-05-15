@@ -1,4 +1,4 @@
-import { Module, NotFoundException } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService, ConfigType } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
@@ -18,7 +18,6 @@ import { WalletsControllerModule } from './controllers/wallet/wallet.controller.
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RealtimeModule } from '@modules/RealtimeGateway/RealtimeGateway.module';
 import Redis from 'ioredis';
-import { url } from 'inspector';
 
 @Module({
   imports: [
@@ -35,14 +34,31 @@ import { url } from 'inspector';
     BullModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const redisUrl = config.get<string>("REDIS_URL")
+        const redisUrl = config.get<string>('REDIS_URL');
         if (!redisUrl) throw new Error('REDIS_URL missing in BullMQ config');
-        return {
-          connection: new Redis(redisUrl, {
-            maxRetriesPerRequest: null,
-          }),
-        }
-      }
+
+        const connection = new Redis(redisUrl, {
+          maxRetriesPerRequest: null, // required by BullMQ
+          enableReadyCheck: false, // required by BullMQ
+          lazyConnect: false,
+          keepAlive: 30000,
+          connectTimeout: 15000,
+          retryStrategy: (times) => {
+            if (times > 10) return null;
+            return Math.min(times * 1000, 10000);
+          },
+        });
+
+        connection.on('error', (err) => {
+          console.error('BullMQ Redis error:', err.message);
+        });
+
+        connection.on('connect', () => {
+          console.log('BullMQ Redis connected');
+        });
+
+        return { connection };
+      },
     }),
     GiftControllerModule,
     AuthControllerModule,
@@ -74,4 +90,4 @@ import { url } from 'inspector';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

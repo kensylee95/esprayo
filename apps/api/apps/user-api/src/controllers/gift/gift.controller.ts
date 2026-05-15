@@ -26,7 +26,7 @@ export class GiftController {
   // -------------------------
   @Post('gift')
   async sendGift(@Body() dto: SendGiftDto, @CurrentUser('id') userId: string) {
-    const catalog = await this.giftService.getGiftCatalog();
+    const catalog = this.giftService.getGiftCatalog();
 
     const item = catalog.find((g) => g.id === dto.giftId);
 
@@ -66,15 +66,6 @@ export class GiftController {
   @Get('catalog')
   getCatalog() {
     return this.giftService.getGiftCatalog();
-  }
-
-  // -------------------------
-  // WALLET BALANCE
-  // -------------------------
-  @Get('wallet')
-  async getWallet(@CurrentUser('id') userId: string) {
-    const balance = await this.giftService.getWalletBalance(userId);
-    return { balance };
   }
 
   // -------------------------

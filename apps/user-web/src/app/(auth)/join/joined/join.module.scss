@@ -21,23 +21,11 @@
   pointer-events: none;
 }
 
-.back {
-  font-size: 18px;
-  color: vars.$text-3;
-  padding: 16px 22px 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: block;
-  line-height: 1;
-  text-align: left;
-  transition: color 0.15s ease;
-
-  &:hover { color: vars.$text-2; }
-}
-
 // ── Hero ──────────────────────────────────────────────────────────────────────
-
+.alignButton{
+  margin: 16px 0 0 12px;
+  width: fit-content;
+}
 .hero {
   padding: 8px 22px 20px;
 }

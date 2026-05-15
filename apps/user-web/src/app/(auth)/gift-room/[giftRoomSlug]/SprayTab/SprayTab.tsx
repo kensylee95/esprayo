@@ -1,11 +1,12 @@
 "use client";
 
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { GIFT_CATALOG } from "./GiftRoom.constants";
-import type { GiftItem } from "./GiftRoom.dto";
-import styles from "./GiftRoom.module.scss";
-import TopUpModalCTA from "./TopupModalCTA";
+import { GIFT_CATALOG } from "../GiftRoom.constants";
+import type { GiftItem } from "../GiftRoom.dto";
+import TopUpModalCTA from "../TopupModalCTA";
+import styles from "./SprayTab.module.scss";
 
 export default function SprayTab({
   walletBalance,
@@ -24,49 +25,80 @@ export default function SprayTab({
 }) {
   const [selected, setSelected] = useState<GiftItem | null>(null);
   const [openTopModal, setTopModal] = useState(false);
-
   const isOnFire = streak >= 3;
 
+  const y = useMotionValue(0);
+
+  // backdrop fades as sheet is dragged down
+  const backdropOpacity = useTransform(y, [0, 300], [1, 0]);
+
+  function dismissSheet() {
+    animate(y, window.innerHeight, {
+      type: "tween",
+      ease: "easeIn",
+      duration: 0.22,
+      onComplete: closeSprayOverlay,
+    });
+  }
+
+  function handleDragEnd(
+    _: unknown,
+    info: { offset: { y: number }; velocity: { y: number } },
+  ) {
+    if (info.offset.y > 100 || info.velocity.y > 500) {
+      dismissSheet();
+    } else {
+      animate(y, 0, { type: "spring", stiffness: 500, damping: 40 });
+    }
+  }
+
   return createPortal(
-    <div
-      className={styles.portal}
-      onClick={closeSprayOverlay}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && closeSprayOverlay()}
-    >
-      <div
+    <div className={styles.portal}>
+      {/* Backdrop — separate from sheet so it can fade independently */}
+      <motion.div
+        className={styles.backdrop}
+        style={{ opacity: backdropOpacity }}
+        onClick={dismissSheet}
+      />
+
+      <motion.div
         className={styles.tabContent}
+        style={{ y }}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.4 }}
+        dragMomentum={false}
+        onDragEnd={handleDragEnd}
         onClick={(e) => e.stopPropagation()}
-        role="button"
-        aria-pressed="false"
-        tabIndex={0}
-        onKeyDown={(e) => e.key === "Enter" && e.stopPropagation()}
       >
+        {/* Handle — visual only, whole sheet is draggable */}
+        <div className={styles.dragHandle} />
+
+        {/* Balance header */}
         <div className={styles.sprayHeader}>
           <span className={styles.sprayBalLabel}>Balance</span>
           <span className={styles.sprayBalVal}>
             {walletBalance.toLocaleString()} tkn
           </span>
-
-          {/* Streak badge — only shows when active */}
           {streak > 1 && (
-            <span className={styles.streakBadge}>
-              🔥 x{streak}
-            </span>
+            <span className={styles.streakBadge}>🔥 x{streak}</span>
           )}
         </div>
 
-        <div className={styles.giftGrid}>
+        {/* Scrollable gift grid — stopPropagation prevents drag hijack */}
+        <div
+          className={styles.giftGrid}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           {GIFT_CATALOG.map((gift) => (
             <button
               type="button"
               key={gift.id}
               className={`${styles.giftCard}
-              ${gift.featured ? styles.featured : ""}
-              ${selected?.id === gift.id ? styles.giftSel : ""}
-              ${walletBalance < gift.tokens ? styles.giftDisabled : ""}
-            `}
+                ${gift.featured ? styles.featured : ""}
+                ${selected?.id === gift.id ? styles.giftSel : ""}
+                ${walletBalance < gift.tokens ? styles.giftDisabled : ""}
+              `}
               onClick={() => setSelected(gift)}
               disabled={walletBalance < gift.tokens}
             >
@@ -77,12 +109,12 @@ export default function SprayTab({
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
+      {/* Send strip */}
       {selected && (
         <div className={styles.sendStrip}>
           <span className={styles.stripEmoji}>{selected.emoji}</span>
-
           <div className={styles.stripInfo}>
             <p className={styles.stripName}>{selected.name}</p>
             <p className={styles.stripCost}>
@@ -90,14 +122,13 @@ export default function SprayTab({
               remaining
             </p>
           </div>
-
           <button
             type="button"
             className={`${styles.stripBtn} ${isOnFire ? styles.stripBtnFire : ""}`}
             onClick={() => onSend(selected)}
             disabled={isSending}
           >
-            {isSending ? "…" : isOnFire ? `🔥 Spray` : "Spray"}
+            {isSending ? "…" : isOnFire ? "🔥 Spray" : "Spray"}
           </button>
         </div>
       )}

@@ -3,7 +3,10 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { WalletTransactionType, WalletTransactionStatus } from './constants.wallet';
+import {
+  WalletTransactionType,
+  WalletTransactionStatus,
+} from './constants.wallet';
 
 export type DebitJob = {
   userId: string;
@@ -12,7 +15,7 @@ export type DebitJob = {
   newBalance: number;
 };
 
-@Processor('wallet')
+@Processor('wallet', { concurrency: 2 })
 export class WalletProcessor extends WorkerHost {
   private readonly logger = new Logger(WalletProcessor.name);
 
@@ -75,9 +78,13 @@ export class WalletProcessor extends WorkerHost {
           drift: result.balance - newBalance,
         });
       });
-
-    } catch (err) {
-      this.logger.error('wallet.debit.failed', { jobId: job.id, userId, reference, err });
+    } catch (err: unknown) {
+      console.error('wallet.debit.failed', {
+        jobId: job.id,
+        userId,
+        reference,
+        err,
+      });
       throw err;
     }
   }

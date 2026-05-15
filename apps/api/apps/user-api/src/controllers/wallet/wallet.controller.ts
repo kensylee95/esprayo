@@ -19,6 +19,14 @@ export class WalletController {
   }
 
   // -------------------------
+  // GET WALLET
+  // -------------------------
+  @Get('balance')
+  async getWalletBalance(@CurrentUser('id') userId: string) {
+    return this.walletService.getBalance(userId);
+  }
+
+  // -------------------------
   // CREDIT
   // -------------------------
   @Post('credit')

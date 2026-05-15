@@ -14,10 +14,18 @@ import OrmConfig from './orm.config';
           synchronize: false,
           schema: 'public',
           entities: [__dirname + '/../../**/*.entity{.ts,.js}'],
+          extra: {
+            max: 20,
+            min: 5,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 10000,
+          },
+          retryAttempts: 3,
+          retryDelay: 3000,
         };
       },
       inject: [OrmConfig.KEY],
     }),
   ],
 })
-export class OrmModule { }
+export class OrmModule {}
