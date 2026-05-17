@@ -18,7 +18,7 @@ export default function SprayTab({
 }: {
   walletBalance: number;
   onSend: (gift: GiftItem) => void;
-  isSending: boolean;
+  isSending?: boolean;
   closeSprayOverlay: () => void;
   onRecharge: () => void;
   streak?: number;
@@ -105,7 +105,7 @@ export default function SprayTab({
               {gift.featured && <span className={styles.topTag}>TOP</span>}
               <span className={styles.giftEmoji}>{gift.emoji}</span>
               <span className={styles.giftName}>{gift.name}</span>
-              <span className={styles.giftCost}>{gift.tokens} tkn</span>
+              <span className={styles.giftCost}>{gift.tokens} Gold</span>
             </button>
           ))}
         </div>

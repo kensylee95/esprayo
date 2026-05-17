@@ -114,6 +114,9 @@
 }
 
 .slugCopy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-family: vars.$font-body;
   font-size: 10px;
   color: vars.$text-3;
@@ -121,7 +124,8 @@
   background: none;
   border: none;
   transition: color 0.15s ease;
-
+  gap: 0.4rem;
+  min-width: 110px;
   &:hover {
     color: vars.$gold;
   }

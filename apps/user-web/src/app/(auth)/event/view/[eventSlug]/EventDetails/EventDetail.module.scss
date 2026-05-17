@@ -11,22 +11,11 @@
   position: relative;
 }
 
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  min-height: 100dvh;
-  font-family: vars.$font-mono;
-  font-size: 12px;
-  color: vars.$text-3;
-}
-
 // ── Cover ─────────────────────────────────────────────────────────────────────
 
 .cover {
   padding-inline: 10px;
-  padding-top: 16px;
+  padding-top: 48px;
   display: flex;
   align-items: center;
   justify-content: start;
@@ -100,13 +89,13 @@
 }
 
 .badgeLive {
-  background: #1A2A1A;
+  background: #1a2a1a;
   border: 0.5px solid rgba(vars.$success, 0.2);
   color: vars.$success;
 }
 
 .badgeDraft {
-  background: #2A1E10;
+  background: #2a1e10;
   border: 0.5px solid rgba(vars.$warning, 0.2);
   color: vars.$warning;
 }
@@ -118,13 +107,13 @@
 }
 
 .badgeCancelled {
-  background: #1A1010;
+  background: #1a1010;
   border: 0.5px solid rgba(vars.$danger, 0.2);
   color: vars.$danger;
 }
 
 .badgeType {
-  background: #1A1810;
+  background: #1a1810;
   border: 0.5px solid rgba(vars.$gold, 0.2);
   color: vars.$gold;
 }
@@ -136,45 +125,7 @@
   letter-spacing: 1px;
 }
 
-// ── Stats grid ────────────────────────────────────────────────────────────────
-
-.statsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.statCard {
-  background: vars.$surface-1;
-  border: 0.5px solid vars.$surface-2;
-  border-radius: vars.$radius-card;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.statVal {
-  font-family: vars.$font-mono;
-  font-size: 1.2rem;
-  font-weight: 500;
-  color: vars.$text-1;
-  line-height: 1;
-}
-
-.statGold  { color: vars.$gold; }
-.statMuted { color: vars.$text-4; }
-
-.statLbl {
-  font-family: vars.$font-mono;
-  font-size: 9px;
-  color: vars.$text-3;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-// ── Info card ─────────────────────────────────────────────────────────────────
+// ── Info card + join code ─────────────────────────────────────────────────────
 
 .infoCard {
   background: vars.$surface-1;
@@ -184,29 +135,59 @@
   margin-bottom: 18px;
 }
 
-.infoRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 11px 14px;
-  border-bottom: 0.5px solid vars.$surface-2;
-
-  &:last-child { border-bottom: none; }
-}
-
 .infoKey {
   font-family: vars.$font-body;
   font-size: 11px;
   color: vars.$text-3;
 }
 
-.infoVal {
-  font-family: vars.$font-mono;
-  font-size: 11px;
-  color: vars.$text-2;
+.joinRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  gap: 8px;
 }
 
-.infoValGold { color: vars.$gold; }
+.joinRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.joinCode {
+  font-family: vars.$font-mono;
+  font-size: 12px;
+  color: vars.$text-1;
+  letter-spacing: 0.1em;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: vars.$surface-2;
+  border: 0.5px solid vars.$surface-3;
+  border-radius: vars.$radius-pill;
+  padding: 4px 10px;
+  font-family: vars.$font-mono;
+  font-size: 9px;
+  color: vars.$text-3;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+
+  &:hover {
+    background: vars.$surface-3;
+    color: vars.$text-2;
+  }
+}
+
+.copyBtnCopied {
+  background: #1a2a1a;
+  border-color: rgba(vars.$success, 0.3);
+  color: vars.$success;
+}
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 
@@ -223,22 +204,46 @@
   padding: 14px;
   font-size: 13px;
   letter-spacing: 0.3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
 }
 
-.btnSecondary {
-  @include mixins.btn-secondary;
+.btnPrimaryActive {
+  background: #1a2a1a;
+  border-color: rgba(vars.$success, 0.35);
+  color: vars.$success;
+
+  &:hover { background: #1f321f; }
+}
+
+.btnGift {
   width: 100%;
+  background: #10181a;
+  border: 0.5px solid rgba(vars.$gold, 0.2);
+  border-radius: vars.$radius-pill;
   padding: 13px;
+  font-family: vars.$font-body;
   font-size: 12px;
+  font-weight: 500;
+  color: vars.$gold;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+
+  &:hover {
+    background: #141e20;
+    border-color: rgba(vars.$gold, 0.35);
+  }
 }
 
 .btnCancel {
   width: 100%;
-  background: #1A1010;
+  background: #1a1010;
   border: 0.5px solid rgba(vars.$danger, 0.25);
   border-radius: vars.$radius-pill;
   padding: 13px;
@@ -248,10 +253,19 @@
   color: vars.$danger;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 
   &:hover {
     background: #221414;
     border-color: rgba(vars.$danger, 0.4);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 }
 
@@ -284,7 +298,7 @@
 
 @keyframes slideUp {
   from { transform: translateY(100%); }
-  to   { transform: translateY(0);    }
+  to   { transform: translateY(0); }
 }
 
 .sheetHandle {
@@ -319,7 +333,7 @@
 }
 
 .sheetWarn {
-  background: #1A1010;
+  background: #1a1010;
   border: 0.5px solid rgba(vars.$danger, 0.2);
   border-radius: vars.$radius-card;
   padding: 11px 13px;
@@ -330,9 +344,9 @@
 }
 
 .warnIcon {
-  font-size: 14px;
   flex-shrink: 0;
   margin-top: 1px;
+  color: vars.$danger;
 }
 
 .warnText {
@@ -349,7 +363,7 @@
 
 .btnConfirmCancel {
   width: 100%;
-  background: #2A1010;
+  background: #2a1010;
   border: 0.5px solid rgba(vars.$danger, 0.35);
   border-radius: vars.$radius-pill;
   padding: 14px;

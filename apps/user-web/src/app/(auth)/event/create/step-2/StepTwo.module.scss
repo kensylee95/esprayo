@@ -30,15 +30,15 @@
 
 .title {
   @include mixins.display;
-  font-size: 36px;
+  font-size: 24px;
   line-height: 1.15;
   color: vars.$text-1;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 .sub {
-    font-size: 20px;
-    color: vars.$text-3;
+    font-size: 16px;
+    color: vars.$text-2;
     line-height: 1.5;
     margin-bottom: 1.5rem
 }

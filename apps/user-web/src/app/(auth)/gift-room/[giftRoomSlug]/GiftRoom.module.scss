@@ -11,6 +11,7 @@
   overflow: hidden;
 }
 
+
 // ── Room header ───────────────────────────────────────────────────────────────
 
 .roomHeader {
@@ -598,6 +599,14 @@
   pointer-events: none;
 }
 
+.errorCta{
+  @include mixins.btn-primary;
+  width: 100%;
+  padding: 14px;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  margin-bottom: 8px;
+}
 // ── Error state ───────────────────────────────────────────────────────────────
 
 .errorState {
@@ -605,10 +614,14 @@
   flex-direction: column;
   gap: 40px;
   align-items: center;
-  justify-content: center;
+  padding-top: 150px;
   min-width: 300px;
   min-height: 100%;
   margin: 16px;
+}
+
+.errorIcon {
+  opacity: 0.9;
 }
 
 .errorMessage {

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect } from "react";
 import { useWizardStore } from "@/stores/create-event-stores/useWizardStore";
+import BackButton from "@/ui/components/BackButton/BackButton";
 import styles from "./CreateWizardWrapper.module.scss";
 
 type WizardProps = {
@@ -13,11 +14,12 @@ type WizardProps = {
 export function Wizard({ children }: WizardProps) {
   const step = useWizardStore((s) => s.step);
   const router = useRouter();
+  const setStep = useWizardStore((s) => s.setStep);
   const handleBackBtn = () => {
     if (step <= 1) return;
+    setStep(step - 1);
     router.back();
   };
-  const setStep = useWizardStore((s) => s.setStep);
   useEffect(() => {
     setStep(1);
     router.push("step-1");
@@ -47,15 +49,7 @@ export function Wizard({ children }: WizardProps) {
         </div>
         <div className={styles.rowStepper}>
           <div className={styles.stepperText}>Step {step} of 3</div>
-          {step > 1 && (
-            <button
-              type="button"
-              onClick={handleBackBtn}
-              className={styles.icon}
-            >
-              <ArrowBigLeftIcon height={24} width={24} />
-            </button>
-          )}
+          {step > 1 && <BackButton onClick={handleBackBtn} />}
         </div>
       </div>
       <div style={{ display: "flex", flex: 1 }}>{children}</div>

@@ -9,7 +9,7 @@
   background: vars.$void;
   position: relative;
   overflow: hidden;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .orb {
@@ -28,7 +28,7 @@
 }
 
 .back {
-  font-size: 18px;
+  font-size: 16px;
   color: vars.$text-3;
   padding: 16px 22px 0;
   cursor: pointer;
@@ -45,10 +45,10 @@
 
 .title {
   @include mixins.display;
-  font-size: 36px;
+  font-size: 24px;
   line-height: 1.15;
   color: vars.$text-1;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
 }
 
 // ── Summary card ─────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@
   border: 0.5px solid vars.$surface-3;
   border-radius: 24px;
   overflow: hidden;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .cover {

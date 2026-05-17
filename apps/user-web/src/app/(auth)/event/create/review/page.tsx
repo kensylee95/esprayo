@@ -32,9 +32,9 @@ export default function EventReviewScreen() {
     if (!type) return;
     const token = await getTokenClient();
     if (!token) return;
-    if (title === "" || venue === "" || welcomeMessage === "") return null;
+    if (title === "") return null;
     try {
-      await event.createEvent(
+      const response = await event.createEvent(
         {
           title,
           type,
@@ -43,12 +43,10 @@ export default function EventReviewScreen() {
         },
         token,
       );
-
-      // optional: clear wizard store here
+      //clear wizard store here
       clearForm();
-      router.push("/event/success");
+      router.replace(`/event/success/${response.id}`);
     } catch (e) {
-      // error already stored in hook if needed
       console.error(e);
     }
   };

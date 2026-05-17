@@ -1,361 +1,238 @@
 "use client";
-
+import {
+  AlertTriangle,
+  Check,
+  ChevronLeft,
+  Copy,
+  Gift,
+  Play,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { getTokenClient } from "@/helpers/request";
+import { EventStatus, type IEvent } from "@/services/Event/Event.dto";
 import BackButton from "@/ui/components/BackButton/BackButton";
-import styles from "./EventDetail.module.scss";
+import { useEvent } from "../../../hooks/useEvents";
+import s from "./EventDetail.module.scss";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface EventDetail {
-  id: string;
-  slug: string;
-  title: string;
-  type: string;
-  status: "active" | "draft" | "ended" | "cancelled";
-  venue: string | null;
-  tokenBalance: number;
-  nairaBalance: number;
-  giftCount: number;
-  gifterCount: number;
-  tokenRateNaira: number;
-  showNairaValues: boolean;
-  welcomeMessage: string | null;
+interface EventDetailProps {
+  event: IEvent;
+  onBack?: () => void;
+  onActivate?: (id: string) => Promise<void>;
+  onCancel?: (id: string) => Promise<void>;
+  onOpenGiftRoom?: (id: string) => void;
 }
 
-/*const EVENT_TYPE_EMOJI: Record<string, string> = {
-  wedding: "💍",
-  birthday: "🎂",
-  graduation: "🎓",
-  anniversary: "💑",
-  naming: "👶",
-  other: "✨",
-};*/
+// ── Cancel sheet ──────────────────────────────────────────────────────────────
 
-// ─── Cancel sheet ─────────────────────────────────────────────────────────────
-
-function CancelSheet({
-  status,
-  onConfirm,
-  onDismiss,
-  loading,
-}: {
-  title: string;
-  status: string;
+interface CancelSheetProps {
+  eventTitle: string;
   onConfirm: () => void;
   onDismiss: () => void;
-  loading: boolean;
-}) {
-  const isLive = status === "active";
+}
+
+function CancelSheet({ eventTitle, onConfirm, onDismiss }: CancelSheetProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try {
+      await onConfirm();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div
-      className={styles.sheetOverlay}
-      role="button"
-      tabIndex={0}
-      onClick={(e) => e.target === e.currentTarget && onDismiss()}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          onDismiss();
-        }
-        if (e.key === "Escape") {
-          onDismiss();
-        }
-      }}
-    >
-      <div className={styles.sheet}>
-        <div className={styles.sheetHandle} aria-hidden="true" />
-        <div className={styles.sheetIcon} aria-hidden="true">
-          ⚠️
-        </div>
-        <h2 id="cancel-title" className={styles.sheetTitle}>
-          Cancel this event?
-        </h2>
-        <p className={styles.sheetSub}>
-          {isLive
-            ? "This will close the gift room immediately. Guests will no longer be able to join or send gifts."
-            : "This draft event will be permanently cancelled."}
+    <div className={s.sheetOverlay} onClick={onDismiss}>
+      <div className={s.sheet} onClick={(e) => e.stopPropagation()}>
+        <div className={s.sheetHandle} />
+        <div className={s.sheetIcon}>🚫</div>
+        <p className={s.sheetTitle}>Cancel event?</p>
+        <p className={s.sheetSub}>
+          This will cancel{" "}
+          <strong style={{ color: "inherit" }}>{eventTitle}</strong> and notify
+          all registered guests.
         </p>
 
-        {isLive && (
-          <div className={styles.sheetWarn}>
-            <span className={styles.warnIcon} aria-hidden="true">
-              ℹ️
-            </span>
-            <p className={styles.warnText}>
-              <strong>Gifts already sent are not refunded.</strong> Token
-              balances for any pending transactions will be returned to wallets
-              within 24 hours.
-            </p>
-          </div>
-        )}
+        <div className={s.sheetWarn}>
+          <AlertTriangle size={14} className={s.warnIcon} />
+          <p className={s.warnText}>
+            <strong>This action is irreversible.</strong> All RSVPs will be
+            voided and the event will be permanently marked as cancelled.
+          </p>
+        </div>
 
         <button
-          type="button"
-          className={styles.btnConfirmCancel}
-          onClick={onConfirm}
+          className={s.btnConfirmCancel}
+          onClick={handleConfirm}
           disabled={loading}
         >
           {loading ? "Cancelling…" : "Yes, cancel event"}
         </button>
-        <button
-          type="button"
-          className={styles.btnKeep}
-          onClick={onDismiss}
-          disabled={loading}
-        >
-          {isLive ? "Keep event open" : "Keep draft"}
+        <button className={s.btnKeep} onClick={onDismiss} disabled={loading}>
+          Keep event
         </button>
       </div>
     </div>
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-export default function EventDetailPage({
-  event,
-  loading,
-}: {
-  event: EventDetail;
-  loading?: boolean;
-}) {
-  const router = useRouter();
-  const [showCancel, setShowCancel] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
+
+export default function EventDetail({ event }: EventDetailProps) {
+  const [status, setStatus] = useState<EventStatus>(event.status);
+  const [showCancelSheet, setShowCancel] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activating, setActivating] = useState(false);
+  const router = useRouter();
 
-  const token =
-    typeof window !== "undefined"
-      ? (localStorage.getItem("serenade_token") ?? "")
-      : "";
+  const isDraft = status === "draft";
+  const isLive = status === "active";
+  const isCancelled = status === "cancelled";
+  const isEnded = status === "ended";
+  const isInactive = isCancelled || isEnded;
+  const eventHook = useEvent();
+
+  const handleActivate = useCallback(async () => {
+    if (!isDraft) return;
+    setActivating(true);
+    try {
+      const token = await getTokenClient();
+      if (!token) return null;
+      await eventHook.activateEvent(event.id, token);
+      setStatus(EventStatus.ACTIVE);
+    } finally {
+      setActivating(false);
+    }
+  }, [isDraft, event.id]);
+
+  const handleConfirmCancel = useCallback(async () => {
+    const token = await getTokenClient();
+    if (!token) return null;
+    setStatus(EventStatus.CANCELLED);
+    setShowCancel(false);
+  }, [event.id]);
 
   const handleCopy = useCallback(async () => {
-    if (!event) return;
-    await navigator.clipboard.writeText(
-      `${process.env.NEXT_PUBLIC_API_URL}/join?code=${event.slug}`,
-    );
+    await navigator.clipboard.writeText(event.slug);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [event]);
-
-  const handleCancel = useCallback(async () => {
-    if (!event) return;
-    setCancelling(true);
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/events/${event.id}/cancel`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      if (!res.ok) throw new Error("Cancel failed");
-      router.push("/events");
-    } catch (err) {
-      console.error(err);
-      setCancelling(false);
-    }
-  }, [event, token, router]);
-
-  if (loading) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.loading}>Loading…</div>
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.loading}>Event not found.</div>
-      </div>
-    );
-  }
-
-  const isActive = event.status === "active";
-  const isDraft = event.status === "draft";
-  const isEnded = event.status === "ended" || event.status === "cancelled";
-  const canCancel = isActive || isDraft;
+  }, [event.slug]);
 
   return (
-    <div className={styles.page}>
-      {/* ── Cover ── */}
-      <div className={`${styles.cover} ${isEnded ? styles.coverMuted : ""}`}>
-        <BackButton onClick={() => router.back()} />
-      </div>
-
-      {/* ── Body ── */}
-      <div className={styles.body}>
-        <h1 className={styles.detTitle}>{event.title}</h1>
-
-        <div className={styles.badges}>
-          {event.status === "active" && (
-            <span className={`${styles.badge} ${styles.badgeLive}`}>
-              ● LIVE
-            </span>
-          )}
-          {event.status === "draft" && (
-            <span className={`${styles.badge} ${styles.badgeDraft}`}>
-              Draft
-            </span>
-          )}
-          {event.status === "ended" && (
-            <span className={`${styles.badge} ${styles.badgeEnded}`}>
-              Ended
-            </span>
-          )}
-          {event.status === "cancelled" && (
-            <span className={`${styles.badge} ${styles.badgeCancelled}`}>
-              Cancelled
-            </span>
-          )}
-          <span className={`${styles.badge} ${styles.badgeType}`}>
-            {event.type.charAt(0).toUpperCase() + event.type.slice(1)}
-          </span>
-          <span className={`${styles.badge} ${styles.badgeSlug}`}>
-            {event.slug}
-          </span>
+    <>
+      <div className={s.page}>
+        {/* Cover */}
+        <div className={`${s.cover} ${isInactive ? s.coverMuted : ""}`}>
+          {
+            <button
+              className={s.coverBack}
+              onClick={() => router.back}
+              aria-label="Go back"
+            >
+              <ChevronLeft />
+            </button>
+          }
         </div>
 
-        {/* ── Stats ── */}
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <span
-              className={`${styles.statVal} ${isEnded ? styles.statMuted : styles.statGold}`}
-            >
-              {event.tokenBalance > 0
-                ? event.tokenBalance.toLocaleString()
-                : "—"}
-            </span>
-            <span className={styles.statLbl}>Tokens gifted</span>
-          </div>
-          <div className={styles.statCard}>
-            <span
-              className={`${styles.statVal} ${isEnded ? styles.statMuted : ""}`}
-            >
-              {event.gifterCount > 0 ? event.gifterCount : "—"}
-            </span>
-            <span className={styles.statLbl}>Guests</span>
-          </div>
-          <div className={styles.statCard}>
-            <span
-              className={`${styles.statVal} ${isEnded ? styles.statMuted : ""}`}
-            >
-              {event.giftCount > 0 ? event.giftCount : "—"}
-            </span>
-            <span className={styles.statLbl}>Gifts sent</span>
-          </div>
-          <div className={styles.statCard}>
-            <span
-              className={`${styles.statVal} ${isEnded ? styles.statMuted : styles.statGold}`}
-            >
-              {event.nairaBalance > 0
-                ? `₦${Number(event.nairaBalance).toLocaleString()}`
-                : "—"}
-            </span>
-            <span className={styles.statLbl}>Naira value</span>
-          </div>
-        </div>
+        {/* Body */}
+        <div className={s.body}>
+          <h1 className={s.detTitle}>{event.title}</h1>
 
-        {/* ── Info rows ── */}
-        <div className={styles.infoCard}>
-          {event.venue && (
-            <div className={styles.infoRow}>
-              <span className={styles.infoKey}>Venue</span>
-              <span className={styles.infoVal}>{event.venue}</span>
+          <div className={s.badges}>
+            <span className={`${s.badge} ${s[`badge${capitalize(status)}`]}`}>
+              {status}
+            </span>
+            <span className={`${s.badge} ${s.badgeType}`}>{event.type}</span>
+            <span className={`${s.badge} ${s.badgeSlug}`}>{event.slug}</span>
+          </div>
+
+          {/* Join code */}
+          <div className={s.infoCard}>
+            <div className={s.joinRow}>
+              <span className={s.infoKey}>Join code</span>
+              <div className={s.joinRight}>
+                <span className={s.joinCode}>{event.slug}</span>
+                <button
+                  className={`${s.copyBtn} ${copied ? s.copyBtnCopied : ""}`}
+                  onClick={handleCopy}
+                  aria-label="Copy join code"
+                >
+                  {copied ? (
+                    <>
+                      <Check size={11} /> copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={11} /> copy
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className={s.actions}>
+          {isDraft && (
+            <button
+              className={s.btnPrimary}
+              onClick={handleActivate}
+              disabled={activating}
+            >
+              <Play size={14} />
+              {activating ? "Activating…" : "Activate event"}
+            </button>
           )}
-          <div className={styles.infoRow}>
-            <span className={styles.infoKey}>Token rate</span>
-            <span className={`${styles.infoVal} ${styles.infoValGold}`}>
-              ₦{event.tokenRateNaira} / token
-            </span>
-          </div>
-          <div className={styles.infoRow} style={{ borderBottom: "none" }}>
-            <span className={styles.infoKey}>Show naira</span>
-            <span className={styles.infoVal}>
-              {event.showNairaValues ? "Yes" : "No"}
-            </span>
-          </div>
+
+          {isLive && (
+            <button
+              className={`${s.btnPrimary} ${s.btnPrimaryActive}`}
+              disabled
+            >
+              <Check size={14} /> Event is live
+            </button>
+          )}
+
+          {!isInactive && (
+            <button
+              className={s.btnGift}
+              onClick={() => router.push(`/gift-room/${event.id}`)}
+            >
+              <Gift size={14} /> Open gift room
+            </button>
+          )}
+
+          {!isInactive && (
+            <button className={s.btnCancel} onClick={() => setShowCancel(true)}>
+              <X size={14} /> Cancel event
+            </button>
+          )}
+
+          {isCancelled && (
+            <button className={s.btnCancel} disabled>
+              <X size={14} /> Event cancelled
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ── Actions ── */}
-      <div className={styles.actions}>
-        {isActive && (
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            onClick={() => router.push(`/gift-room/${event.id}`)}
-          >
-            View gift room
-          </button>
-        )}
-
-        {isDraft && (
-          <button
-            type="button"
-            className={styles.btnPrimary}
-            onClick={async () => {
-              await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/events/${event.id}/activate`,
-                {
-                  method: "POST",
-                  headers: { Authorization: `Bearer ${token}` },
-                },
-              );
-              router.push(`/gift-room/${event.id}`);
-            }}
-          >
-            Open gift room
-          </button>
-        )}
-
-        {(isActive || isDraft) && (
-          <button
-            type="button"
-            className={styles.btnSecondary}
-            onClick={handleCopy}
-          >
-            <span aria-hidden="true">📋</span>
-            {copied ? "Copied!" : `Copy join code ${event.slug}`}
-          </button>
-        )}
-
-        {isDraft && (
-          <button
-            type="button"
-            className={styles.btnSecondary}
-            onClick={() => router.push(`/events/${event.id}/edit`)}
-          >
-            <span aria-hidden="true">✏️</span>
-            Edit event details
-          </button>
-        )}
-
-        {canCancel && (
-          <button
-            type="button"
-            className={styles.btnCancel}
-            onClick={() => setShowCancel(true)}
-          >
-            Cancel event
-          </button>
-        )}
-      </div>
-
-      {/* ── Cancel confirmation sheet ── */}
-      {showCancel && (
+      {showCancelSheet && (
         <CancelSheet
-          title={event.title}
-          status={event.status}
-          onConfirm={handleCancel}
+          eventTitle={event.title}
+          onConfirm={() => {}}
           onDismiss={() => setShowCancel(false)}
-          loading={cancelling}
         />
       )}
-    </div>
+    </>
   );
 }

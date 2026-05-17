@@ -51,7 +51,7 @@ export default function GiftRoomPage({
   const { leaderboard, stats, roomError, liveAlert, rivalryAlert, getAudio } =
     useGiftRoom(token, eventId);
 
-  const { sendGift, isSending } = useGiftSender(token);
+  const { sendGift } = useGiftSender(token);
 
   const handleSend = useCallback(
     async (gift: GiftItem) => {
@@ -139,7 +139,6 @@ export default function GiftRoomPage({
         <SprayTab
           walletBalance={wallet.balance ?? 0}
           onSend={handleSend}
-          isSending={isSending}
           onRecharge={() => {
             setTab(null);
             router.push("/wallet/fund");

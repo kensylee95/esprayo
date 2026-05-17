@@ -12,7 +12,7 @@ export type UpdateEventDto = Partial<EventDTO>;
 
 const eventService = (token?: string) => ({
   // CREATE EVENT
-  createEvent(payload: EventDTO) {
+  createEvent(payload: EventDTO): Promise<IEvent> {
     return request("/events", {
       method: "POST",
       body: JSON.stringify(payload),
