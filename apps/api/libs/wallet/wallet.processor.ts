@@ -15,7 +15,7 @@ export type DebitJob = {
   newBalance: number;
 };
 
-@Processor('wallet', { concurrency: 2 })
+@Processor('wallet', { concurrency: 20 })
 export class WalletProcessor extends WorkerHost {
   private readonly logger = new Logger(WalletProcessor.name);
 

@@ -1,24 +1,39 @@
 import { Module } from '@nestjs/common';
-import { GiftService } from './gift.service';
-import { LeaderboardServiceModule } from '@modules/leaderboard/leaderboard.module';
-import { GiftProcessor } from './gift.processor';
-import { WalletModule } from '@modules/wallet/wallet.module';
+
 import { BullModule } from '@nestjs/bullmq';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Gift } from './entities/gift.entity';
+
+import { GiftService } from './gift.service';
+
+import { GiftPersistProcessor } from './gift-persist.processor';
+
+import { WalletModule } from '@modules/wallet/wallet.module';
+
 import { RedisProviderModule } from '@modules/redis/redis.module';
+
+import { LeaderboardServiceModule } from '@modules/leaderboard/leaderboard.module';
+
+import { Gift } from './entities/gift.entity';
+import { GIFTS_PERSIST_QUEUE } from './job.constants';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Gift]),
+
     LeaderboardServiceModule,
+
     WalletModule,
+
     RedisProviderModule,
+
     BullModule.registerQueue({
-      name: 'gifts',
+      name: GIFTS_PERSIST_QUEUE,
     }),
   ],
-  providers: [GiftService, GiftProcessor],
-  exports: [GiftService, GiftProcessor],
+
+  providers: [GiftService, GiftPersistProcessor],
+
+  exports: [GiftService],
 })
 export class GiftServiceModule {}

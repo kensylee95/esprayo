@@ -7,7 +7,12 @@ import {
   playRoomBurstSound,
 } from "../audio";
 import { triggerRoomBurst } from "../confetti";
-import type { GetWayRes, LeaderboardEntry, RoomStats } from "../GiftRoom.dto";
+import type {
+  GetWayRes,
+  LeaderboardEntry,
+  LeaderboardUpdatePayload,
+  RoomStats,
+} from "../GiftRoom.dto";
 
 export function useGiftRoom(token: string | null, eventId: string) {
   const [leaderboard, setLb] = useState<LeaderboardEntry[]>([]);
@@ -55,17 +60,40 @@ export function useGiftRoom(token: string | null, eventId: string) {
       );
     };
 
-    const onLeaderboardUpdate = (payload: {
-      leaderboard: LeaderboardEntry[];
-      totalTokens: number;
-      totalGifts: number;
-    }) => {
-      setLb(payload.leaderboard);
+    const onLeaderboardUpdate = (payload: LeaderboardUpdatePayload) => {
       setStats((s) => ({
         ...s,
         totalTokens: payload.totalTokens,
         totalGifts: payload.totalGifts,
       }));
+
+      setLb((prev) => {
+        const { userId, displayName, newScore, newRank } = payload.patch;
+
+        // update or insert the entry
+        const exists = prev.some((e) => e.userId === userId);
+
+        const updated = exists
+          ? prev.map((e) =>
+              e.userId === userId ? { ...e, displayName, tokens: newScore } : e,
+            )
+          : [
+              ...prev,
+              {
+                userId,
+                displayName,
+                tokens: newScore,
+                rank: newRank,
+                giftCount: 1,
+                lastGift: "",
+              },
+            ];
+
+        // re-sort descending by tokens, reassign ranks
+        return updated
+          .sort((a, b) => b.tokens - a.tokens)
+          .map((e, i) => ({ ...e, rank: i + 1 }));
+      });
     };
 
     const onGuestCountUpdate = (payload: { guestCount: number }) => {

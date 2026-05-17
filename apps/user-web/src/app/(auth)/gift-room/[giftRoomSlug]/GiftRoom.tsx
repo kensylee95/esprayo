@@ -10,8 +10,8 @@ import { useWallet } from "@/hooks/useWallets";
 import BackButton from "@/ui/components/BackButton/BackButton";
 import WalletFundOverlay from "@/ui/components/WalletFundOverlay/WalletFundOverlay";
 import NavButton from "../NavButton/NavButton";
-import { playCashOdogwu, playNumber1Sound } from "./audio";
-import { triggerNumber1Burst, triggerSenderBurst } from "./confetti";
+import { playNumber1Sound } from "./audio";
+import { triggerNumber1Burst } from "./confetti";
 import type { GiftItem, Overlay } from "./GiftRoom.dto";
 import styles from "./GiftRoom.module.scss";
 import { useGiftRoom } from "./hooks/useGiftRoom";
@@ -58,33 +58,22 @@ export default function GiftRoomPage({
       try {
         navigator.vibrate?.(80);
         const ctx = getAudio();
-        const data = await sendGift({ eventId, giftId: gift.id, displayName });
 
-        wallet.setBalance(data.newBalance);
+        // optimistic debit — no await needed
+        wallet.setBalance((prev) => (prev ?? 0) - gift.tokens);
 
-        /* const rankDiff =
-          prevRankRef.current !== null ? prevRankRef.current - data.newRank : 0;
-        prevRankRef.current = data.newRank;*/
+        sendGift({ eventId, giftId: gift.id, displayName });
 
-        const isNumber1 = data.newRank === 1;
-
-        if (isNumber1) {
-          triggerNumber1Burst();
-          if (ctx) playNumber1Sound(ctx);
-          navigator.vibrate?.([100, 50, 100, 50, 200]);
-          //setShowNumber1(true);
-          //setTimeout(() => setShowNumber1(false), 3000);
-        } else {
-          triggerSenderBurst();
-          if (ctx) playCashOdogwu(ctx);
-        }
+        triggerNumber1Burst();
+        if (ctx) playNumber1Sound(ctx);
+        navigator.vibrate?.([100, 50, 100, 50, 200]);
 
         clearTimeout(streakTimerRef.current);
         setStreak((s) => s + 1);
         streakTimerRef.current = setTimeout(() => setStreak(0), 5000);
-
-        //setSentGift({ gift, newRank: data.newRank, rankDiff, isNumber1 });
       } catch (error) {
+        // roll back if sendGift throws synchronously
+        wallet.setBalance((prev) => (prev ?? 0) + gift.tokens);
         console.error(error);
       }
     },
@@ -151,7 +140,10 @@ export default function GiftRoomPage({
           walletBalance={wallet.balance ?? 0}
           onSend={handleSend}
           isSending={isSending}
-          onRecharge={() => setTab("wallet")}
+          onRecharge={() => {
+            setTab(null);
+            router.push("/wallet/fund");
+          }}
           closeSprayOverlay={() => setTab(null)}
           streak={streak}
         />
@@ -191,7 +183,7 @@ export default function GiftRoomPage({
             icon={Wallet}
             label="Wallet"
             active={tab === "wallet"}
-            onClick={() => setTab("wallet")}
+            onClick={() => router.push("/wallet/fund")}
           />
         </div>
       </nav>

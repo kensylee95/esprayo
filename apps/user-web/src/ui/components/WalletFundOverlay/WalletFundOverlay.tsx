@@ -2,6 +2,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useWallet } from "@/hooks/useWallets";
+import BackButton from "../BackButton/BackButton";
 import { TOKEN_PACKAGES } from "./constants";
 import styles from "./walletFundOverlay.module.scss";
 
@@ -10,10 +12,23 @@ export default function WalletFundOverlay({
   closeWalletOverlay,
 }: {
   balance: number;
-  closeWalletOverlay: () => void;
+  closeWalletOverlay?: () => void;
 }) {
-  const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const wallet = useWallet();
+  const [topUpAmount, setTopUpAmount] = useState(0);
+  const router = useRouter();
+
+  const creditWallet = async () => {
+    try {
+      const reference = crypto.randomUUID();
+      const result = await wallet.credit({ amount: topUpAmount, reference });
+      wallet.setBalance(result.balance);
+      return balance;
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -37,14 +52,17 @@ export default function WalletFundOverlay({
         tabIndex={0}
         onKeyDown={(e) => e.key === "Enter" && e.stopPropagation()}
       >
+        {" "}
+        <div className={styles.backBtn}>
+          <BackButton onClick={() => router.back()}></BackButton>
+        </div>
         <div className={styles.walCard}>
           <p className={styles.walLabel}>Token balance</p>
-          <p className={styles.walBal}>{balance.toLocaleString()}</p>
+          <p className={styles.walBal}>{wallet.balance}</p>
           <p className={styles.walSub}>
             1 token = ₦10 · ≈ ₦{(balance * 10).toLocaleString()}
           </p>
         </div>
-
         <p className={styles.pkgLabel}>Top up tokens</p>
         <div className={styles.pkgGrid}>
           {TOKEN_PACKAGES.map(({ naira, tokens, featured }) => (
@@ -52,7 +70,7 @@ export default function WalletFundOverlay({
               type="button"
               key={naira}
               className={`${styles.pkg} ${featured ? styles.pkgFeat : ""}`}
-              onClick={() => router.push(`/wallet/topup?amount=${naira}`)}
+              onClick={() => setTopUpAmount(tokens)}
             >
               <span className={styles.pkgNaira}>₦{naira.toLocaleString()}</span>
               <span className={styles.pkgTokens}>
@@ -61,21 +79,9 @@ export default function WalletFundOverlay({
             </button>
           ))}
         </div>
-
         <div className={styles.pkgCtas}>
-          <button
-            type="button"
-            className={styles.cta}
-            onClick={() => router.push("/wallet/topup?provider=paystack")}
-          >
-            Fund with Paystack
-          </button>
-          <button
-            type="button"
-            className={styles.ghost}
-            onClick={() => router.push("/wallet/topup?provider=flutterwave")}
-          >
-            Fund with Flutterwave
+          <button type="button" className={styles.cta} onClick={creditWallet}>
+            Fund Wallet
           </button>
         </div>
       </div>

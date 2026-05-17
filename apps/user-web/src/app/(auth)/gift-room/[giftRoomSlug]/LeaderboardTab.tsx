@@ -81,7 +81,6 @@ export default function LeaderboardTab({
                   >
                     {entry.rank}
                   </motion.span>
-
                   <div
                     className={styles.lbAvatar}
                     style={{

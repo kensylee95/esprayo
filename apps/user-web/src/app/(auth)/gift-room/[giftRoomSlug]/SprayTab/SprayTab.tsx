@@ -29,7 +29,6 @@ export default function SprayTab({
 
   const y = useMotionValue(0);
 
-  // backdrop fades as sheet is dragged down
   const backdropOpacity = useTransform(y, [0, 300], [1, 0]);
 
   function dismissSheet() {
@@ -54,7 +53,6 @@ export default function SprayTab({
 
   return createPortal(
     <div className={styles.portal}>
-      {/* Backdrop — separate from sheet so it can fade independently */}
       <motion.div
         className={styles.backdrop}
         style={{ opacity: backdropOpacity }}
@@ -71,10 +69,8 @@ export default function SprayTab({
         onDragEnd={handleDragEnd}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle — visual only, whole sheet is draggable */}
         <div className={styles.dragHandle} />
 
-        {/* Balance header */}
         <div className={styles.sprayHeader}>
           <span className={styles.sprayBalLabel}>Balance</span>
           <span className={styles.sprayBalVal}>
@@ -85,7 +81,6 @@ export default function SprayTab({
           )}
         </div>
 
-        {/* Scrollable gift grid — stopPropagation prevents drag hijack */}
         <div
           className={styles.giftGrid}
           onPointerDown={(e) => e.stopPropagation()}
@@ -99,8 +94,13 @@ export default function SprayTab({
                 ${selected?.id === gift.id ? styles.giftSel : ""}
                 ${walletBalance < gift.tokens ? styles.giftDisabled : ""}
               `}
-              onClick={() => setSelected(gift)}
-              disabled={walletBalance < gift.tokens}
+              onClick={() => {
+                if (walletBalance < gift.tokens) {
+                  setTopModal(true);
+                  return;
+                }
+                setSelected(gift);
+              }}
             >
               {gift.featured && <span className={styles.topTag}>TOP</span>}
               <span className={styles.giftEmoji}>{gift.emoji}</span>
@@ -111,7 +111,6 @@ export default function SprayTab({
         </div>
       </motion.div>
 
-      {/* Send strip */}
       {selected && (
         <div className={styles.sendStrip}>
           <span className={styles.stripEmoji}>{selected.emoji}</span>
@@ -124,16 +123,16 @@ export default function SprayTab({
           </div>
           <button
             type="button"
+            disabled={isSending || walletBalance < selected.tokens}
             className={`${styles.stripBtn} ${isOnFire ? styles.stripBtnFire : ""}`}
             onClick={() => onSend(selected)}
-            disabled={isSending}
           >
-            {isSending ? "…" : isOnFire ? "🔥 Spray" : "Spray"}
+            Send
           </button>
         </div>
       )}
 
-      {walletBalance <= 0 && openTopModal && (
+      {openTopModal && (
         <TopUpModalCTA
           onRecharge={onRecharge}
           onClose={() => setTopModal(false)}

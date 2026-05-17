@@ -25,11 +25,13 @@ import {
   SaveGiftInput,
 } from './dtos/gift.dto';
 
-import { BROADCAST_GIFT_EVENT } from './job.constants';
+import { GIFTS_PERSIST_QUEUE, PERSIST_GIFT_EVENT } from './job.constants';
 
 import { REDIS_CLIENT } from '@modules/redis/redis.module';
 
 import { giftCountKey, giftLockKey } from '../../constants';
+import { RealtimeGatewayService } from '@modules/RealtimeGateway/RealtimeGateway.service';
+import { SocketEvents } from '@app/socket-events';
 
 const DEFAULT_CATALOG: readonly GiftCatalogItem[] = [
   {
@@ -82,18 +84,6 @@ const DEFAULT_CATALOG: readonly GiftCatalogItem[] = [
   },
 ];
 
-interface BroadcastGiftJob {
-  eventId: string;
-  userId: string;
-  displayName: string;
-  giftName: string;
-  giftEmoji: string;
-  tokens: number;
-  nairaValue: number;
-  giftId: string;
-  transactionId: string;
-}
-
 @Injectable()
 export class GiftService {
   private readonly logger = new Logger(GiftService.name);
@@ -105,23 +95,17 @@ export class GiftService {
     @InjectRepository(Gift)
     private readonly giftRepo: Repository<Gift>,
 
+    private readonly realtime: RealtimeGatewayService,
+
+    @InjectQueue(GIFTS_PERSIST_QUEUE)
+    private readonly persistQueue: Queue,
+
     private readonly walletService: WalletService,
 
     private readonly leaderboardService: LeaderboardService,
-
-    @InjectQueue('gifts')
-    private readonly giftQueue: Queue<
-      BroadcastGiftJob,
-      void,
-      typeof BROADCAST_GIFT_EVENT
-    >,
   ) {}
 
   async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
-    const t0 = performance.now();
-
-    const tRedisSet = performance.now();
-
     const locked = await this.redis.set(
       giftLockKey(payload.reference),
       '1',
@@ -129,80 +113,96 @@ export class GiftService {
       86400,
       'NX',
     );
+    if (!locked) return null;
 
-    this.logger.log(
-      `gift.redis.set: ${(performance.now() - tRedisSet).toFixed(2)}ms`,
-    );
-
-    if (!locked) {
-      this.logger.log(
-        `gift.total (locked): ${(performance.now() - t0).toFixed(2)}ms`,
-      );
-
-      return null;
-    }
+    const jobData = {
+      eventId: payload.eventId,
+      userId: payload.userId,
+      displayName: payload.displayName,
+      giftName: payload.giftName,
+      giftEmoji: payload.giftEmoji,
+      tokens: payload.tokens,
+      nairaValue: payload.amount,
+      giftId: payload.giftId,
+      transactionId: payload.reference,
+    };
 
     try {
-      const tDebit = performance.now();
-
       const newBalance = await this.walletService.debit({
         userId: payload.userId,
         amount: payload.amount,
         reference: payload.reference,
       });
 
-      this.logger.log(
-        `gift.wallet.debit: ${(performance.now() - tDebit).toFixed(2)}ms`,
-      );
+      // 1. persist first — debit succeeded, we must not lose this
+      await this.persistQueue.add(PERSIST_GIFT_EVENT, jobData, {
+        attempts: 10,
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: true,
+      });
 
-      const tQueue = performance.now();
+      // 2. leaderboard update
+      const { score, rank, totalTokens, totalGifts } =
+        await this.leaderboardService.addGiftFull(
+          payload.eventId,
+          payload.userId,
+          payload.displayName,
+          payload.tokens,
+          payload.giftName,
+          giftCountKey(payload.eventId),
+        );
 
-      void this.giftQueue.add(
-        BROADCAST_GIFT_EVENT,
-        {
-          eventId: payload.eventId,
-          userId: payload.userId,
-          displayName: payload.displayName,
-          giftName: payload.giftName,
-          giftEmoji: payload.giftEmoji,
-          tokens: payload.tokens,
-          nairaValue: payload.amount,
-          giftId: payload.giftId,
-          transactionId: payload.reference,
-        },
-        {
-          attempts: 5,
-          backoff: {
-            type: 'exponential',
-            delay: 1000,
+      // 3. broadcast — best-effort, never throws up
+      try {
+        this.realtime.emitTo(
+          `gift-room:${payload.eventId}`,
+          SocketEvents.giftReceived,
+          {
+            displayName: payload.displayName,
+            giftName: payload.giftName,
+            giftEmoji: payload.giftEmoji,
+            tokens: payload.tokens,
+            giftId: payload.giftId,
+            newScore: score,
+            newRank: rank,
           },
-          removeOnComplete: true,
-        },
-      );
+        );
 
-      this.logger.log(
-        `gift.queue.add: ${(performance.now() - tQueue).toFixed(2)}ms`,
-      );
+        this.realtime.emitTo(
+          `gift-room:${payload.eventId}`,
+          SocketEvents.leaderboardUpdate,
+          {
+            patch: {
+              userId: payload.userId,
+              displayName: payload.displayName,
+              newScore: score,
+              newRank: rank,
+            },
+            totalTokens,
+            totalGifts,
+          },
+        );
+      } catch (broadcastErr) {
+        this.logger.warn(
+          'realtime broadcast failed — gift persisted and leaderboard updated',
+          broadcastErr instanceof Error
+            ? broadcastErr.stack
+            : String(broadcastErr),
+        );
+      }
 
-      this.logger.log(`gift.total: ${(performance.now() - t0).toFixed(2)}ms`);
-
-      return {
-        success: true,
-        newBalance,
-      };
-    } catch (error: unknown) {
-      void this.redis
+      return { success: true, newBalance };
+    } catch (err) {
+      await this.redis
         .del(giftLockKey(payload.reference))
-        .catch((cleanupError: unknown): void => {
+        .catch((cleanupErr: unknown) => {
           this.logger.error(
             'gift.cleanup failed',
-            cleanupError instanceof Error
-              ? cleanupError.stack
-              : String(cleanupError),
+            cleanupErr instanceof Error ? cleanupErr.stack : String(cleanupErr),
           );
         });
 
-      throw error;
+      throw err;
     }
   }
 

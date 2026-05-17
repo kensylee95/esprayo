@@ -81,7 +81,7 @@ export default function HomePage() {
       <main className={styles.main}>
         {/* ── Header ── */}
         <header className={styles.header}>
-          <span className={styles.logo}>Serenade</span>
+          <span className={styles.logo}>SprayIt</span>
           <button
             type="button"
             className={styles.avatar}
@@ -95,11 +95,11 @@ export default function HomePage() {
         {/* ── Balance card ── */}
         <div
           className={styles.balanceCard}
-          onClick={() => router.push("/wallet")}
+          onClick={() => router.push("/wallet/fund")}
           role="button"
           tabIndex={0}
           aria-label="Wallet balance, tap to fund"
-          onKeyDown={(e) => e.key === "Enter" && router.push("/wallet")}
+          onKeyDown={(e) => e.key === "Enter" && router.push("/wallet/fund")}
         >
           <div className={styles.balOrb} aria-hidden="true" />
           <p className={styles.balLabel}>Token balance</p>

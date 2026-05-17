@@ -144,7 +144,7 @@ export class WalletService {
     });
 
     // Fire and forget — DB is source of truth for credits
-    this.redis
+    await this.redis
       .set(this.balanceKey(userId), newBalance, 'EX', 86400)
       .catch((err: unknown) =>
         console.error('wallet.redis.set failed', { userId, err }),

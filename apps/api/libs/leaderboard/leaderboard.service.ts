@@ -193,6 +193,44 @@ export class LeaderboardService {
     return parseInt(val ?? '0', 10);
   }
 
+  async addGiftFull(
+    eventId: string,
+    userId: string,
+    displayName: string,
+    tokens: number,
+    giftName: string,
+    giftCountKey: string, // passed in from processor
+  ): Promise<{
+    score: number;
+    rank: number;
+    totalTokens: number;
+    totalGifts: number;
+  }> {
+    const pipeline = this.redis.pipeline();
+
+    pipeline.zincrby(this.lbKey(eventId), tokens, userId); // [0] new score
+    pipeline.zrevrank(this.lbKey(eventId), userId); // [1] new rank
+    pipeline.hset(this.metaKey(eventId, userId), {
+      // [2]
+      displayName,
+      lastGift: giftName,
+    });
+    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1); // [3]
+    pipeline.incrby(this.totalKey(eventId), tokens); // [4] total tokens
+    pipeline.sadd(this.usersSetKey(eventId), userId); // [5]
+    pipeline.incr(giftCountKey); // [6] total gifts
+
+    const results = await pipeline.exec();
+    this.assertPipelineResults(results, 'addGiftFull');
+
+    return {
+      score: Number(results![0][1]),
+      rank: Number(results![1][1]) + 1,
+      totalTokens: Number(results![4][1]),
+      totalGifts: Number(results![6][1]),
+    };
+  }
+
   // -------------------------
   // EXPIRY
   // -------------------------

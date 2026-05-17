@@ -1,1 +1,3 @@
-export const BROADCAST_GIFT_EVENT = 'broadcast_gift_event' as const;
+export const GIFTS_PERSIST_QUEUE = 'gifts-persist';
+
+export const PERSIST_GIFT_EVENT = 'persist-gift';

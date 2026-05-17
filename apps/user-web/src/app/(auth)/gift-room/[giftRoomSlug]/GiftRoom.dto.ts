@@ -6,7 +6,20 @@ export interface LeaderboardEntry {
   displayName: string;
   tokens: number;
   giftCount: number;
-  lastGift: string;
+  lastGift?: string;
+}
+
+export interface LeaderboardPatch {
+  userId: string;
+  displayName: string;
+  newScore: number;
+  newRank: number;
+}
+
+export interface LeaderboardUpdatePayload {
+  patch: LeaderboardPatch;
+  totalTokens: number;
+  totalGifts: number;
 }
 
 export interface GetWayRes {
@@ -33,6 +46,7 @@ export interface RoomStats {
   eventTitle: string;
   eventEmoji: string;
 }
+
 export type Overlay = "spray" | "wallet";
 
 // ─── Constants ────────────────────────────────────────────────────────────────

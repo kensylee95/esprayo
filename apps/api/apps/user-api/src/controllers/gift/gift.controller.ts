@@ -34,7 +34,7 @@ export class GiftController {
       throw new Error('Gift not found');
     }
 
-    return await this.giftService.sendGift({
+    return this.giftService.sendGift({
       eventId: dto.eventId,
       userId,
       displayName: dto.displayName,

@@ -33,32 +33,35 @@ import Redis from 'ioredis';
     OrmModule,
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => {
-        const redisUrl = config.get<string>('REDIS_URL');
-        if (!redisUrl) throw new Error('REDIS_URL missing in BullMQ config');
+      useFactory: () =>
+        //config: ConfigService
+        {
+          const redisUrl =
+            'redis://default:ceed33ff15c2463387253a50f33a3a35@fly-throbbing-dawn-1630.upstash.io:6379';
+          //if (!redisUrl) throw new Error('REDIS_URL missing in BullMQ config');
 
-        const connection = new Redis(redisUrl, {
-          maxRetriesPerRequest: null, // required by BullMQ
-          enableReadyCheck: false, // required by BullMQ
-          lazyConnect: false,
-          keepAlive: 30000,
-          connectTimeout: 15000,
-          retryStrategy: (times) => {
-            if (times > 10) return null;
-            return Math.min(times * 1000, 10000);
-          },
-        });
+          const connection = new Redis(redisUrl, {
+            maxRetriesPerRequest: null, // required by BullMQ
+            enableReadyCheck: false, // required by BullMQ
+            lazyConnect: false,
+            keepAlive: 30000,
+            connectTimeout: 15000,
+            retryStrategy: (times) => {
+              if (times > 10) return null;
+              return Math.min(times * 1000, 10000);
+            },
+          });
 
-        connection.on('error', (err) => {
-          console.error('BullMQ Redis error:', err.message);
-        });
+          connection.on('error', (err) => {
+            console.error('BullMQ Redis error:', err.message);
+          });
 
-        connection.on('connect', () => {
-          console.log('BullMQ Redis connected');
-        });
+          connection.on('connect', () => {
+            console.log('BullMQ Redis connected');
+          });
 
-        return { connection };
-      },
+          return { connection };
+        },
     }),
     GiftControllerModule,
     AuthControllerModule,
