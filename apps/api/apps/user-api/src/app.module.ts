@@ -33,12 +33,11 @@ import Redis from 'ioredis';
     OrmModule,
     BullModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: () =>
-        //config: ConfigService
+      useFactory: (config: ConfigService) => 
         {
-          const redisUrl =
-            'redis://default:ceed33ff15c2463387253a50f33a3a35@fly-throbbing-dawn-1630.upstash.io:6379';
-          //if (!redisUrl) throw new Error('REDIS_URL missing in BullMQ config');
+          const redisUrl = config.get<string>("REDIS_URL")
+            //'redis://default:ceed33ff15c2463387253a50f33a3a35@fly-throbbing-dawn-1630.upstash.io:6379';
+          if (!redisUrl) throw new Error('REDIS_URL missing in BullMQ config');
 
           const connection = new Redis(redisUrl, {
             maxRetriesPerRequest: null, // required by BullMQ
