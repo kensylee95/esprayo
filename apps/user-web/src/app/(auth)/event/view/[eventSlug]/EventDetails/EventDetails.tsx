@@ -12,7 +12,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { getTokenClient } from "@/helpers/request";
 import { EventStatus, type IEvent } from "@/services/Event/Event.dto";
-import BackButton from "@/ui/components/BackButton/BackButton";
 import { useEvent } from "../../../hooks/useEvents";
 import s from "./EventDetail.module.scss";
 
@@ -45,8 +44,28 @@ function CancelSheet({ eventTitle, onConfirm, onDismiss }: CancelSheetProps) {
   };
 
   return (
-    <div className={s.sheetOverlay} onClick={onDismiss}>
-      <div className={s.sheet} onClick={(e) => e.stopPropagation()}>
+    <div
+      className={s.sheetOverlay}
+      onClick={onDismiss}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          onDismiss();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      <div
+        className={s.sheet}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.stopPropagation();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={s.sheetHandle} />
         <div className={s.sheetIcon}>🚫</div>
         <p className={s.sheetTitle}>Cancel event?</p>
@@ -65,13 +84,19 @@ function CancelSheet({ eventTitle, onConfirm, onDismiss }: CancelSheetProps) {
         </div>
 
         <button
+          type="button"
           className={s.btnConfirmCancel}
           onClick={handleConfirm}
           disabled={loading}
         >
           {loading ? "Cancelling…" : "Yes, cancel event"}
         </button>
-        <button className={s.btnKeep} onClick={onDismiss} disabled={loading}>
+        <button
+          type="button"
+          className={s.btnKeep}
+          onClick={onDismiss}
+          disabled={loading}
+        >
           Keep event
         </button>
       </div>
@@ -112,14 +137,15 @@ export default function EventDetail({ event }: EventDetailProps) {
     } finally {
       setActivating(false);
     }
-  }, [isDraft, event.id]);
+  }, [isDraft, event.id, eventHook]);
 
-  const handleConfirmCancel = useCallback(async () => {
-    const token = await getTokenClient();
-    if (!token) return null;
-    setStatus(EventStatus.CANCELLED);
-    setShowCancel(false);
-  }, [event.id]);
+  /*  const handleConfirmCancel = useCallback(async () => {
+      const token = await getTokenClient();
+      if (!token) return null;
+      setStatus(EventStatus.CANCELLED);
+      setShowCancel(false);
+    }, [event.id]);
+    */
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(event.slug);
@@ -134,6 +160,12 @@ export default function EventDetail({ event }: EventDetailProps) {
         <div className={`${s.cover} ${isInactive ? s.coverMuted : ""}`}>
           {
             <button
+              type="button"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  router.back;
+                }
+              }}
               className={s.coverBack}
               onClick={() => router.back}
               aria-label="Go back"
@@ -162,6 +194,12 @@ export default function EventDetail({ event }: EventDetailProps) {
               <div className={s.joinRight}>
                 <span className={s.joinCode}>{event.slug}</span>
                 <button
+                  type="button"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleCopy;
+                    }
+                  }}
                   className={`${s.copyBtn} ${copied ? s.copyBtnCopied : ""}`}
                   onClick={handleCopy}
                   aria-label="Copy join code"
@@ -185,6 +223,7 @@ export default function EventDetail({ event }: EventDetailProps) {
         <div className={s.actions}>
           {isDraft && (
             <button
+              type="button"
               className={s.btnPrimary}
               onClick={handleActivate}
               disabled={activating}
@@ -196,6 +235,7 @@ export default function EventDetail({ event }: EventDetailProps) {
 
           {isLive && (
             <button
+              type="button"
               className={`${s.btnPrimary} ${s.btnPrimaryActive}`}
               disabled
             >
@@ -205,6 +245,7 @@ export default function EventDetail({ event }: EventDetailProps) {
 
           {!isInactive && (
             <button
+              type="button"
               className={s.btnGift}
               onClick={() => router.push(`/gift-room/${event.id}`)}
             >
@@ -213,13 +254,17 @@ export default function EventDetail({ event }: EventDetailProps) {
           )}
 
           {!isInactive && (
-            <button className={s.btnCancel} onClick={() => setShowCancel(true)}>
+            <button
+              type="button"
+              className={s.btnCancel}
+              onClick={() => setShowCancel(true)}
+            >
               <X size={14} /> Cancel event
             </button>
           )}
 
           {isCancelled && (
-            <button className={s.btnCancel} disabled>
+            <button type="button" className={s.btnCancel} disabled>
               <X size={14} /> Event cancelled
             </button>
           )}

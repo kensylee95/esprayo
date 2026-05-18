@@ -1,5 +1,4 @@
 "use client";
-import { ArrowBigLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect } from "react";
