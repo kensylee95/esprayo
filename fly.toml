@@ -9,6 +9,10 @@ primary_region = 'jnb'
 [build]
   dockerfile = 'Dockerfile.api'
 
+[env]
+  FLY_PRIVATE_NETWORK = "true"
+
+
 [http_service]
   internal_port = 3001
   force_https = true
