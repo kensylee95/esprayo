@@ -1,5 +1,5 @@
 import { request } from "@/helpers/request";
-import type { IEvent } from "./Event.dto";
+import { type IEvent, MAX_RECENT, RECENT_EVENT_IDS_KEY } from "./Event.dto";
 
 export type EventDTO = {
   title: string;
@@ -63,6 +63,24 @@ const eventService = (token?: string) => ({
       method: "POST",
       token,
     });
+  },
+
+  saveRecentEventId(id: string) {
+    const existing: string[] = JSON.parse(
+      localStorage.getItem(RECENT_EVENT_IDS_KEY) || "[]",
+    );
+
+    // Remove duplicate, add to front, trim to max
+    const updated = [id, ...existing.filter((e) => e !== id)].slice(
+      0,
+      MAX_RECENT,
+    );
+
+    localStorage.setItem(RECENT_EVENT_IDS_KEY, JSON.stringify(updated));
+  },
+
+  getRecentEventIds(): string[] {
+    return JSON.parse(localStorage.getItem(RECENT_EVENT_IDS_KEY) || "[]");
   },
 });
 

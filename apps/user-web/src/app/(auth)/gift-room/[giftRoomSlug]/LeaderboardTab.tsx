@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-
-import { avatarColour, initials } from "./GiftRoom.constants";
+import { avatarColour, initials } from "@/helpers/getters";
 import type { LeaderboardEntry, RoomStats } from "./GiftRoom.dto";
 import styles from "./GiftRoom.module.scss";
 

@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { TOKEN_NAME } from "../constants";
+import { TOKEN_NAME } from "./constants";
 
 export async function proxy(request: NextRequest) {
   const token = request.cookies.get(TOKEN_NAME)?.value;

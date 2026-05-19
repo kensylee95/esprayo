@@ -1,6 +1,19 @@
-import type { GiftItem } from "./GiftRoom.dto";
+export const TOKEN_NAME = "accessToken" as const;
+export interface GiftItem {
+  id: string;
+  name: string;
+  emoji: string;
+  tokens: number;
+  featured?: boolean;
+}
 
-const AVATAR_COLOURS = ["#C9A84C", "#7B6CE0", "#E07BA0", "#6ED88A", "#E87070"];
+export const AVATAR_COLOURS = [
+  "#C9A84C",
+  "#7B6CE0",
+  "#E07BA0",
+  "#6ED88A",
+  "#E87070",
+];
 
 export const GIFT_CATALOG: GiftItem[] = [
   { id: "bouquet", name: "Bouquet", emoji: "💐", tokens: 50 },
@@ -12,17 +25,3 @@ export const GIFT_CATALOG: GiftItem[] = [
   { id: "car", name: "Car Key", emoji: "🚗", tokens: 2000, featured: true },
   { id: "house", name: "House Key", emoji: "🏠", tokens: 5000, featured: true },
 ];
-
-export function initials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-}
-
-export function avatarColour(userId: string) {
-  const sum = userId.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return AVATAR_COLOURS[sum % AVATAR_COLOURS.length];
-}

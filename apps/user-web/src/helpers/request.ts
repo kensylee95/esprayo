@@ -1,4 +1,4 @@
-import { TOKEN_NAME } from "../../constants";
+import { TOKEN_NAME } from "../constants";
 
 export async function saveToken(token: string): Promise<void> {
   if (typeof window === "undefined") return;

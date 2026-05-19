@@ -14,6 +14,19 @@ export enum EventType {
   OTHER = "other",
 }
 
+export const RECENT_EVENT_IDS_KEY = "recent_event_ids";
+export const MAX_RECENT = 5;
+
+export interface RecentEvent {
+  id: string;
+  title: string;
+  code: string;
+  emoji: string;
+  gifterCount: number;
+  status: "live" | "draft";
+  lastViewedAt: number;
+}
+
 export interface IEvent {
   id: string;
   slug: string;

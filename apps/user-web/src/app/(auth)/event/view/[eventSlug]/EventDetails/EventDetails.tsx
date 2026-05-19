@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { getTokenClient } from "@/helpers/request";
 import { EventStatus, type IEvent } from "@/services/Event/Event.dto";
-import { useEvent } from "../../../hooks/useEvents";
+import { useEvent } from "../../../../../../hooks/useEvents";
 import s from "./EventDetail.module.scss";
 
 interface EventDetailProps {

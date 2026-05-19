@@ -5,14 +5,14 @@ import {
   createAudioContext,
   playRivalrySound,
   playRoomBurstSound,
-} from "../audio";
-import { triggerRoomBurst } from "../confetti";
+} from "../app/(auth)/gift-room/[giftRoomSlug]/audio";
+import { triggerRoomBurst } from "../app/(auth)/gift-room/[giftRoomSlug]/confetti";
 import type {
   GetWayRes,
   LeaderboardEntry,
   LeaderboardUpdatePayload,
   RoomStats,
-} from "../GiftRoom.dto";
+} from "../app/(auth)/gift-room/[giftRoomSlug]/GiftRoom.dto";
 
 export function useGiftRoom(token: string | null, eventId: string) {
   const [leaderboard, setLb] = useState<LeaderboardEntry[]>([]);
@@ -68,14 +68,24 @@ export function useGiftRoom(token: string | null, eventId: string) {
       }));
 
       setLb((prev) => {
-        const { userId, displayName, newScore, newRank } = payload.patch;
+        const { userId, displayName, newScore, newRank, giftCount } =
+          payload.patch;
 
-        // update or insert the entry
         const exists = prev.some((e) => e.userId === userId);
 
         const updated = exists
           ? prev.map((e) =>
-              e.userId === userId ? { ...e, displayName, tokens: newScore } : e,
+              e.userId === userId
+                ? {
+                    ...e,
+                    displayName,
+                    tokens: newScore,
+                    rank: newRank,
+
+                    // update live values too
+                    giftCount: giftCount ?? (e.giftCount ?? 0) + 1,
+                  }
+                : e,
             )
           : [
               ...prev,
@@ -84,15 +94,16 @@ export function useGiftRoom(token: string | null, eventId: string) {
                 displayName,
                 tokens: newScore,
                 rank: newRank,
-                giftCount: 1,
-                lastGift: "",
+                giftCount: giftCount ?? 1,
               },
             ];
 
-        // re-sort descending by tokens, reassign ranks
         return updated
           .sort((a, b) => b.tokens - a.tokens)
-          .map((e, i) => ({ ...e, rank: i + 1 }));
+          .map((e, i) => ({
+            ...e,
+            rank: i + 1,
+          }));
       });
     };
 

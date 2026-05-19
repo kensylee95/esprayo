@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import walletService from "@/services/Wallet/Wallet";
 import LoadingPage from "@/ui/components/LoadingPage/LoadingPage";
 import WalletFundOverlay from "@/ui/components/WalletFundOverlay/WalletFundOverlay";
-import { TOKEN_NAME } from "../../../../../constants";
+import { TOKEN_NAME } from "../../../../constants";
 
 const getUserBalance = async (token: string) => {
   try {

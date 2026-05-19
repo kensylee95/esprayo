@@ -3,8 +3,7 @@
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import { useState } from "react";
 import { createPortal } from "react-dom";
-import { GIFT_CATALOG } from "../GiftRoom.constants";
-import type { GiftItem } from "../GiftRoom.dto";
+import { GIFT_CATALOG, type GiftItem } from "@/constants";
 import TopUpModalCTA from "../TopupModalCTA";
 import styles from "./SprayTab.module.scss";
 

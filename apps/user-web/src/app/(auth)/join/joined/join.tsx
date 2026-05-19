@@ -45,6 +45,7 @@ export default function JoinEventPage() {
 
       const service = eventService(token);
       const event = await service.getBySlug(fullCode);
+      //event.id
       setPreview({
         id: event.id,
         emoji: "",
@@ -52,6 +53,9 @@ export default function JoinEventPage() {
         sub: event.gifterCount.toString(),
         status: event.status === EventStatus.ACTIVE ? "live" : "draft",
       });
+      //add to recent looked up
+      service.saveRecentEventId(event.id);
+
       inputRefs.current.forEach((el) => {
         el?.blur();
       });

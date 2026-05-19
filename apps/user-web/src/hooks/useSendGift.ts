@@ -1,6 +1,5 @@
+import { GiftItem } from "@/constants";
 import { useCallback, useState } from "react";
-import type { GiftItem } from "@/app/(auth)/gift-room/[giftRoomSlug]/GiftRoom.dto";
-
 type SendGiftPayload = {
   eventId: string;
   giftId: GiftItem["id"];

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getTokenClient } from "@/helpers/request";
 import { useWizardStore } from "@/stores/create-event-stores/useWizardStore";
-import { useEvent } from "../../hooks/useEvents";
+import { useEvent } from "../../../../../hooks/useEvents";
 import { useCreateEventStore } from "../useCreateEventStore";
 import styles from "./Review.module.scss";
 import { EVENT_TYPE_EMOJI } from "./types";

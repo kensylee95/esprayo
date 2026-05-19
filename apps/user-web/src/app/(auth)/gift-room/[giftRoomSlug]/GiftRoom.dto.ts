@@ -14,6 +14,7 @@ export interface LeaderboardPatch {
   displayName: string;
   newScore: number;
   newRank: number;
+  giftCount: number;
 }
 
 export interface LeaderboardUpdatePayload {
@@ -29,14 +30,6 @@ export interface GetWayRes {
   guestCount: number;
   ok: boolean;
   error: string;
-}
-
-export interface GiftItem {
-  id: string;
-  name: string;
-  emoji: string;
-  tokens: number;
-  featured?: boolean;
 }
 
 export interface RoomStats {
