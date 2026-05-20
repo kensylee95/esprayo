@@ -1,68 +1,67 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import {
+  LayoutGrid,
+  LogOut,
+  type LucideIcon,
+  QrCode,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { deleteToken } from "@/helpers/request";
+import { useCallback, useEffect, useState } from "react";
+import { deleteToken, getTokenClient } from "@/helpers/request";
 import { useWallet } from "@/hooks/useWallets";
+import eventService from "@/services/Event/Event";
+import { EventStatus, type IEvent } from "@/services/Event/Event.dto";
 import styles from "./Home.module.scss";
 
 interface QuickAction {
-  icon: string;
+  icon: LucideIcon;
   label: string;
   sub: string;
   href: string;
+  color: string;
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
   {
-    icon: "🎁",
+    icon: QrCode,
     label: "Join event",
     sub: "Enter code or scan QR",
     href: "/join",
+    color: "#7C3AED", // violet
   },
   {
-    icon: "✨",
+    icon: Sparkles,
     label: "Create event",
     sub: "Host a gift room",
     href: "/event/create/step-1",
-  },
-  { icon: "💸", label: "Fund wallet", sub: "Buy tokens", href: "/wallet/fund" },
-  { icon: "📊", label: "My events", sub: "View & manage", href: "/event/view" },
-];
-
-interface RecentEvent {
-  id: string;
-  emoji: string;
-  title: string;
-  sub: string;
-  status: "live" | "draft" | "ended";
-}
-
-// In production, fetch from GET /events/mine
-const RECENT_EVENTS: RecentEvent[] = [
-  {
-    id: "1",
-    emoji: "💍",
-    title: "Adaeze & Chidi's Wedding",
-    sub: "Active · 47 guests · 18,420 tkn",
-    status: "live",
+    color: "#F59E0B", // gold
   },
   {
-    id: "2",
-    emoji: "🎂",
-    title: "Emeka's 40th Birthday",
-    sub: "Draft · starts Apr 30",
-    status: "draft",
+    icon: Wallet,
+    label: "Fund wallet",
+    sub: "Buy tokens",
+    href: "/wallet/fund",
+    color: "#10B981", // emerald
+  },
+  {
+    icon: LayoutGrid,
+    label: "My events",
+    sub: "View & manage",
+    href: "/event/view",
+    color: "#EC4899", // pink
   },
 ];
 
-function StatusBadge({ status }: { status: RecentEvent["status"] }) {
-  if (status === "live") {
+function StatusBadge({ status }: { status: EventStatus }) {
+  if (status === EventStatus.ACTIVE) {
     return (
       <span className={`${styles.badge} ${styles.badgeLive}`}>● LIVE</span>
     );
   }
-  if (status === "draft") {
+  if (status === EventStatus.DRAFT) {
     return (
       <span className={`${styles.badge} ${styles.badgeDraft}`}>Draft</span>
     );
@@ -70,13 +69,28 @@ function StatusBadge({ status }: { status: RecentEvent["status"] }) {
   return <span className={`${styles.badge} ${styles.badgeEnded}`}>Ended</span>;
 }
 
+// Extracted outside component — no dependency on component state or props
+async function fetchRecentEvents(): Promise<IEvent[]> {
+  const token = await getTokenClient();
+  if (!token) return [];
+  const service = eventService(token);
+  const eventIds = service.getRecentEventIds();
+  return Promise.all(eventIds.map((id) => service.getEvent(id)));
+}
+
 export default function HomePage() {
+  const [recentActiveEvents, setRecentActiveEvents] = useState<IEvent[]>([]);
   const router = useRouter();
-  const handleLogout = () => {
+  const wallet = useWallet();
+
+  const handleLogout = useCallback(() => {
     deleteToken();
     router.replace("/login");
-  };
-  const wallet = useWallet();
+  }, [router]);
+
+  useEffect(() => {
+    fetchRecentEvents().then(setRecentActiveEvents);
+  }, []);
 
   return (
     <div className={styles.page}>
@@ -88,7 +102,7 @@ export default function HomePage() {
             type="button"
             className={styles.logout}
             onClick={handleLogout}
-            aria-label="Go to profile"
+            aria-label="Log out"
           >
             <LogOut size={16} /> Logout
           </button>
@@ -106,21 +120,16 @@ export default function HomePage() {
           <div className={styles.balOrb} aria-hidden="true" />
           <p className={styles.balLabel}>Token balance</p>
           <p className={styles.balValue}>
-            {wallet.balance ? wallet.balance.toLocaleString() : 0.0}
+            {(wallet.balance ?? 0).toLocaleString()}
           </p>
           <p className={styles.balSub}>
-            ≈ ₦
-            {(wallet.balance
-              ? wallet.balance.toLocaleString()
-              : 0.0 * 10
-            ).toLocaleString()}{" "}
-            · tap to fund
+            ≈ ₦{((wallet.balance ?? 0) * 10).toLocaleString()} · tap to fund
           </p>
         </div>
 
         {/* ── Quick actions ── */}
         <div className={styles.quickGrid}>
-          {QUICK_ACTIONS.map(({ icon, label, sub, href }) => (
+          {QUICK_ACTIONS.map(({ icon: Icon, label, sub, href, color }) => (
             <button
               type="button"
               key={href}
@@ -128,7 +137,7 @@ export default function HomePage() {
               onClick={() => router.push(href)}
             >
               <span className={styles.qaIcon} aria-hidden="true">
-                {icon}
+                <Icon color={color} size={24} />
               </span>
               <span className={styles.qaLabel}>{label}</span>
               <span className={styles.qaSub}>{sub}</span>
@@ -137,23 +146,25 @@ export default function HomePage() {
         </div>
 
         {/* ── Recent events ── */}
-        {RECENT_EVENTS.length > 0 && (
+        {recentActiveEvents.length > 0 && (
           <>
             <p className={styles.sectionLabel}>Recent</p>
             <ul className={styles.eventList}>
-              {RECENT_EVENTS.map((event) => (
+              {recentActiveEvents.map((event) => (
                 <li key={event.id}>
                   <button
                     type="button"
                     className={styles.eventCard}
-                    onClick={() => router.push(`/events/${event.id}`)}
+                    onClick={() => router.push(`/gift-room/${event.id}`)}
                   >
-                    <div className={styles.ecIcon} aria-hidden="true">
-                      {event.emoji}
-                    </div>
                     <div className={styles.ecInfo}>
-                      <p className={styles.ecTitle}>{event.title}</p>
-                      <p className={styles.ecSub}>{event.sub}</p>
+                      <p
+                        style={{ marginBottom: "10px" }}
+                        className={styles.ecTitle}
+                      >
+                        {event.title.toUpperCase()}
+                      </p>
+                      <p className={styles.ecSub}>Join Code: {event.slug}</p>
                     </div>
                     <StatusBadge status={event.status} />
                   </button>
