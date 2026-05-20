@@ -18,9 +18,11 @@ import { WalletsControllerModule } from './controllers/wallet/wallet.controller.
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RealtimeModule } from '@modules/RealtimeGateway/RealtimeGateway.module';
 import Redis from 'ioredis';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{ name: 'default', ttl: 0, limit: 0 }]),
     RealtimeModule,
     //Config
     ConfigModule.forRoot({

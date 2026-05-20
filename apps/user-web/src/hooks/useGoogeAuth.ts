@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { saveToken } from "@/helpers/request";
-import { googleSignIn } from "@/services/Auth/Auth";
+import { getTokenClient, saveToken } from "@/helpers/request";
+import authService from "@/services/Auth/Auth";
 import type { AuthError } from "@/services/Auth/Auth.dto";
 
 type AuthStatus = "idle" | "loading" | "success" | "error";
@@ -23,7 +23,13 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     setError(null);
 
     try {
-      const { accessToken } = await googleSignIn(credential);
+      const token = await getTokenClient();
+      if (!token) {
+        setError("Token is required");
+        return;
+      }
+      const service = authService(token);
+      const { accessToken } = await service.googleLogin({ token: credential });
       await saveToken(accessToken);
       setStatus("success");
       return accessToken;

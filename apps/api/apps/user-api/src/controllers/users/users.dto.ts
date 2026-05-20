@@ -15,9 +15,9 @@ export type UserUpdateDto = {
 
 export type UserDto = {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
   createdAt: Date;
   updatedAt: Date;
   status: UserStatus;

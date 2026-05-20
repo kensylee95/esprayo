@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -33,6 +34,7 @@ export class UsersService {
   private mapToUserResponse = (user: User): UserResponse => ({
     id: user.id,
     email: user.email,
+    phoneNumber: user.phoneNumber,
     firstName: user.firstName,
     lastName: user.lastName,
     createdAt: user.createdAt,
@@ -86,30 +88,61 @@ export class UsersService {
       limit,
     };
   }
+  async findUserByPhone(phoneNumber: string): Promise<UserResponse> {
+    const user = await this.userRepository.findOne({ where: { phoneNumber } });
+    if (!user) throw new Error('user not found');
+    return this.mapToUserResponse(user);
+  }
 
+  async createPhoneUser(data: { phoneNumber: string }): Promise<UserResponse> {
+    const user = this.userRepository.create({
+      phoneNumber: data.phoneNumber,
+      provider: AuthProviderEnum.Local,
+      isActive: true,
+      status: UserStatusEnum.Active,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const saved = await this.userRepository.save(user);
+    return this.mapToUserResponse(saved);
+  }
   // -------------------------
   // LOCAL USER (EMAIL/PASSWORD)
   // -------------------------
   async createLocalUser(
     user: {
-      email: string;
+      email?: string;
+      phoneNumber?: string;
       password: string;
       firstName: string;
       lastName: string;
     },
     currentUser: UserPayload,
   ): Promise<UserResponse> {
-    const existingUser = await this.findUserByEmail(user.email);
+    if (!user.email && !user.phoneNumber) {
+      throw new BadRequestException('Either email or phone number is required');
+    }
+    if (user.email) {
+      const existingEmail = await this.findUserByEmail(user.email);
+      if (existingEmail) {
+        throw new ConflictException('Email is already in use');
+      }
+    }
 
-    if (existingUser) {
-      throw new ConflictException('Email is already in use');
+    if (user.phoneNumber) {
+      const existingPhone = await this.findUserByPhone(user.phoneNumber);
+      if (existingPhone) {
+        throw new ConflictException('Phone number is already in use');
+      }
     }
 
     const newUser = this.userRepository.create({
       email: user.email,
+      phoneNumber: user.phoneNumber,
       firstName: user.firstName,
       lastName: user.lastName,
-      passwordHash: user.password, // ideally hash before calling this
+      passwordHash: user.password,
       provider: AuthProviderEnum.Local,
       isActive: true,
       createdBy: currentUser.id,
@@ -138,22 +171,29 @@ export class UsersService {
       return this.mapToUserResponse(existingUser);
     }
 
-    const newUser = this.userRepository.create({
+    await this.userRepository.upsert(
+      {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        passwordHash: null,
+        provider: AuthProviderEnum.Google,
+        googleId: user.googleId,
+        isActive: true,
+        createdBy: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: UserStatusEnum.Active,
+      },
+      {
+        conflictPaths: ['email'],
+        skipUpdateIfNoValuesChanged: true,
+      },
+    );
+
+    const saved = await this.userRepository.findOneByOrFail({
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      passwordHash: null,
-      provider: AuthProviderEnum.Google,
-      googleId: user.googleId,
-      isActive: true,
-      createdBy: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: UserStatusEnum.Active,
     });
-
-    const saved = await this.userRepository.save(newUser);
-
     return this.mapToUserResponse(saved);
   }
 

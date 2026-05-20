@@ -1,22 +1,56 @@
-import type { AuthError, AuthResponse } from "./Auth.dto";
+import { request } from "@/helpers/request";
+import type {
+  AuthResponse,
+  GoogleLoginDto,
+  LoginDto,
+  PhoneSendOtpDto,
+  PhoneVerifyOtpDto,
+} from "./Auth.dto";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const authService = (token?: string) => ({
+  // -----------------------------------s
+  // EMAIL LOGIN
+  // -----------------------------------
+  login(payload: LoginDto): Promise<{ accessToken: AuthResponse }> {
+    return request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      token,
+    });
+  },
 
-export async function googleSignIn(token: string): Promise<AuthResponse> {
-  const res = await fetch(`${API_BASE_URL}/auth/google`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token }),
-  });
+  // -----------------------------------
+  // PHONE AUTH - STEP 1 (SEND OTP)
+  // -----------------------------------
+  sendPhoneOtp(payload: PhoneSendOtpDto): Promise<{ message: string }> {
+    return request("/auth/phone/send-otp", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      token,
+    });
+  },
 
-  const data = await res.json();
+  // -----------------------------------
+  // PHONE AUTH - STEP 2 (VERIFY OTP)
+  // -----------------------------------
+  verifyPhoneOtp(payload: PhoneVerifyOtpDto): Promise<AuthResponse> {
+    return request("/auth/phone/verify-otp", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      token,
+    });
+  },
 
-  if (!res.ok) {
-    throw {
-      message: data.message || "Authentication failed",
-      statusCode: res.status,
-    } as AuthError;
-  }
+  // -----------------------------------
+  // GOOGLE LOGIN
+  // -----------------------------------
+  googleLogin(payload: GoogleLoginDto): Promise<AuthResponse> {
+    return request("/auth/google", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      token,
+    });
+  },
+});
 
-  return data as AuthResponse;
-}
+export default authService;

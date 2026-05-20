@@ -25,13 +25,13 @@ export class User {
   id: string;
 
   @Column({ unique: true, type: 'text' })
-  email: string;
+  email?: string;
 
   @Column({ type: 'text', name: 'first_name' })
-  firstName: string;
+  firstName?: string;
 
   @Column({ type: 'text', name: 'last_name' })
-  lastName: string;
+  lastName?: string;
 
   @Column({ type: 'text', nullable: true, name: 'password_hash' })
   passwordHash: string | null;
@@ -41,6 +41,9 @@ export class User {
 
   @Column({ type: 'text', nullable: true, name: 'google_id' })
   googleId: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'phone' })
+  phoneNumber?: string;
 
   @Column({ enum: UserStatusEnum, default: 'Active' })
   status: UserStatus;

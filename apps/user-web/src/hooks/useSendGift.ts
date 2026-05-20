@@ -1,10 +1,12 @@
-import { GiftItem } from "@/constants";
 import { useCallback, useState } from "react";
+import type { GiftItem } from "@/constants";
+
 type SendGiftPayload = {
   eventId: string;
   giftId: GiftItem["id"];
   displayName: string;
 };
+
 export const useGiftSender = (token?: string | null) => {
   const [isSending, setSending] = useState(false);
 

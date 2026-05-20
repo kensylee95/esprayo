@@ -6,9 +6,10 @@ export type PaginationDto = {
 };
 export type UserResponse = {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
+  email?: string;
+  phoneNumber?: string;
+  firstName?: string;
+  lastName?: string;
   status: UserStatus;
   createdBy: string | null;
   createdAt: Date;
