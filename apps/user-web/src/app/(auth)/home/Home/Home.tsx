@@ -1,6 +1,8 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { deleteToken } from "@/helpers/request";
 import { useWallet } from "@/hooks/useWallets";
 import styles from "./Home.module.scss";
 
@@ -70,11 +72,11 @@ function StatusBadge({ status }: { status: RecentEvent["status"] }) {
 
 export default function HomePage() {
   const router = useRouter();
-
-  // In production: fetch from useAuth() hook
-  const user = { initials: "CO" };
+  const handleLogout = () => {
+    deleteToken();
+    router.replace("/login");
+  };
   const wallet = useWallet();
-  //clearToken()
 
   return (
     <div className={styles.page}>
@@ -84,11 +86,11 @@ export default function HomePage() {
           <span className={styles.logo}>SprayIt</span>
           <button
             type="button"
-            className={styles.avatar}
-            onClick={() => router.push("/profile")}
+            className={styles.logout}
+            onClick={handleLogout}
             aria-label="Go to profile"
           >
-            {user.initials}
+            <LogOut size={16} /> Logout
           </button>
         </header>
 

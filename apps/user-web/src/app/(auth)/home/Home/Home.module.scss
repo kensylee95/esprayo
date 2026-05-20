@@ -30,23 +30,25 @@
   color: vars.$gold;
 }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(vars.$gold, 0.13);
-  border: 0.5px solid rgba(vars.$gold, 0.27);
-  color: vars.$gold;
+.logout {
+  padding: 8px 12px;
+  background: none;
+  border-radius: 10px;
+  border: 2px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
   font-family: vars.$font-body;
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   display: flex;
+  gap: 4px;
   align-items: center;
   justify-content: center;
   transition: opacity 0.15s ease;
 
-  &:hover { opacity: 0.8; }
+  &:hover {
+    opacity: 0.8;
+  }
 }
 
 // ── Balance card ──────────────────────────────────────────────────────────────
@@ -63,8 +65,14 @@
   -webkit-tap-highlight-color: transparent;
   transition: border-color 0.15s ease;
 
-  &:hover { border-color: rgba(vars.$gold, 0.3); }
-  &:focus-visible { outline: 1.5px solid vars.$gold; outline-offset: 2px; }
+  &:hover {
+    border-color: rgba(vars.$gold, 0.3);
+  }
+
+  &:focus-visible {
+    outline: 1.5px solid vars.$gold;
+    outline-offset: 2px;
+  }
 }
 
 .balOrb {
@@ -125,8 +133,13 @@
   -webkit-tap-highlight-color: transparent;
   transition: border-color 0.15s ease, background 0.15s ease;
 
-  &:hover  { border-color: rgba(vars.$gold, 0.27); }
-  &:active { background: vars.$surface-2; }
+  &:hover {
+    border-color: rgba(vars.$gold, 0.27);
+  }
+
+  &:active {
+    background: vars.$surface-2;
+  }
 }
 
 .qaIcon {
@@ -181,8 +194,13 @@
   -webkit-tap-highlight-color: transparent;
   transition: border-color 0.15s ease;
 
-  &:hover  { border-color: rgba(vars.$gold, 0.2); }
-  &:active { background: vars.$surface-2; }
+  &:hover {
+    border-color: rgba(vars.$gold, 0.2);
+  }
+
+  &:active {
+    background: vars.$surface-2;
+  }
 }
 
 .ecIcon {

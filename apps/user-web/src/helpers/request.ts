@@ -13,6 +13,12 @@ export async function saveToken(token: string): Promise<void> {
   } as CookieInit);
 }
 
+export async function deleteToken(): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  await cookieStore.delete(TOKEN_NAME);
+}
+
 export async function getTokenClient(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 
