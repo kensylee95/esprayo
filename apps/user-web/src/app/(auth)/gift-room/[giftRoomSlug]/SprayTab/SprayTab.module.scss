@@ -196,7 +196,7 @@
 }
 
 .stripBtn {
-  background: linear-gradient(135deg, vars.$gold, vars.$gold-light);
+  background: linear-gradient(135deg, vars.$gold,vars.$gold-light-val);
   color: vars.$void;
   border: none;
   border-radius: vars.$radius-pill;

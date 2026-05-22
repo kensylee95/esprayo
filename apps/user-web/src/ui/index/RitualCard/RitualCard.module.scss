@@ -25,7 +25,7 @@
   font-family: $font-mono;
   font-size: 11px;
   background: rgba($gold, 0.12);
-  color: $gold-light;
+  color: vars.$gold-light-val;
 }
 
 .rituals {
@@ -60,7 +60,7 @@
   background: $text-3;
 }
 
-.rowDotAccent { background: $gold-light; }
+.rowDotAccent { background: vars.$gold-light-val; }
 
 .rowTitle { font-size: 0.875rem; }
 

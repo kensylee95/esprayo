@@ -1,15 +1,21 @@
+"use client"
 import { ArrowRight, Coins, Globe2, PlayCircle, Users } from "lucide-react";
-import Image from "next/image";
-import heroImg from "../../assets/hero-spray.jpg";
+import Image, { StaticImageData } from "next/image";
+import heroImgDark from "../../assets/hero-spray-dark.png";
+import heroImgLight from "../../assets/hero-spray-light.png";
 import { LiveRoomCard } from "../LiveRoomCard/LiveRoomCard";
 import { TokenSprayCard } from "../TokenSprayCard/TokenSprayCard";
 import styles from "./Hero.module.scss";
+import { FeatureStrip } from "../FeatureStrip/FeatureStrip";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export function Hero() {
+
   return (
     <section className={styles.hero}>
       <div className={styles.heroGrid}>
-        <div>
+        <div className={styles.heroLeft}>
           <span className={styles.label}>
             <span className={styles.labelDot} /> Live Gifting · Real Moments
           </span>
@@ -36,30 +42,32 @@ export function Hero() {
           <div className={styles.statsRow}>
             <Stat
               icon={<Coins size={14} />}
-              value="2.4M"
+              value="102K"
               label="Tokens sprayed"
             />
             <div className={styles.divider} />
-            <Stat icon={<Users size={14} />} value="18k" label="Live rooms" />
+            <Stat icon={<Users size={14} />} value="25" label="Live rooms" />
             <div className={styles.divider} />
-            <Stat icon={<Globe2 size={14} />} value="92" label="Countries" />
+            <Stat icon={<Globe2 size={14} />} value="2" label="Countries" />
           </div>
         </div>
 
         <div className={styles.cardStack}>
           <div className={styles.glow} />
           <div className={styles.heroImageWrap}>
-            <Image
-              src={heroImg}
+            {<Image
+              src={heroImgLight}
               alt="Wedding guests spraying gold tokens at a celebration"
-              width={1024}
-              height={1024}
+              width={500}
+              height={500}
+              priority
+              unoptimized
               className={styles.heroImage}
-            />
-            <div className={styles.heroImageOverlay} />
+            />}
           </div>
-          <LiveRoomCard />
-          <TokenSprayCard />
+          {/*<LiveRoomCard />*/}
+          {/*<TokenSprayCard />*/}
+          <FeatureStrip />
         </div>
       </div>
     </section>

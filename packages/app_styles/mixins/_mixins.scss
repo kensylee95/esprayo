@@ -29,39 +29,82 @@
 
 @mixin btn-primary {
   @include btn-base;
-  background: $gradient-gold;
-  color: #000;
-  box-shadow: 0 6px 24px -8px rgba($gold, 0.6);
 
-  @include sm-down { width: 100%; }
-   &:disabled,
+  background: $gold;
+  color: $void;
+
+  border: 1px solid rgba($gold-light-val, 0.2);
+
+  box-shadow:
+    0 10px 30px -12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+
+  transition:
+    transform 180ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+
+  @include sm-down {
+    width: 100%;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+
+    background: $gold-light-val;
+
+    box-shadow:
+      0 16px 42px -14px rgba(0, 0, 0, 0.35),
+      0 0 18px rgba($gold, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.985);
+  }
+
+  &:disabled,
   &[disabled] {
     cursor: not-allowed;
     opacity: 0.55;
-    box-shadow: none;
-    background: rgba($gold, 0.8);
-    color: rgba(#000, 0.5);
     transform: none;
+    box-shadow: none;
+
+    background: $gold-dim;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  :global([data-theme="light"]) & {
+    color: $void;
   }
 }
 
 @mixin btn-secondary {
   @include btn-base;
-  background: $surface-1;
-  color: $text-1;
-  border: 0.5px solid $surface-2;
+
+  background: transparent;
+  color: var(--text-primary);
+  border: 1.5px solid var(--text-primary);
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    background: var(--surface-2);
+  }
 }
 
 @mixin btn-ghost {
   @include btn-base;
   background: transparent;
-  color: $text-2;
+  color: var(--text-secondary);
 }
 
 // ── Card ─────────────────────────────────
 @mixin card {
-  background: $surface-1;
-  border: 0.5px solid $surface-2;
+  background: var(--surface-1);
+  border: 1.5px solid var(--surface-2);
   border-radius: $radius-card;
   padding: 1.25rem;
 }
@@ -70,17 +113,17 @@
 @mixin input {
   width: 100%;
   height: 44px;
-  background: $surface-1;
-  border: 0.5px solid $surface-3;
+  background: var(--surface-1);
+  border: 0.5px solid var(--surface-3);
   border-radius: $radius-input;
   padding: 0 14px;
   font-family: $font-body;
   font-size: 16px;
-  color: $text-1;
+  color: var(--text-primary);
   outline: none;
   transition: border-color 0.15s ease;
 
-  &::placeholder { color: $text-4; }
+  &::placeholder { color: var(--text-subtle); }
   &:focus { border: 1.5px solid $gold; }
 }
 
@@ -90,7 +133,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: $text-3;
+  color: var(--text-muted);
 }
 
 @mixin display {
@@ -101,7 +144,13 @@
 @mixin gold-text {
   background: $gradient-gold;
   -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;  // add this — more reliable than color: transparent
   background-clip: text;
   color: transparent;
+
+  :global([data-theme="light"]) & {
+    background: linear-gradient(135deg, $gold-dim, $gold, $gold-light-val);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
 }
- 

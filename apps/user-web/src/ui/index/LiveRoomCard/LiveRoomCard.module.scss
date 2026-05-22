@@ -7,7 +7,6 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-
 }
 
 .liveDot {
@@ -39,7 +38,18 @@
   @include display;
   margin-top: 0.5rem;
   font-size: 1.625rem;
-  em { font-style: italic; font-weight: 400; @include gold-text; }
+  color: var(--text-primary);
+  em {
+    font-style: italic;
+    font-weight: 400;
+    display: inline-block;
+    padding-bottom: 0.1em;
+    margin-bottom: -0.1em;
+    background: linear-gradient(135deg, $gold-light-val, $gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 .viewersPill {
@@ -51,25 +61,24 @@
   font-family: $font-mono;
   font-size: 11px;
   background: rgba($violet, 0.15);
-  color: $text-1;
+  color: var(--text-primary);
 }
 
 .feed {
   display: flex;
   margin-top: 1.5rem;
-  display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
 .row {
   display: flex;
-   min-width: 0;
+  min-width: 0;
   align-items: center;
   justify-content: space-between;
   border-radius: $radius-input;
   padding: 0.625rem 0.75rem;
-  border: 0.5px solid $surface-2;
+  border: 0.5px solid var(--surface-2);
 }
 
 .rowAccent {
@@ -77,7 +86,7 @@
   border-color: rgba($gold, 0.25);
 }
 
-.rowLeft { display: flex; align-items: center; gap: 0.75rem;  min-width: 0;}
+.rowLeft { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
 
 .avatar {
   width: 32px;
@@ -92,32 +101,37 @@
   font-weight: 600;
 }
 
-.avatar_gold { background: $gradient-gold; }
-.avatar_violet { background: linear-gradient(135deg, $violet, #4a3fb0); color: $text-1; }
-.avatar_rose { background: linear-gradient(135deg, $rose, #b04270); color: $text-1; }
+.avatar_gold   { background: $gradient-gold; }
+.avatar_violet { background: linear-gradient(135deg, $violet, #4a3fb0); color: var(--text-primary); }
+.avatar_rose   { background: linear-gradient(135deg, $rose, #b04270); color: var(--text-primary); }
 
 .rowTitle {
   font-size: 0.875rem;
-   min-width: 0;
+  min-width: 0;
+  color: var(--text-primary);
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
 }
 
-.inlineIcon { color: $gold-light; }
+.inlineIcon { color: $gold-light-val; }
 
 .rowTag { @include label; }
 
 .amount {
   font-family: $font-mono;
   font-size: 0.875rem;
-  @include gold-text;
+  display: inline-block;
+  background: linear-gradient(135deg, $gold-light-val, $gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .totalBar {
   margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 0.5px dashed $surface-3;
+  border-top: 0.5px dashed var(--surface-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -133,5 +147,9 @@
 .total {
   font-family: $font-mono;
   font-size: 1.125rem;
-  @include gold-text;
+  display: inline-block;
+  background: linear-gradient(135deg, $gold-light-val, $gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

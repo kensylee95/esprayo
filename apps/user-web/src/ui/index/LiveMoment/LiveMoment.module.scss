@@ -190,7 +190,7 @@
   @include md-up { padding: 2.5rem 3rem; }
 }
 
-.label { @include label; color: $gold-light; }
+.label { @include label; color: $gold-light-val; }
 
 .title {
   @include display;

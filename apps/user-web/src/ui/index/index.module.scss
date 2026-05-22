@@ -1,3 +1,5 @@
+@use "@app/styles/mixins/variables" as vars;
 .page {
+    background: var(--bg-page);
     width: 100%;
 }

@@ -8,6 +8,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
+  margin-bottom: 24px;
 }
 
 .logo {
@@ -24,12 +25,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #000;
+  color: var(--text-primary)
 }
 
 .logoText {
   @include display;
   font-size: 1.5rem;
+  color: var(--text-primary);
   letter-spacing: 0.02em;
 }
 
@@ -42,10 +44,12 @@
 
   a {
     font-size: 0.875rem;
-    color: $text-2;
+    color: var(--text-secondary);
     transition: color 0.15s ease;
-    &:hover { color: $text-1; }
+    &:hover { color: var(--text-primary); }
   }
 }
 
-.btnSecondary { @include btn-secondary; }
+.btnSecondary { 
+  @include btn-secondary;
+ }

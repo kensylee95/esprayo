@@ -20,7 +20,7 @@
   height: 2.25rem;
   width: 2.25rem;
   border-radius: 9999px;
-  background: conic-gradient(from 180deg, $violet, $rose, $gold-light, $violet);
+  background: conic-gradient(from 180deg, $violet, $rose, vars.$gold-light-val, $violet);
 }
 
 .title { font-size: 0.875rem; }

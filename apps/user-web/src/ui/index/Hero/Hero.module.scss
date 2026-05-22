@@ -2,21 +2,23 @@
 @use "@app/styles/mixins/mixins" as *;
 
 .hero {
+  display: flex;
   width: 100%;
   max-width: 72rem;
-  padding: 3rem 1.5rem 5rem;
+  padding: 16px 1.5rem 0 1.5rem;
+  margin-inline: auto;
 
-  @include md-up { padding: 6rem 1.5rem 8rem; }
+  @include md-up { padding: 10px 1.5rem 0 1.5rem }
 }
 
 .heroGrid {
   display: grid;
   gap: 3rem;
-   min-width: 0;
+  min-width: 0;
 
   @include md-up {
     grid-template-columns: 1fr 1fr;
-    align-items: center;
+    align-items: start;
   }
 }
 .heroGrid > * {
@@ -34,31 +36,59 @@
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: $gold-light;
+  background: $gold-light-val;
   box-shadow: 0 0 12px rgba($gold, 0.6);
 }
 
 .heroTitle {
   @include display;
   margin-top: 1.25rem;
-  font-size: 2rem;
+  font-size: 24px;
   min-width: 0;
+  letter-spacing: 0;
   line-height: 1.05;
-  @include md-up { font-size: 4.5rem; }
+  color: var(--text-primary);
+  word-spacing:0;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  @include md-up { font-size: 4.5rem;  letter-spacing: -0.04em; }
+  
+em {
+  font-weight: 400;
+  font-style: italic;
+  display: inline-block;
+  padding-bottom: 6px;
+  padding-inline: 4px;
+  background: linear-gradient(135deg, $gold-light-val, $gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 
-  em {
-    font-weight: 400;
-    font-style: italic;
-    @include gold-text;
+  :global([data-theme="light"]) & {
+    background: linear-gradient(135deg, $gold-dim, $gold, $gold-light-val);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+}
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  
+  .statsRow {
+    margin-top: auto;
+    padding-top: 3rem;
   }
 }
 
 .heroLead {
   margin-top: 1.5rem;
   max-width: 28rem;
+  letter-spacing: 0;
   font-size: 1rem;
   line-height: 1.65;
-  color: $text-2;
+  color: var(--text-secondary);
 }
 
 .ctaRow {
@@ -73,8 +103,13 @@
   }
 }
 
-.btnPrimary { @include btn-primary; }
-.btnGhost { @include btn-ghost; }
+
+.btnPrimary { 
+  @include btn-primary; 
+  display: flex;
+  align-items: center;
+}
+.btnGhost   { @include btn-ghost; }
 
 .statsRow {
   margin-top: 3rem;
@@ -82,9 +117,7 @@
   align-items: center;
   gap: 2rem;
   flex-direction: column;
-  @media(min-width: 350px){
-    flex-direction: row;
-  }
+  @media (min-width: 350px) { flex-direction: row; }
 }
 .statsRow > * {
   min-width: 0;
@@ -93,13 +126,13 @@
 .statValue {
   font-family: $font-mono;
   font-size: 1.125rem;
-  color: $text-1;
+  color: var(--text-primary);
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
 }
 
-.statIcon { color: $gold-light; display: inline-flex; }
+.statIcon { color: $gold-light-val; display: inline-flex; }
 
 .statLabel {
   @include label;
@@ -109,14 +142,20 @@
 .divider {
   height: 2rem;
   width: 1px;
-  background: $surface-2;
+  background: var(--surface-2);
   display: none;
-   @media(min-width: 350px){
-    display: block;
-  }
+  @media (min-width: 350px) { display: block; }
 }
 
-.cardStack { position: relative; }
+.cardStack {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 
 .glow {
   position: absolute;
@@ -128,30 +167,21 @@
   background:
     radial-gradient(ellipse at 30% 20%, rgba($gold, 0.5), transparent 60%),
     radial-gradient(ellipse at 80% 80%, rgba($violet, 0.45), transparent 60%);
+
+  // Softer on light — full opacity glow is too heavy on parchment
+  :global([data-theme="light"]) & {
+    opacity: 0.25;
+  }
 }
 
 .heroImageWrap {
   position: relative;
-  border-radius: 20px;
   overflow: hidden;
-  border: 0.5px solid $surface-2;
   margin-bottom: 1rem;
-  aspect-ratio: 4 / 3;
 }
 
 .heroImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+width: 80%;
+  height: auto;
   display: block;
-  transform: scale(1.02);
-}
-
-.heroImageOverlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, transparent 40%, rgba($void, 0.85) 100%),
-    radial-gradient(ellipse at 50% 0%, rgba($gold, 0.15), transparent 60%);
-  pointer-events: none;
 }

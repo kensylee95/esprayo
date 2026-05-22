@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: vars.$void;
+  background: var(--bg-page);
 }
 
 .wrapper {
@@ -23,7 +23,6 @@
 
 .brand {
   @include mixins.display;
-
   font-size: 20px;
   color: vars.$gold;
   margin-bottom: 20px;
@@ -31,13 +30,13 @@
 
 .title {
   @include mixins.display;
-
   font-size: 28px;
+  color: var(--text-primary);
   margin-bottom: 10px;
 }
 
 .subtitle {
-  color: vars.$text-2;
+  color: var(--text-secondary);
   margin-bottom: 20px;
   font-size: 1rem;
   line-height: 1.65;
@@ -46,25 +45,23 @@
 .label {
   font-size: 10px;
   letter-spacing: 1px;
-  color: vars.$text-3;
+  color: var(--text-muted);
   text-transform: uppercase;
 }
+
 .inputError {
-  border-color: #ff4d4f !important;
-  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.15);
+  border-color: vars.$danger !important;
+  box-shadow: 0 0 0 2px rgba(232, 112, 112, 0.15);
 }
+
 .errorText {
   margin-block: 4px;
-
   font-size: 12px;
   font-family: vars.$font-mono;
-
-  color: #ff4d4f;
-
+  color: vars.$danger;
   display: flex;
   align-items: center;
   gap: 6px;
-
   animation: fadeIn 0.2s ease-in-out;
 }
 
@@ -81,17 +78,14 @@
 
 .numDisplay {
   display: flex;
-  align-items: center; 
+  align-items: center;
   gap: 12px;
-
   width: 100%;
   min-height: 60px;
-
   padding: 14px 16px;
-
-  background: vars.$surface-1;
-  border: 1px solid vars.$surface-3;
-  border-radius: 14px;
+  background: var(--surface-1);
+  border: 1px solid var(--surface-3);
+  border-radius: vars.$radius-input;
 }
 
 .flag {
@@ -111,9 +105,8 @@
 .code {
   display: flex;
   align-items: center;
-
   font-family: vars.$font-mono;
-  color: vars.$text-2;
+  color: var(--text-secondary);
   font-size: 16px;
   white-space: nowrap;
   line-height: 0;
@@ -123,43 +116,29 @@
   flex: 1;
   display: flex;
   align-items: center;
-
   height: 100%;
-
   border: none;
   outline: none;
   background: transparent;
-
   font-family: vars.$font-mono;
-  color: vars.$text-1;
-
+  color: var(--text-primary);
   font-size: 16px;
   letter-spacing: 1px;
-
   padding: 0;
   margin: 0;
-
   line-height: 0;
 }
+
 .cta {
   width: 100%;
   padding: 14px;
   margin-top: 16px;
-
   border: none;
-  border-radius: 100px;
-
-  background: linear-gradient(
-    135deg,
-    vars.$gold,
-    vars.$gold-light
-  );
-
-  color: vars.$surface-3;
+  border-radius: vars.$radius-pill;
+  background: vars.$gradient-gold;
+  color: var(--bg-page);  // text always contrasts against gold
   font-weight: 600;
-
   cursor: pointer;
-
   transition: transform 0.2s ease;
 
   &:active {
@@ -171,11 +150,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 100%;
   padding-block: 14px;
-
-  color: vars.$text-2;
+  color: var(--text-secondary);
   font-size: 11px;
   text-align: center;
 }
@@ -183,24 +160,19 @@
 .ctaGoogle {
   width: 100%;
   padding: 14px;
-
   border: 1px solid vars.$gold;
   border-radius: vars.$radius-pill;
-
-  background: hsl(240, 20%, 5%);
+  background: var(--surface-1);
   color: vars.$gold;
-
   font-weight: 600;
-
   cursor: pointer;
-
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 24px var(--shadow-overlay);
   }
 
   &:active {
@@ -213,7 +185,7 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: vars.$bp-md) {
   .loginScreen {
     justify-content: center;
     align-items: center;
@@ -223,17 +195,13 @@
   .wrapper {
     width: 100%;
     max-width: 500px;
-
     padding: 36px;
-
-    border: 1px solid vars.$surface-3;
+    border: 1px solid var(--surface-3);
     border-radius: 28px;
-
-    background: vars.$void;
-
+    background: var(--surface-1);
     box-shadow:
-      0 10px 30px rgba(0, 0, 0, 0.25),
-      0 0 0 1px rgba(255, 255, 255, 0.02);
+      0 10px 30px var(--shadow-overlay),
+      0 0 0 1px var(--gold-08);
   }
 
   .numpad {

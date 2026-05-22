@@ -43,7 +43,7 @@
 
 .bannerLabel {
   @include label;
-  color: $gold-light;
+  color: $gold-light-val;
 }
 
 .bannerTitle {
@@ -93,7 +93,7 @@
   height: 2.5rem;
   border-radius: 9999px;
   background: rgba($gold, 0.12);
-  color: $gold-light;
+  color: $gold-light-val;
   margin-bottom: 1rem;
 }
 

@@ -76,7 +76,7 @@
   }
   &[data-p="4"] {
     width: 3px; height: 3px;
-    background: vars.$gold-light;
+    background:vars.$gold-light-val;
     top: -6px; left: 2px;
     animation: sprayP4 1.4s ease-out infinite 0.05s;
   }

@@ -1,0 +1,68 @@
+// =====================================
+// SERENADE — Theme (import once in globals)
+// =====================================
+@use "variables" as vars;
+
+// ── Mixin ────────────────────────────────────────────────────────────────────
+@mixin light-theme {
+  --bg-page:   #{vars.$void-light};
+  --surface-1: #{vars.$surface-1-light};
+  --surface-2: #{vars.$surface-2-light};
+  --surface-3: #{vars.$surface-3-light};
+  --surface-4: #{vars.$surface-4-light};
+
+  --text-primary:   #{vars.$text-1-light};
+  --text-secondary: #{vars.$text-2-light};
+  --text-muted:     #{vars.$text-3-light};
+  --text-subtle:    #{vars.$text-4-light};
+
+  --gold-44: #{vars.$gold}66;
+  --gold-22: #{vars.$gold}33;
+  --gold-08: #{vars.$gold}12;
+
+  --shadow-overlay: #{vars.$shadow-light};
+
+  --input-bg:     #{vars.$surface-1-light};
+  --input-border: #{vars.$surface-3-light};
+  --input-focus:  #{vars.$gold}66;
+  --card-bg:      #{vars.$surface-1-light};
+  --card-border:  #{vars.$surface-3-light};
+}
+
+// ── Dark (default) ───────────────────────────────────────────────────────────
+:root {
+  --bg-page:    #{vars.$void};
+  --surface-1:  #{vars.$surface-1};
+  --surface-2:  #{vars.$surface-2};
+  --surface-3:  #{vars.$surface-3};
+  --surface-4:  #{vars.$surface-4};
+  --bg-page-rgb: 10, 10, 15;
+
+  --text-primary:   #{vars.$text-1};
+  --text-secondary: #{vars.$text-2};
+  --text-muted:     #{vars.$text-3};
+  --text-subtle:    #{vars.$text-4};
+
+  --gold-44: #{vars.$gold}44;
+  --gold-22: #{vars.$gold}22;
+  --gold-08: #{vars.$gold}08;
+
+  --success: #{vars.$success};
+  --danger:  #{vars.$danger};
+  --warning: #{vars.$warning};
+  --violet:  #{vars.$violet};
+  --rose:    #{vars.$rose};
+
+  --shadow-overlay: #{vars.$shadow-dark};
+
+  --input-bg:     #{vars.$surface-1};
+  --input-border: #{vars.$surface-3};
+  --input-focus:  #{vars.$gold}44;
+  --card-bg:      #{vars.$surface-1};
+  --card-border:  #{vars.$surface-3};
+}
+
+// ── Light ────────────────────────────────────────────────────────────────────
+[data-theme="light"] {
+  @include light-theme;
+}
