@@ -16,9 +16,9 @@ import NavButton from "../NavButton/NavButton";
 import type { Overlay } from "./GiftRoom.dto";
 import styles from "./GiftRoom.module.scss";
 import LeaderboardTab from "./LeaderboardTab";
-import SprayButton from "./SprayButton/SprayButton";
 //import SprayTab from "./SprayTab/SprayTab";
 import NairaWidget from "./naira-hand";
+import SprayButton from "./SprayButton/SprayButton";
 
 export default function GiftRoomPage({
   eventData,
@@ -40,76 +40,46 @@ export default function GiftRoomPage({
     getTokenClient().then(setToken);
   }, []);
 
-  const { leaderboard, stats, roomError, liveAlert, rivalryAlert, getAudio } =
+  const { leaderboard, stats, roomError, liveAlert, rivalryAlert } =
     useGiftRoom(token, eventId);
 
   const { sendGift } = useGiftSender(token);
 
-const handleSend = useCallback(
-  async (
-    noteValue: number,
-    remainingAmount: number
-  ) => {
+  const handleSend = useCallback(
+    async (noteValue: number, remainingAmount: number) => {
+      try {
+        navigator.vibrate?.(80);
 
-    try {
+        // optimistic debit
+        wallet.setBalance((prev) => (prev ?? 0) - noteValue);
 
-      navigator.vibrate?.(80);
+        sendGift({
+          eventId,
+          amount: noteValue,
+          displayName,
+        });
 
-      // optimistic debit
-      wallet.setBalance(
-        (prev) =>
-          (prev ?? 0) - noteValue
-      );
+        navigator.vibrate?.([100, 50, 100, 50, 200]);
 
-      sendGift({
-        eventId,
-        amount: noteValue,
-        displayName,
-      });
+        clearTimeout(streakTimerRef.current);
 
-      navigator.vibrate?.([
-        100,
-        50,
-        100,
-        50,
-        200,
-      ]);
+        setStreak((s) => s + 1);
 
-      clearTimeout(
-        streakTimerRef.current
-      );
+        streakTimerRef.current = setTimeout(() => setStreak(0), 5000);
 
-      setStreak((s) => s + 1);
+        // optional analytics
+        console.log({
+          noteValue,
+          remainingAmount,
+        });
+      } catch (error) {
+        wallet.setBalance((prev) => (prev ?? 0) + noteValue);
 
-      streakTimerRef.current =
-        setTimeout(
-          () => setStreak(0),
-          5000
-        );
-
-      // optional analytics
-      console.log({
-        noteValue,
-        remainingAmount,
-      });
-
-    } catch (error) {
-
-      wallet.setBalance(
-        (prev) =>
-          (prev ?? 0) + noteValue
-      );
-
-      console.error(error);
-    }
-  },
-  [
-    sendGift,
-    eventId,
-    displayName,
-    wallet,
-  ]
-);
+        console.error(error);
+      }
+    },
+    [sendGift, eventId, displayName, wallet],
+  );
 
   if (roomError) {
     return (
@@ -166,7 +136,7 @@ const handleSend = useCallback(
 
       <LeaderboardTab entries={leaderboard} stats={stats} />
 
-     {/* tab === "spray" && (
+      {/* tab === "spray" && (
         <SprayTab
           walletBalance={wallet.balance ?? 0}
           onSend={handleSend}
@@ -180,35 +150,36 @@ const handleSend = useCallback(
       )*/}
 
       <AnimatePresence>
-  {tab === "spray" && (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className={styles.sprayOverlay}
-    >
-      <NairaWidget
-        totalAmount={wallet.balance ?? 0}
-        noteValue={1_000}
-        onSprayReset={()=>{
-           router.push("/wallet/fund");
-        }}
-        onGift={handleSend}
-        onComplete={() => {
-          //handleSend
-          console.log("spraying completed")
-        }}
-      />
+        {tab === "spray" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={styles.sprayOverlay}
+          >
+            <NairaWidget
+              totalAmount={wallet.balance ?? 0}
+              noteValue={1_000}
+              onSprayReset={() => {
+                router.push("/wallet/fund");
+              }}
+              onGift={handleSend}
+              onComplete={() => {
+                //handleSend
+                console.log("spraying completed");
+              }}
+            />
 
-      <button
-        className={styles.closeSpray}
-        onClick={() => setTab(null)}
-      >
-        ✕
-      </button>
-    </motion.div>
-  )}
-</AnimatePresence>
+            <button
+              type="button"
+              className={styles.closeSpray}
+              onClick={() => setTab(null)}
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {tab === "wallet" && (
         <WalletFundOverlay

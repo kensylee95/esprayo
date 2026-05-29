@@ -1,9 +1,4 @@
-export const COLORS = [
-  "#FFD700",
-  "#FFF3A0",
-  "#FF8C00",
-  "#FFE566",
-];
+export const COLORS = ["#FFD700", "#FFF3A0", "#FF8C00", "#FFE566"];
 
 export const SYMBOLS = ["₦", "✦", "★", "◆"];
 

@@ -1,73 +1,46 @@
-import {
-  useState,
-  useRef,
-  useCallback,
-} from "react";
+import { useCallback, useRef, useState } from "react";
 
 interface SprayOptions {
-  onGift?: (
-    noteValue: number,
-    remainingAmount: number
-  ) => void;
+  onGift?: (noteValue: number, remainingAmount: number) => void;
 }
 
 export function useSprayState(
   totalAmount: number,
   noteValue: number,
   onComplete?: () => void,
-  options?: SprayOptions
+  options?: SprayOptions,
 ) {
+  const [remainingAmount, setRemainingAmount] = useState(totalAmount);
 
-  const [remainingAmount, setRemainingAmount] =
-    useState(totalAmount);
-
-  const [sprayTrigger, setSprayTrigger] =
-    useState(0);
+  const [sprayTrigger, setSprayTrigger] = useState(0);
 
   const swipeLock = useRef(false);
 
-const spray = useCallback(() => {
+  const spray = useCallback(() => {
+    if (swipeLock.current) return;
 
-  if (swipeLock.current) return;
+    swipeLock.current = true;
 
-  swipeLock.current = true;
+    setSprayTrigger((v) => v + 1);
 
-  setSprayTrigger((v) => v + 1);
+    requestAnimationFrame(() => {
+      const currentRemaining = remainingAmount;
 
-  requestAnimationFrame(() => {
+      const next = Math.max(currentRemaining - noteValue, 0);
 
-    const currentRemaining =
-      remainingAmount;
+      // update local state first
+      setRemainingAmount(next);
 
-    const next = Math.max(
-      currentRemaining - noteValue,
-      0
-    );
+      // THEN notify parent safely
+      options?.onGift?.(noteValue, next);
 
-    // update local state first
-    setRemainingAmount(next);
+      if (next === 0) {
+        onComplete?.();
+      }
 
-    // THEN notify parent safely
-    options?.onGift?.(
-      noteValue,
-      next,
-    );
-
-    if (next === 0) {
-      onComplete?.();
-    }
-
-    swipeLock.current = false;
-
-  });
-
-}, [
-  remainingAmount,
-  noteValue,
-  totalAmount,
-  onComplete,
-  options,
-]);
+      swipeLock.current = false;
+    });
+  }, [remainingAmount, noteValue, onComplete, options]);
 
   return {
     remainingAmount,

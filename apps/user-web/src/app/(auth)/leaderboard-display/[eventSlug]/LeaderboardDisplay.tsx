@@ -15,7 +15,6 @@ function LiveDot() {
   return <span className={styles.liveDot} aria-hidden="true" />;
 }
 
-
 function AnimatedCount({ value }: { value: number }) {
   const [display, setDisplay] = useState(value);
   const controls = useAnimationControls();

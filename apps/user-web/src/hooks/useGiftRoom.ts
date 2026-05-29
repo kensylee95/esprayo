@@ -4,7 +4,7 @@ import { createGiftRoomSocket } from "@/services/socket";
 import {
   createAudioContext,
   playRivalrySound,
-  playRoomBurstSound,
+  //playRoomBurstSound,
 } from "../app/(auth)/gift-room/[giftRoomSlug]/audio";
 import { triggerRoomBurst } from "../app/(auth)/gift-room/[giftRoomSlug]/confetti";
 
@@ -121,8 +121,8 @@ export function useGiftRoom(token: string | null, eventId: string) {
       triggerRoomBurst();
       navigator.vibrate?.(30);
 
-      const ctx = getAudio();
-      if (ctx) playRoomBurstSound(ctx);
+      //const ctx = getAudio();
+      //if (ctx) playRoomBurstSound(ctx);
 
       if (liveAlertTimerRef.current) {
         clearTimeout(liveAlertTimerRef.current);

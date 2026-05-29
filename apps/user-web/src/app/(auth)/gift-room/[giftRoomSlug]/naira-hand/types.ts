@@ -3,8 +3,8 @@ export interface NairaHandProps {
   noteValue?: number;
   visibleStack?: number;
   onComplete?: () => void;
-  onSprayReset: ()=> void
-  onGift: (noteValue: number, remainingAmount: number)=>void
+  onSprayReset: () => void;
+  onGift: (noteValue: number, remainingAmount: number) => void;
 }
 
 export interface Ring {

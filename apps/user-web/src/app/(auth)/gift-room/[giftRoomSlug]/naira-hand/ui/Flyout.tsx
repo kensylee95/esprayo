@@ -4,11 +4,15 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 import NOTE_SRC from "../assets/naira-note.png";
+import type { ExitTrajectory } from "../physics/trajectories";
 
 export default function Flyout({
   trajectory,
   rotate,
-}: any) {
+}: {
+  trajectory: ExitTrajectory;
+  rotate: number;
+}) {
   return (
     <motion.div
       initial={{
@@ -20,9 +24,7 @@ export default function Flyout({
         y: trajectory.exitY,
         x: trajectory.exitX,
         scale: trajectory.exitScale,
-        rotate:
-          rotate +
-          trajectory.exitRot,
+        rotate: rotate + trajectory.exitRot,
       }}
       transition={{
         duration: trajectory.dur,
@@ -39,18 +41,12 @@ export default function Flyout({
     >
       <div
         style={{
-          width:
-            "clamp(120px, 22vw, 160px)",
+          width: "clamp(120px, 22vw, 160px)",
           aspectRatio: "130 / 240",
           position: "relative",
         }}
       >
-        <Image
-          src={NOTE_SRC}
-          alt=""
-          fill
-          draggable={false}
-        />
+        <Image src={NOTE_SRC} alt="" fill draggable={false} />
       </div>
     </motion.div>
   );
