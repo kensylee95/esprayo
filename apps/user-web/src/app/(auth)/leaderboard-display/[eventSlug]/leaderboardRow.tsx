@@ -43,13 +43,13 @@ function GapChip({ gap }: { gap: number }) {
 interface LbRowProps {
   entry: LeaderboardEntry;
   max: number;
-  nextTokens?: number; // tokens of the person ranked above
+  nextTokens?: number; // score of the person ranked above
   isNew?: boolean; // first appearance this session
 }
 
 export default function LbRow({ entry, max, nextTokens, isNew }: LbRowProps) {
   const colour = avatarColour(entry.userId);
-  const pct = Math.round((entry.tokens / max) * 100);
+  const pct = Math.round((entry.score / max) * 100);
 
   const rankCls =
     entry.rank === 1
@@ -61,22 +61,22 @@ export default function LbRow({ entry, max, nextTokens, isNew }: LbRowProps) {
           : "";
 
   const gap =
-    nextTokens != null && nextTokens > entry.tokens
-      ? nextTokens - entry.tokens
+    nextTokens != null && nextTokens > entry.score
+      ? nextTokens - entry.score
       : 0;
 
-  // Spotlight: flash gold border when tokens increase
-  const prevTokens = useRef(entry.tokens);
+  // Spotlight: flash gold border when score increase
+  const prevTokens = useRef(entry.score);
   const [spotlight, setSpotlight] = useState(false);
   useEffect(() => {
-    if (entry.tokens > prevTokens.current) {
+    if (entry.score > prevTokens.current) {
       setSpotlight(true);
       const t = setTimeout(() => setSpotlight(false), 2000);
-      prevTokens.current = entry.tokens;
+      prevTokens.current = entry.score;
       return () => clearTimeout(t);
     }
-    prevTokens.current = entry.tokens;
-  }, [entry.tokens]);
+    prevTokens.current = entry.score;
+  }, [entry.score]);
 
   const hasStreak = (entry.streak ?? 0) >= 3;
 
@@ -142,10 +142,10 @@ export default function LbRow({ entry, max, nextTokens, isNew }: LbRowProps) {
       {/* Score */}
       <div className={styles.lbRight}>
         <span className={styles.lbScore}>
-          <CountUp value={entry.tokens} /> tkn
+          <CountUp value={entry.score} /> tkn
         </span>
         <span className={styles.lbNaira}>
-          ≈ ₦<CountUp value={entry.tokens * 10} />
+          ≈ ₦<CountUp value={entry.score} />
         </span>
       </div>
     </motion.div>

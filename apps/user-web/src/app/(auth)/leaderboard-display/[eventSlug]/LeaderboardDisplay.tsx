@@ -188,13 +188,12 @@ export default function LeaderboardDisplayPage({ event }: { event: IEvent }) {
 
   const max = safeLeaderboard[0]?.score || 1;
 
-  const eventTitle = stats?.eventTitle || event.title?.toUpperCase() || "";
+  //const eventTitle = stats?.eventTitle || event.title?.toUpperCase() || "";
   const eventSub = event.description || "";
-  const eventEmoji = stats?.eventEmoji || "🎁";
   const slug = event.slug;
 
-  const totalTokens = stats?.totalTokens ?? 0;
-  const totalNaira = totalTokens * 10;
+  const totalTokens = stats?.totalScore ?? 0;
+  const totalNaira = stats.totalGifts;
   const giftCount = stats?.totalGifts ?? 0;
   const guestCount = stats?.guestCount ?? 0;
 
@@ -278,7 +277,6 @@ export default function LeaderboardDisplayPage({ event }: { event: IEvent }) {
             ? `🔥 jumped to #${entry.rank}!`
             : `sent a gift · now #${entry.rank}`,
           tokens: gained,
-          emoji: eventEmoji,
         });
       }
 
@@ -322,7 +320,7 @@ export default function LeaderboardDisplayPage({ event }: { event: IEvent }) {
     if (freshUsers.size > 0) {
       setTimeout(() => setNewUsers(new Set()), 2000);
     }
-  }, [safeLeaderboard, addToast, eventEmoji]);
+  }, [safeLeaderboard, addToast]);
 
   return (
     <main className={styles.display}>
@@ -340,10 +338,6 @@ export default function LeaderboardDisplayPage({ event }: { event: IEvent }) {
       >
         <div className={styles.headerLeft}>
           <p className={styles.eventLabel}>Gift room · live</p>
-          <h1 className={styles.eventTitle}>
-            {eventEmoji && <span aria-hidden="true">{eventEmoji}</span>}{" "}
-            {eventTitle}
-          </h1>
           {eventSub && <p className={styles.eventSub}>{eventSub}</p>}
         </div>
 
