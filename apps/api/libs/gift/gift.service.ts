@@ -19,7 +19,7 @@ import {
 import { Gift } from './entities/gift.entity';
 
 import {
-  GiftCatalogItem,
+  BroadcastGiftJob,
   GiftPayload,
   GiftResult,
   SaveGiftInput,
@@ -32,57 +32,6 @@ import { REDIS_CLIENT } from '@modules/redis/redis.module';
 import { giftCountKey, giftLockKey } from '../../constants';
 import { RealtimeGatewayService } from '@modules/RealtimeGateway/RealtimeGateway.service';
 import { SocketEvents } from '@app/socket-events';
-
-const DEFAULT_CATALOG: readonly GiftCatalogItem[] = [
-  {
-    id: 'bouquet',
-    name: 'Bouquet',
-    emoji: '💐',
-    tokens: 50,
-  },
-  {
-    id: 'champagne',
-    name: 'Champagne',
-    emoji: '🍾',
-    tokens: 120,
-  },
-  {
-    id: 'diamond',
-    name: 'Diamond',
-    emoji: '💎',
-    tokens: 500,
-  },
-  {
-    id: 'car',
-    name: 'Car Key',
-    emoji: '🚗',
-    tokens: 2000,
-  },
-  {
-    id: 'house',
-    name: 'House Key',
-    emoji: '🏠',
-    tokens: 5000,
-  },
-  {
-    id: 'mystery',
-    name: 'Mystery Box',
-    emoji: '🎁',
-    tokens: 80,
-  },
-  {
-    id: 'travel',
-    name: 'Travel',
-    emoji: '✈️',
-    tokens: 300,
-  },
-  {
-    id: 'crown',
-    name: 'Crown',
-    emoji: '👑',
-    tokens: 800,
-  },
-];
 
 @Injectable()
 export class GiftService {
@@ -115,15 +64,12 @@ export class GiftService {
     );
     if (!locked) return null;
 
-    const jobData = {
+    const jobData: BroadcastGiftJob = {
       eventId: payload.eventId,
       userId: payload.userId,
       displayName: payload.displayName,
-      giftName: payload.giftName,
-      giftEmoji: payload.giftEmoji,
-      tokens: payload.tokens,
+      denomination: payload.denomination,
       nairaValue: payload.amount,
-      giftId: payload.giftId,
       transactionId: payload.reference,
     };
 
@@ -142,13 +88,13 @@ export class GiftService {
       });
 
       // 2. leaderboard update
-      const { score, rank, totalTokens, totalGifts } =
+      const { score, rank, totalScore, totalGifts } =
         await this.leaderboardService.addGiftFull(
           payload.eventId,
           payload.userId,
           payload.displayName,
-          payload.tokens,
-          payload.giftName,
+          payload.amount,
+          payload.denomination,
           giftCountKey(payload.eventId),
         );
 
@@ -159,10 +105,6 @@ export class GiftService {
           SocketEvents.giftReceived,
           {
             displayName: payload.displayName,
-            giftName: payload.giftName,
-            giftEmoji: payload.giftEmoji,
-            tokens: payload.tokens,
-            giftId: payload.giftId,
             newScore: score,
             newRank: rank,
           },
@@ -178,7 +120,7 @@ export class GiftService {
               newScore: score,
               newRank: rank,
             },
-            totalTokens,
+            totalScore,
             totalGifts,
           },
         );
@@ -227,10 +169,6 @@ export class GiftService {
         eventId: input.eventId,
         guestId: input.userId,
         displayName: input.displayName,
-        giftId: input.giftId,
-        giftName: input.giftName,
-        giftEmoji: input.giftEmoji,
-        tokens: input.tokens,
         nairaValue: input.nairaValue,
         cumulativeTokens: input.cumulativeTokens ?? 0,
         transactionId: input.transactionId,
@@ -266,8 +204,7 @@ export class GiftService {
   }> {
     const [leaderboard, totalTokens] = await Promise.all([
       this.leaderboardService.getTop(eventId, limit),
-
-      this.leaderboardService.getTotalTokens(eventId),
+      this.leaderboardService.getTotalScore(eventId),
     ]);
 
     return {
@@ -278,9 +215,5 @@ export class GiftService {
 
   async setExpiry(eventId: string, ttlSeconds = 86400): Promise<void> {
     await this.redis.expire(giftCountKey(eventId), ttlSeconds);
-  }
-
-  getGiftCatalog(): readonly GiftCatalogItem[] {
-    return DEFAULT_CATALOG;
   }
 }

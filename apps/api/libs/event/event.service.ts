@@ -160,11 +160,8 @@ export class EventService {
       eventId,
       guestId,
       displayName,
-      giftId,
-      giftName,
-      giftEmoji,
-      tokens,
-      cumulativeTokens,
+      nairaValue,
+      cumulativeScore,
       rankAtTime,
       isNewGifter,
     } = params;
@@ -181,24 +178,17 @@ export class EventService {
         throw new BadRequestException('Event is not currently active');
       }
 
-      const nairaValue: number = tokens * event.tokenRateNaira;
-
       const gift = manager.create(Gift);
       Object.assign(gift, {
         eventId,
         guestId: guestId ?? undefined,
         displayName,
-        giftId,
-        giftName,
-        giftEmoji,
-        tokens,
         nairaValue,
-        cumulativeTokens,
+        cumulativeTokens: cumulativeScore,
         rankAtTime,
       });
       await manager.save(Gift, gift);
 
-      await manager.increment(Event, { id: eventId }, 'tokenBalance', tokens);
       await manager.increment(
         Event,
         { id: eventId },

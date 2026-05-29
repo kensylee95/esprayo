@@ -2,13 +2,23 @@ import { Inject, Injectable } from '@nestjs/common';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '@modules/redis/redis.module';
 
+export type NairaDenomination = '50' | '100' | '200' | '500' | '1000';
+
 export interface LeaderboardEntry {
   rank: number;
   userId: string;
   displayName: string;
-  tokens: number;
+  score: number;
   giftCount: number;
   lastGift: string;
+}
+
+export interface Denomination {
+  id: string;
+  label: string;
+  value: number;
+  color: string;
+  rarity: 'common' | 'rare' | 'premium';
 }
 
 @Injectable()
@@ -17,6 +27,7 @@ export class LeaderboardService {
     @Inject(REDIS_CLIENT)
     private readonly redis: Redis,
   ) {}
+
   // -------------------------
   // KEYS
   // -------------------------
@@ -29,12 +40,11 @@ export class LeaderboardService {
     return `event:${eventId}:user:${userId}`;
   }
 
-  private totalKey(eventId: string): string {
-    return `event:${eventId}:total_tokens`;
+  // renamed for clarity
+  private totalScoreKey(eventId: string): string {
+    return `event:${eventId}:total_score`;
   }
 
-  /** Tracks all user IDs that have participated in an event.
-   *  Used instead of KEYS pattern-scan in setExpiry. */
   private usersSetKey(eventId: string): string {
     return `event:${eventId}:users`;
   }
@@ -43,10 +53,6 @@ export class LeaderboardService {
   // HELPERS
   // -------------------------
 
-  /**
-   * Asserts that every pipeline result succeeded.
-   * pipeline.exec() resolves even on per-command failures — each slot is [Error|null, value].
-   */
   private assertPipelineResults(
     results: [Error | null, unknown][] | null,
     context: string,
@@ -66,62 +72,80 @@ export class LeaderboardService {
   }
 
   // -------------------------
-  // ADD GIFT
+  // ADD GIFT (core write path)
   // -------------------------
 
-  /**
-   * Atomically records a gift:
-   *  - Increments the user's score in the sorted set
-   *  - Updates display name + last gift in the user hash
-   *  - Increments gift count in the user hash
-   *  - Increments the event-wide total token counter
-   *  - Registers the user in the membership set (avoids KEYS scan later)
-   *
-   * Returns the user's new cumulative token total.
-   *
-   * FIX: Reads the new score directly from the zincrby pipeline result
-   * instead of making a separate zscore round-trip.
-   */
   async addGift(
     eventId: string,
     userId: string,
     displayName: string,
-    tokens: number,
+    nairaValue: number,
     giftName: string,
   ): Promise<{ score: number; rank: number }> {
     const pipeline = this.redis.pipeline();
 
-    // [0] update score
-    pipeline.zincrby(this.lbKey(eventId), tokens, userId);
-
-    // [1] rank AFTER score update
-    pipeline.zrevrank(this.lbKey(eventId), userId);
-
-    // [2]
+    pipeline.zincrby(this.lbKey(eventId), nairaValue, userId); // score update
+    pipeline.zrevrank(this.lbKey(eventId), userId); // rank
     pipeline.hset(this.metaKey(eventId, userId), {
       displayName,
       lastGift: giftName,
     });
-
-    // [3]
     pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1);
-
-    // [4]
-    pipeline.incrby(this.totalKey(eventId), tokens);
-
-    // [5]
+    pipeline.incrby(this.totalScoreKey(eventId), nairaValue);
     pipeline.sadd(this.usersSetKey(eventId), userId);
 
     const results = await pipeline.exec();
-
     this.assertPipelineResults(results, 'addGift');
 
-    const score = Number(results![0][1]);
-    const rank = Number(results![1][1]) + 1;
+    return {
+      score: Number(results![0][1]),
+      rank: Number(results![1][1]) + 1,
+    };
+  }
+
+  // -------------------------
+  // ADD GIFT FULL (extended metrics)
+  // -------------------------
+
+  async addGiftFull(
+    eventId: string,
+    userId: string,
+    displayName: string,
+    nairaValue: number,
+    denomination: NairaDenomination,
+    giftCountKey: string,
+  ): Promise<{
+    score: number;
+    rank: number;
+    totalScore: number;
+    totalGifts: number;
+  }> {
+    const pipeline = this.redis.pipeline();
+
+    pipeline.zincrby(this.lbKey(eventId), nairaValue, userId);
+    pipeline.zrevrank(this.lbKey(eventId), userId);
+
+    pipeline.hset(this.metaKey(eventId, userId), {
+      displayName,
+      lastGift: denomination,
+    });
+
+    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1);
+
+    pipeline.incrby(this.totalScoreKey(eventId), nairaValue);
+
+    pipeline.sadd(this.usersSetKey(eventId), userId);
+
+    pipeline.incr(giftCountKey);
+
+    const results = await pipeline.exec();
+    this.assertPipelineResults(results, 'addGiftFull');
 
     return {
-      score,
-      rank,
+      score: Number(results![0][1]),
+      rank: Number(results![1][1]) + 1,
+      totalScore: Number(results![4][1]),
+      totalGifts: Number(results![6][1]),
     };
   }
 
@@ -129,14 +153,7 @@ export class LeaderboardService {
   // GET TOP
   // -------------------------
 
-  /**
-   * Returns the top `limit` entries, ranked highest-first.
-   *
-   * FIX: Replaced deprecated ZREVRANGE with ZRANGE … REV (Redis 6.2+).
-   * Per-command errors in the meta pipeline are now checked.
-   */
   async getTop(eventId: string, limit = 20): Promise<LeaderboardEntry[]> {
-    // ZRANGE … REV replaces the deprecated ZREVRANGE command
     const raw = await this.redis.zrange(
       this.lbKey(eventId),
       0,
@@ -166,7 +183,7 @@ export class LeaderboardService {
         rank: index + 1,
         userId,
         displayName: meta?.displayName ?? userId,
-        tokens: score,
+        score,
         giftCount: parseInt(meta?.giftCount ?? '0', 10),
         lastGift: meta?.lastGift ?? '',
       };
@@ -179,81 +196,29 @@ export class LeaderboardService {
 
   async getUserRank(eventId: string, userId: string): Promise<number | null> {
     const rank = await this.redis.zrevrank(this.lbKey(eventId), userId);
-
     return rank === null ? null : rank + 1;
   }
 
   // -------------------------
-  // TOTAL TOKENS
+  // TOTAL SCORE
   // -------------------------
 
-  async getTotalTokens(eventId: string): Promise<number> {
-    const val = await this.redis.get(this.totalKey(eventId));
-    // parseInt matches the INCRBY integer semantics of this key
+  async getTotalScore(eventId: string): Promise<number> {
+    const val = await this.redis.get(this.totalScoreKey(eventId));
     return parseInt(val ?? '0', 10);
-  }
-
-  async addGiftFull(
-    eventId: string,
-    userId: string,
-    displayName: string,
-    tokens: number,
-    giftName: string,
-    giftCountKey: string, // passed in from processor
-  ): Promise<{
-    score: number;
-    rank: number;
-    totalTokens: number;
-    totalGifts: number;
-  }> {
-    const pipeline = this.redis.pipeline();
-
-    pipeline.zincrby(this.lbKey(eventId), tokens, userId); // [0] new score
-    pipeline.zrevrank(this.lbKey(eventId), userId); // [1] new rank
-    pipeline.hset(this.metaKey(eventId, userId), {
-      // [2]
-      displayName,
-      lastGift: giftName,
-    });
-    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1); // [3]
-    pipeline.incrby(this.totalKey(eventId), tokens); // [4] total tokens
-    pipeline.sadd(this.usersSetKey(eventId), userId); // [5]
-    pipeline.incr(giftCountKey); // [6] total gifts
-
-    const results = await pipeline.exec();
-    this.assertPipelineResults(results, 'addGiftFull');
-
-    return {
-      score: Number(results![0][1]),
-      rank: Number(results![1][1]) + 1,
-      totalTokens: Number(results![4][1]),
-      totalGifts: Number(results![6][1]),
-    };
   }
 
   // -------------------------
   // EXPIRY
   // -------------------------
 
-  /**
-   * Sets a TTL on all keys belonging to an event.
-   *
-   * FIX: Replaced KEYS pattern-scan (blocks Redis event loop) with SMEMBERS
-   * on the usersSetKey that addGift maintains incrementally. The membership
-   * set itself is also expired.
-   *
-   * NOTE: If you need to call setExpiry on events that were written before
-   * this version was deployed (i.e. the usersSetKey didn't exist yet), run a
-   * one-off migration to populate the set, or fall back to the KEYS scan in a
-   * controlled maintenance window.
-   */
   async setExpiry(eventId: string, ttlSeconds = 86_400): Promise<void> {
     const userIds = await this.redis.smembers(this.usersSetKey(eventId));
 
     const pipeline = this.redis.pipeline();
 
     pipeline.expire(this.lbKey(eventId), ttlSeconds);
-    pipeline.expire(this.totalKey(eventId), ttlSeconds);
+    pipeline.expire(this.totalScoreKey(eventId), ttlSeconds);
     pipeline.expire(this.usersSetKey(eventId), ttlSeconds);
 
     for (const userId of userIds) {
@@ -265,20 +230,16 @@ export class LeaderboardService {
   }
 
   // -------------------------
-  // RESET (utility)
+  // RESET
   // -------------------------
 
-  /**
-   * Deletes all keys for an event. Useful for testing or early teardown.
-   * Uses the same membership-set approach to avoid KEYS.
-   */
   async resetEvent(eventId: string): Promise<void> {
     const userIds = await this.redis.smembers(this.usersSetKey(eventId));
 
     const pipeline = this.redis.pipeline();
 
     pipeline.del(this.lbKey(eventId));
-    pipeline.del(this.totalKey(eventId));
+    pipeline.del(this.totalScoreKey(eventId));
     pipeline.del(this.usersSetKey(eventId));
 
     for (const userId of userIds) {

@@ -82,12 +82,9 @@ export default function LbRow({ entry, max, nextTokens, isNew }: LbRowProps) {
 
   return (
     <motion.div
-      layout
-      layoutId={`lb-row-${entry.userId}`}
       initial={isNew ? { opacity: 0, y: 32, scale: 0.96 } : false}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.25 } }}
-      transition={{ type: "spring", stiffness: 380, damping: 36 }}
       className={`${styles.lbRow} ${rankCls} ${spotlight ? styles.spotlight : ""}`}
     >
       {/* Background bar */}

@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Trophy, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { GiftItem } from "@/constants";
 import { getTokenClient } from "@/helpers/request";
 import { useGiftSender } from "@/hooks/useSendGift";
 import { useWallet } from "@/hooks/useWallets";
@@ -12,13 +11,14 @@ import BackButton from "@/ui/components/BackButton/BackButton";
 import WalletFundOverlay from "@/ui/components/WalletFundOverlay/WalletFundOverlay";
 import { useGiftRoom } from "../../../../hooks/useGiftRoom";
 import NavButton from "../NavButton/NavButton";
-import { playNumber1Sound } from "./audio";
-import { triggerNumber1Burst } from "./confetti";
+//import { playNumber1Sound } from "./audio";
+//import { triggerNumber1Burst } from "./confetti";
 import type { Overlay } from "./GiftRoom.dto";
 import styles from "./GiftRoom.module.scss";
 import LeaderboardTab from "./LeaderboardTab";
 import SprayButton from "./SprayButton/SprayButton";
-import SprayTab from "./SprayTab/SprayTab";
+//import SprayTab from "./SprayTab/SprayTab";
+import NairaWidget from "./naira-hand";
 
 export default function GiftRoomPage({
   eventData,
@@ -32,17 +32,8 @@ export default function GiftRoomPage({
   const [token, setToken] = useState<string | null>(null);
   const [tab, setTab] = useState<Overlay | null>(null);
   const [displayName] = useState("Chief Okafor");
-  /*const [sentGift, setSentGift] = useState<{
-    gift: GiftItem;
-    newRank: number;
-    rankDiff: number;
-    isNumber1: boolean;
-  } | null>(null);
-   */
-  const [streak, setStreak] = useState(0);
-  //const [showNumber1, setShowNumber1] = useState(false);
 
-  // const prevRankRef = useRef<number | null>(null);
+  const [streak, setStreak] = useState(0);
   const streakTimerRef = useRef<NodeJS.Timeout>(undefined);
 
   useEffect(() => {
@@ -54,32 +45,71 @@ export default function GiftRoomPage({
 
   const { sendGift } = useGiftSender(token);
 
-  const handleSend = useCallback(
-    async (gift: GiftItem) => {
-      try {
-        navigator.vibrate?.(80);
-        const ctx = getAudio();
+const handleSend = useCallback(
+  async (
+    noteValue: number,
+    remainingAmount: number
+  ) => {
 
-        // optimistic debit — no await needed
-        wallet.setBalance((prev) => (prev ?? 0) - gift.tokens);
+    try {
 
-        sendGift({ eventId, giftId: gift.id, displayName });
+      navigator.vibrate?.(80);
 
-        triggerNumber1Burst();
-        if (ctx) playNumber1Sound(ctx);
-        navigator.vibrate?.([100, 50, 100, 50, 200]);
+      // optimistic debit
+      wallet.setBalance(
+        (prev) =>
+          (prev ?? 0) - noteValue
+      );
 
-        clearTimeout(streakTimerRef.current);
-        setStreak((s) => s + 1);
-        streakTimerRef.current = setTimeout(() => setStreak(0), 5000);
-      } catch (error) {
-        // roll back if sendGift throws synchronously
-        wallet.setBalance((prev) => (prev ?? 0) + gift.tokens);
-        console.error(error);
-      }
-    },
-    [sendGift, eventId, displayName, wallet, getAudio],
-  );
+      sendGift({
+        eventId,
+        amount: noteValue,
+        displayName,
+      });
+
+      navigator.vibrate?.([
+        100,
+        50,
+        100,
+        50,
+        200,
+      ]);
+
+      clearTimeout(
+        streakTimerRef.current
+      );
+
+      setStreak((s) => s + 1);
+
+      streakTimerRef.current =
+        setTimeout(
+          () => setStreak(0),
+          5000
+        );
+
+      // optional analytics
+      console.log({
+        noteValue,
+        remainingAmount,
+      });
+
+    } catch (error) {
+
+      wallet.setBalance(
+        (prev) =>
+          (prev ?? 0) + noteValue
+      );
+
+      console.error(error);
+    }
+  },
+  [
+    sendGift,
+    eventId,
+    displayName,
+    wallet,
+  ]
+);
 
   if (roomError) {
     return (
@@ -136,7 +166,7 @@ export default function GiftRoomPage({
 
       <LeaderboardTab entries={leaderboard} stats={stats} />
 
-      {tab === "spray" && (
+     {/* tab === "spray" && (
         <SprayTab
           walletBalance={wallet.balance ?? 0}
           onSend={handleSend}
@@ -147,7 +177,38 @@ export default function GiftRoomPage({
           closeSprayOverlay={() => setTab(null)}
           streak={streak}
         />
-      )}
+      )*/}
+
+      <AnimatePresence>
+  {tab === "spray" && (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className={styles.sprayOverlay}
+    >
+      <NairaWidget
+        totalAmount={wallet.balance ?? 0}
+        noteValue={1_000}
+        onSprayReset={()=>{
+           router.push("/wallet/fund");
+        }}
+        onGift={handleSend}
+        onComplete={() => {
+          //handleSend
+          console.log("spraying completed")
+        }}
+      />
+
+      <button
+        className={styles.closeSpray}
+        onClick={() => setTab(null)}
+      >
+        ✕
+      </button>
+    </motion.div>
+  )}
+</AnimatePresence>
 
       {tab === "wallet" && (
         <WalletFundOverlay

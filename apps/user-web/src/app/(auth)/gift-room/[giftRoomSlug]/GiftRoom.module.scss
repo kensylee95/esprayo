@@ -6,8 +6,8 @@
 .page {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  background: vars.$void;
+  height: 100vh;
+  background: rgba(0,0,0,0.85);
   overflow: hidden;
 }
 
@@ -630,4 +630,36 @@
   font-size: 18px;
   color: white;
   letter-spacing: 0.5px;
+}
+
+.sprayOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background:
+    radial-gradient(
+      circle at top,
+      rgba(vars.$gold, 0.08),
+      transparent 40%
+    ),
+    rgba(0, 0, 0, 0.96);
+
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.closeSpray {
+  position: absolute;
+  top: max(18px, env(safe-area-inset-top));
+  right: 18px;
+  z-index: 10000;
+
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+
+  background: rgba(255,255,255,0.06);
+  color: white;
+  cursor: pointer;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useAnimationControls } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getTokenClient } from "@/helpers/request";
 import { useGiftRoom } from "@/hooks/useGiftRoom";
@@ -15,32 +15,43 @@ function LiveDot() {
   return <span className={styles.liveDot} aria-hidden="true" />;
 }
 
+
 function AnimatedCount({ value }: { value: number }) {
   const [display, setDisplay] = useState(value);
-  const raf = useRef<number | null>(null);
-  const start = useRef({ from: value, to: value, t: 0 });
+  const controls = useAnimationControls();
+  const prev = useRef(value);
 
   useEffect(() => {
-    const from = display;
-    const to = value;
-    const duration = 800;
-    const began = performance.now();
-    start.current = { from, to, t: began };
+    if (value === prev.current) return;
 
-    const tick = (now: number) => {
-      const p = Math.min((now - began) / duration, 1);
-      const eased = 1 - (1 - p) ** 3;
-      setDisplay(Math.round(from + (to - from) * eased));
-      if (p < 1) raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-    return () => {
-      if (raf.current) cancelAnimationFrame(raf.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, display]);
+    setDisplay(value);
 
-  return <>{display.toLocaleString()}</>;
+    // trigger flip animation
+    controls.start({
+      rotateX: [90, -10, 0],
+      opacity: [0, 1, 1],
+      y: [6, 0, 0],
+      transition: {
+        duration: 0.22,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    });
+
+    prev.current = value;
+  }, [value, controls]);
+
+  return (
+    <motion.span
+      animate={controls}
+      style={{
+        display: "inline-block",
+        transformOrigin: "50% 50%",
+        perspective: 1000,
+      }}
+    >
+      {display.toLocaleString()}
+    </motion.span>
+  );
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -176,7 +187,7 @@ export default function LeaderboardDisplayPage({ event }: { event: IEvent }) {
     [leaderboard],
   );
 
-  const max = safeLeaderboard[0]?.tokens || 1;
+  const max = safeLeaderboard[0]?.score || 1;
 
   const eventTitle = stats?.eventTitle || event.title?.toUpperCase() || "";
   const eventSub = event.description || "";
@@ -234,7 +245,7 @@ export default function LeaderboardDisplayPage({ event }: { event: IEvent }) {
     // Detect token increases → toast + last-gift timestamp
     safeLeaderboard.forEach((entry) => {
       const prev = prevLeader.find((p) => p.userId === entry.userId);
-      const gained = prev ? entry.tokens - prev.tokens : 0;
+      const gained = prev ? entry.score - prev.score : 0;
 
       if (gained > 0) {
         setLastGiftAt(Date.now());
@@ -397,7 +408,7 @@ export default function LeaderboardDisplayPage({ event }: { event: IEvent }) {
                 key={entry.userId}
                 entry={entry}
                 max={max}
-                nextTokens={safeLeaderboard[i - 1]?.tokens}
+                nextTokens={safeLeaderboard[i - 1]?.score}
                 isNew={newUsers.has(entry.userId)}
               />
             ))}

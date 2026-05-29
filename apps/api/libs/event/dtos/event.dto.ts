@@ -39,10 +39,7 @@ export interface IGift {
   eventId: string;
   guestId: string | null;
   displayName: string;
-  giftId: string;
-  giftName: string;
-  giftEmoji: string;
-  tokens: number;
+  denomination: string;
   nairaValue: number;
   cumulativeTokens: number;
   rankAtTime: number | null;
@@ -53,11 +50,8 @@ export interface ApplyGiftParams {
   eventId: string;
   guestId: string | null;
   displayName: string;
-  giftId: string;
-  giftName: string;
-  giftEmoji: string;
-  tokens: number;
-  cumulativeTokens: number;
+  nairaValue: number;
+  cumulativeScore: number;
   rankAtTime: number;
   isNewGifter: boolean;
 }
