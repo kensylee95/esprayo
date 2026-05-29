@@ -4,7 +4,7 @@ export interface LeaderboardEntry {
   rank: number;
   userId: string;
   displayName: string;
-  tokens: number;
+  score: number;
   giftCount: number;
   lastGift?: string;
 }
@@ -34,10 +34,9 @@ export interface GetWayRes {
 
 export interface RoomStats {
   guestCount: number;
-  totalTokens: number;
+  totalScore: number;
   totalGifts: number;
   eventTitle: string;
-  eventEmoji: string;
 }
 
 export type Overlay = "spray" | "wallet";

@@ -1,9 +1,8 @@
 import { useCallback, useState } from "react";
-import type { GiftItem } from "@/constants";
 
 type SendGiftPayload = {
   eventId: string;
-  giftId: GiftItem["id"];
+  amount: number;
   displayName: string;
 };
 

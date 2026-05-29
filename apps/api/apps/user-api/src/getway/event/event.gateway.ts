@@ -225,7 +225,7 @@ export class EventGateway
         await Promise.all([
           this.leaderboardService.getTop(eventId, 20),
 
-          this.leaderboardService.getTotalTokens(eventId),
+          this.leaderboardService.getTotalScore(eventId),
 
           this.giftService.getEventGiftCount(eventId),
 

@@ -37,7 +37,7 @@ export interface LeaderboardEntry {
   rank: number;
   userId: string;
   displayName: string;
-  tokens: number;
+  score: number;
   giftCount: number;
   streak?: number;
 }

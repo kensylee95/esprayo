@@ -10,7 +10,7 @@ export default function LeaderboardTab({
   entries: LeaderboardEntry[];
   stats: RoomStats;
 }) {
-  const max = entries[0]?.tokens || 1;
+  const max = entries[0]?.score || 1;
 
   return (
     <div className={styles.content}>
@@ -21,7 +21,7 @@ export default function LeaderboardTab({
         </div>
         <div className={styles.stat}>
           <span className={`${styles.statVal} ${styles.gold}`}>
-            {stats.totalTokens.toLocaleString()}
+            {stats.totalScore.toString()}
           </span>
           <span className={styles.statLbl}>Tokens</span>
         </div>
@@ -45,7 +45,7 @@ export default function LeaderboardTab({
                     : "";
 
             const colour = avatarColour(entry.userId);
-            const pct = Math.round((entry.tokens / max) * 100);
+            const pct = Math.round((entry.score / max) * 100);
 
             return (
               <motion.li
@@ -101,12 +101,12 @@ export default function LeaderboardTab({
                   {/* Score — pulses gold when it updates */}
                   <motion.span
                     className={styles.lbScore}
-                    key={`score-${entry.userId}-${entry.tokens}`}
+                    key={`score-${entry.userId}-${entry.score}`}
                     initial={{ scale: 1.25, color: "#FFD700" }}
                     animate={{ scale: 1, color: "#ffffff" }}
                     transition={{ duration: 0.4 }}
                   >
-                    {entry.tokens.toLocaleString()}
+                    {entry.score.toLocaleString()}
                   </motion.span>
                 </div>
               </motion.li>

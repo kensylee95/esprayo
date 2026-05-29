@@ -1,15 +1,25 @@
-import { Controller, Post, Get, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Query,
+  BadRequestException,
+} from '@nestjs/common';
 import { GiftService } from '@modules/gift/gift.service';
 import { CurrentUser, Public } from '@modules/auth/src';
 import { randomUUID } from 'crypto';
+import { NairaDenomination } from '@modules/gift/dtos/gift.dto';
 
 // -------------------------
 // DTOs
 // -------------------------
 class SendGiftDto {
   eventId: string;
-  giftId: string;
+  amount: number;
   displayName: string;
+  tokens: number;
 }
 
 class TopUpDto {
@@ -26,23 +36,19 @@ export class GiftController {
   // -------------------------
   @Post('gift')
   async sendGift(@Body() dto: SendGiftDto, @CurrentUser('id') userId: string) {
-    const catalog = this.giftService.getGiftCatalog();
+    const allowed = [50, 100, 200, 500, 1000];
 
-    const item = catalog.find((g) => g.id === dto.giftId);
-
-    if (!item) {
-      throw new Error('Gift not found');
+    if (!allowed.includes(dto.amount)) {
+      throw new BadRequestException('Invalid amount');
     }
+    const denomination = String(dto.amount) as NairaDenomination;
 
     return this.giftService.sendGift({
       eventId: dto.eventId,
       userId,
+      denomination: denomination,
       displayName: dto.displayName,
-      giftId: item.id,
-      giftName: item.name,
-      giftEmoji: item.emoji,
-      tokens: item.tokens,
-      amount: item.tokens,
+      amount: dto.amount,
       reference: `gift_${dto.eventId}_${randomUUID()}`,
     });
   }
@@ -57,15 +63,6 @@ export class GiftController {
     @Query('limit') limit = 20,
   ) {
     return this.giftService.getLeaderBoard(eventId, limit);
-  }
-
-  // -------------------------
-  // GIFT CATALOG
-  // -------------------------
-  @Public()
-  @Get('catalog')
-  getCatalog() {
-    return this.giftService.getGiftCatalog();
   }
 
   // -------------------------

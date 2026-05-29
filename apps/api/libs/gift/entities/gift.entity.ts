@@ -8,7 +8,6 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-
 @Entity('gifts')
 @Index(['eventId', 'createdAt'])
 @Index(['eventId', 'guestId'])
@@ -16,6 +15,7 @@ import {
 export class Gift {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
   @Column('uuid')
   @Index()
   eventId: string;
@@ -24,42 +24,67 @@ export class Gift {
   @JoinColumn({ name: 'eventId' })
   event: Event;
 
-  /** Authenticated user id — nullable for anonymous gifts */
   @Column('uuid', { nullable: true })
   guestId: string;
 
-  /** Unique id for idempotency (prevents duplicate processing) */
   @Column({ type: 'uuid' })
   @Index({ unique: true })
   transactionId: string;
 
-  /** Display name chosen at gift time */
-  @Column({ length: 60 })
+  @Column({
+    type: 'varchar',
+    length: 120,
+  })
   displayName: string;
 
-  @Column({ length: 40 })
-  giftId: string;
+  @Column({
+    type: 'varchar',
+    length: 50,
+  })
+  denomination: string;
 
-  @Column({ length: 80 })
-  giftName: string;
-
-  @Column({ length: 10 })
-  giftEmoji: string;
-
-  @Column({ type: 'int' })
-  tokens: number;
-
-  /** Naira value locked at time of gift (tokenRateNaira × tokens) */
-  @Column({ type: 'int' })
+  @Column({
+    type: 'int',
+  })
   nairaValue: number;
 
-  /** Leaderboard score snapshot after this gift */
-  @Column({ type: 'int', default: 0 })
+  @Column({
+    type: 'int',
+    default: 1,
+  })
+  quantity: number;
+
+  @Column({
+    type: 'varchar',
+    length: 50,
+    default: 'spray',
+  })
+  giftType: string;
+
+  @Column({
+    type: 'varchar',
+    length: 10,
+    default: 'NGN',
+  })
+  currency: string;
+
+  @Column({
+    type: 'int',
+    default: 0,
+  })
   cumulativeTokens: number;
 
-  /** Rank on the leaderboard at the time of this gift */
-  @Column({ type: 'int', nullable: true })
+  @Column({
+    type: 'int',
+    nullable: true,
+  })
   rankAtTime: number;
+
+  @Column({
+    type: 'jsonb',
+    nullable: true,
+  })
+  metadata?: Record<string, any>;
 
   @CreateDateColumn()
   createdAt: Date;
