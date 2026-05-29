@@ -8,7 +8,6 @@ import {
 } from "framer-motion";
 import Image from "next/image";
 import { memo, useRef } from "react";
-import SWIPE_SFX from "../assets/money-swipe.wav";
 import NOTE_SRC from "../assets/naira-note.png";
 import { getStackConfig } from "../physics/stack";
 
@@ -40,7 +39,7 @@ const Note = memo(function Note({
 
   function playSwipeSfx() {
     if (!audioRef.current) {
-      audioRef.current = new Audio(SWIPE_SFX);
+      audioRef.current = new Audio("/sounds/money-swipe.wav");
       audioRef.current.volume = 0.7;
     }
     audioRef.current.currentTime = 0;
