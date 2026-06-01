@@ -40,13 +40,18 @@ export default function GiftRoomPage({
     getTokenClient().then(setToken);
   }, []);
 
+  const initialBalanceRef = useRef<number | null>(null);
+if (initialBalanceRef.current === null && wallet.balance != null) {
+  initialBalanceRef.current = wallet.balance;
+}
+
   const { leaderboard, stats, roomError, liveAlert, rivalryAlert } =
     useGiftRoom(token, eventId);
 
   const { sendGift } = useGiftSender(token);
 
   const handleSend = useCallback(
-    async (noteValue: number, remainingAmount: number) => {
+    async (noteValue: number, numberSent: number, remainingAmount: number) => {
       try {
         navigator.vibrate?.(80);
 
@@ -55,7 +60,7 @@ export default function GiftRoomPage({
 
         sendGift({
           eventId,
-          amount: noteValue,
+          amount: noteValue*numberSent,
           displayName,
         });
 
@@ -158,8 +163,9 @@ export default function GiftRoomPage({
             className={styles.sprayOverlay}
           >
             <NairaWidget
-              totalAmount={wallet.balance ?? 0}
+               totalAmount={initialBalanceRef.current ?? 0}
               noteValue={1_000}
+              visibleStack={5}
               onSprayReset={() => {
                 router.push("/wallet/fund");
               }}

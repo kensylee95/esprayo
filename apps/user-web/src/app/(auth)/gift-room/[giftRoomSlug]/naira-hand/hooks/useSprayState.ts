@@ -1,9 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 
 interface SprayOptions {
-  onGift?: (noteValue: number, remainingAmount: number) => void;
+  onGift?: (noteValue: number, numberSent: number, remainingAmount: number) => void;
 }
-
 export function useSprayState(
   totalAmount: number,
   noteValue: number,
@@ -11,40 +10,35 @@ export function useSprayState(
   options?: SprayOptions,
 ) {
   const [remainingAmount, setRemainingAmount] = useState(totalAmount);
-
   const [sprayTrigger, setSprayTrigger] = useState(0);
 
-  const swipeLock = useRef(false);
+  const remainingRef = useRef(totalAmount);
+  const noteValueRef = useRef(noteValue);
+  const onCompleteRef = useRef(onComplete);
+  const optionsRef = useRef(options);
 
-  const spray = useCallback(() => {
-    if (swipeLock.current) return;
+  // Always sync mutable refs
+  noteValueRef.current = noteValue;
+  onCompleteRef.current = onComplete;
+  optionsRef.current = options;
+  // ← prevTotalRef block is gone entirely
 
-    swipeLock.current = true;
+  const spray = useCallback((count = 1) => {
+    if (remainingRef.current <= 0) return;
 
-    setSprayTrigger((v) => v + 1);
+    const actualCount = Math.min(count, Math.ceil(remainingRef.current / noteValueRef.current));
+    const next = Math.max(remainingRef.current - noteValueRef.current * actualCount, 0);
 
-    requestAnimationFrame(() => {
-      const currentRemaining = remainingAmount;
+    remainingRef.current = next;
+    setSprayTrigger((v) => v + actualCount);
+    setRemainingAmount(next);
 
-      const next = Math.max(currentRemaining - noteValue, 0);
+    optionsRef.current?.onGift?.(noteValueRef.current, actualCount, next);
 
-      // update local state first
-      setRemainingAmount(next);
+    if (next === 0) {
+      onCompleteRef.current?.();
+    }
+  }, []);
 
-      // THEN notify parent safely
-      options?.onGift?.(noteValue, next);
-
-      if (next === 0) {
-        onComplete?.();
-      }
-
-      swipeLock.current = false;
-    });
-  }, [remainingAmount, noteValue, onComplete, options]);
-
-  return {
-    remainingAmount,
-    sprayTrigger,
-    spray,
-  };
+  return { remainingAmount, remainingRef, sprayTrigger, spray };
 }

@@ -2,26 +2,18 @@
 
 import { AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import bg from "./assets/bg.jpg";
-import WorldCanvas from "./canvas/WorldCanvas";
+import WorldCanvas, { type WorldCanvasHandle } from "./canvas/WorldCanvas";
 import { useSprayState } from "./hooks/useSprayState";
 import { getStackConfig } from "./physics/stack";
-import { computeExitTrajectory } from "./physics/trajectories";
 import type { NairaHandProps } from "./types";
 import AmountCounter from "./ui/AmountCounter";
 import CelebrationScreen from "./ui/CelebrationScreen";
 import FloatingSymbols from "./ui/FloatingSymbols";
-import Flyout from "./ui/Flyout";
 import Note from "./ui/Note";
 import StageGlow from "./ui/StageGlow";
 import SwipeHint from "./ui/SwipeHint";
-
-interface FlyOutState {
-  id: number;
-  cfg: ReturnType<typeof getStackConfig>;
-  trajectory: ReturnType<typeof computeExitTrajectory>;
-}
 
 export default function NairaWidget({
   totalAmount,
@@ -31,36 +23,41 @@ export default function NairaWidget({
   onComplete,
   onGift,
 }: NairaHandProps) {
-  const { remainingAmount, sprayTrigger, spray } = useSprayState(
+  const { remainingAmount, remainingRef, sprayTrigger, spray } = useSprayState(
     totalAmount,
     noteValue,
     onComplete,
     { onGift },
   );
 
+  const canvasRef = useRef<WorldCanvasHandle>(null);
+
   const visibleNotes = Math.min(
     visibleStack,
     Math.ceil(remainingAmount / noteValue),
   );
 
+  const noteValueRef = useRef(noteValue);
+  noteValueRef.current = noteValue;
+
   const notes = useMemo(
-    () => Array.from({ length: visibleNotes }, (_, i) => i),
-    [visibleNotes],
+    () =>
+      Array.from({ length: visibleNotes }, (_, i) => ({
+        stackIndex: i,
+        key: i === visibleNotes - 1 ? `top-${sprayTrigger}` : `note-${i}`,
+      })),
+    [visibleNotes, sprayTrigger],
   );
 
-  const [flyOut, setFlyOut] = useState<FlyOutState | null>(null);
-
-  const dismiss = (noteId: number, velocityY: number, velocityX: number) => {
-    if (remainingAmount <= 0 && remainingAmount > noteValue) return;
-
-    const topCfg = getStackConfig(visibleNotes - 1, visibleNotes);
-    const trajectory = computeExitTrajectory(velocityY, velocityX);
-
-    setFlyOut({ id: noteId, cfg: topCfg, trajectory });
-    spray();
-
-    window.setTimeout(() => setFlyOut(null), 520);
-  };
+  const dismiss = useCallback(
+    (_noteId: number, vy: number, vx: number, count: number) => {
+      if (remainingRef.current <= 0) return;
+      // draw all notes on canvas — zero React components
+      canvasRef.current?.sprayNotes(count, vx, vy);
+      spray(count);
+    },
+    [remainingRef, spray],
+  );
 
   return (
     <div
@@ -70,14 +67,15 @@ export default function NairaWidget({
         position: "relative",
         overflow: "hidden",
         isolation: "isolate",
-        contain: "layout paint",
       }}
     >
-      {/* ── Background image + overlay ── */}
+      {/* ── Background ── */}
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <Image
           src={bg.src}
           alt=""
+          width={1024}
+          height={600}
           style={{
             width: "100%",
             height: "100%",
@@ -95,7 +93,7 @@ export default function NairaWidget({
         />
       </div>
 
-      {/* ── Subtle grain texture overlay ── */}
+      {/* ── Grain ── */}
       <div
         style={{
           position: "absolute",
@@ -110,46 +108,38 @@ export default function NairaWidget({
         }}
       />
 
-      {/* ── Floating ambient ₦ symbols ── */}
       <FloatingSymbols />
-
-      {/* ── Stage glow (ambient + spray burst) ── */}
       <StageGlow intensity={sprayTrigger} />
 
-      {/* ── Physics / particle canvas ── */}
-      <WorldCanvas trigger={sprayTrigger} />
-
-      {/* ── Amount counter ── */}
+      {/* ── Canvas handles particles + flyout notes ── */}
       <AmountCounter
         mints={Math.ceil(remainingAmount / noteValue)}
         amount={remainingAmount}
       />
 
       {/* ── Note stack ── */}
-      <AnimatePresence mode="popLayout">
-        {notes.map((noteId, stackIndex) => (
+      {notes.map(({ key, stackIndex }) => {
+        const isTop = stackIndex === visibleNotes - 1;
+        const cfg = getStackConfig(stackIndex, visibleNotes);
+        return (
           <Note
-            key={`${remainingAmount}-${noteId}`}
-            noteId={noteId}
-            stackIndex={stackIndex}
-            totalRemaining={visibleNotes}
+            key={key}
+            noteId={stackIndex}
+            isTop={isTop}
+            cfgY={cfg.y}
+            cfgX={cfg.x}
+            cfgRotate={cfg.rotate}
+            cfgZIndex={cfg.zIndex}
             dismissing={false}
             onDismiss={dismiss}
           />
-        ))}
-      </AnimatePresence>
+        );
+      })}
+     <WorldCanvas ref={canvasRef} trigger={sprayTrigger} noteSrc="/assets/naira-note.png" />
 
-      {/* ── Flyout spray note ── */}
-      <AnimatePresence>
-        {flyOut && (
-          <Flyout trajectory={flyOut.trajectory} rotate={flyOut.cfg.rotate} />
-        )}
-      </AnimatePresence>
 
-      {/* ── Swipe hint ── */}
       <SwipeHint visible={remainingAmount > 0} />
 
-      {/* ── Celebration screen ── */}
       <AnimatePresence>
         {remainingAmount <= 0 && (
           <CelebrationScreen

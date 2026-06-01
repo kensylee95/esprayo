@@ -18,6 +18,9 @@ export default function Flyout({
       initial={{
         opacity: 1,
         scale: 1,
+        y: 0,
+        x: 0,
+        rotate,
       }}
       animate={{
         opacity: 0,
@@ -37,6 +40,9 @@ export default function Flyout({
         translateX: "-50%",
         zIndex: 999,
         pointerEvents: "none",
+        //promote to GPU layer so animation is off main thread
+        willChange: "transform, opacity",
+        backfaceVisibility: "hidden",
       }}
     >
       <div
@@ -44,9 +50,21 @@ export default function Flyout({
           width: "clamp(120px, 22vw, 160px)",
           aspectRatio: "130 / 240",
           position: "relative",
+          //prevent layout recalc from affecting parent
+          contain: "layout paint",
         }}
       >
-        <Image src={NOTE_SRC} alt="" fill draggable={false} />
+        <Image
+          src={NOTE_SRC}
+          alt=""
+          fill
+          //prevents Next.js from lazy-loading during animation
+          priority
+          //prevents layout shift from srcset calculation
+          sizes="clamp(120px, 22vw, 160px)"
+          draggable={false}
+          style={{ objectFit: "contain" }}
+        />
       </div>
     </motion.div>
   );
