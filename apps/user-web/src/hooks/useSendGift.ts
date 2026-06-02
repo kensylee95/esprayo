@@ -1,8 +1,10 @@
 import { useCallback, useState } from "react";
+import type { NoteValue } from "@/app/(auth)/gift-room/[giftRoomSlug]/naira-hand/types";
 
 type SendGiftPayload = {
   eventId: string;
   amount: number;
+  denomination: NoteValue;
   displayName: string;
 };
 

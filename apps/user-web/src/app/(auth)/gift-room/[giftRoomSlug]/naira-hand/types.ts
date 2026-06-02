@@ -1,10 +1,25 @@
+import type { getStackConfig } from "./physics/stack";
+import type { computeExitTrajectory } from "./physics/trajectories";
+
+export type NoteValue = 50 | 100 | 200 | 500 | 1000;
+
 export interface NairaHandProps {
   totalAmount: number;
-  noteValue?: number;
+  noteValue?: NoteValue;
   visibleStack?: number;
   onComplete?: () => void;
   onSprayReset: () => void;
-  onGift: (noteValue: number, remainingAmount: number) => void;
+  onGift: (
+    noteValue: NoteValue,
+    numberSent: number,
+    remainingAmount: number,
+  ) => void;
+}
+
+export interface FlyOutState {
+  id: number;
+  cfg: ReturnType<typeof getStackConfig>;
+  trajectory: ReturnType<typeof computeExitTrajectory>;
 }
 
 export interface Ring {
