@@ -1,11 +1,16 @@
 import { useCallback, useRef, useState } from "react";
+import type { NoteValue } from "../types";
 
 interface SprayOptions {
-  onGift?: (noteValue: number, numberSent: number, remainingAmount: number) => void;
+  onGift?: (
+    noteValue: NoteValue,
+    numberSent: number,
+    remainingAmount: number,
+  ) => void;
 }
 export function useSprayState(
   totalAmount: number,
-  noteValue: number,
+  noteValue: NoteValue,
   onComplete?: () => void,
   options?: SprayOptions,
 ) {
@@ -26,8 +31,14 @@ export function useSprayState(
   const spray = useCallback((count = 1) => {
     if (remainingRef.current <= 0) return;
 
-    const actualCount = Math.min(count, Math.ceil(remainingRef.current / noteValueRef.current));
-    const next = Math.max(remainingRef.current - noteValueRef.current * actualCount, 0);
+    const actualCount = Math.min(
+      count,
+      Math.ceil(remainingRef.current / noteValueRef.current),
+    );
+    const next = Math.max(
+      remainingRef.current - noteValueRef.current * actualCount,
+      0,
+    );
 
     remainingRef.current = next;
     setSprayTrigger((v) => v + actualCount);

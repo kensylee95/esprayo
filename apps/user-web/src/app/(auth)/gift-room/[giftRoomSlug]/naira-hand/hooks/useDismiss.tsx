@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { buildFlyOutBatch, batchDuration } from "../physics/flyout";
+import { batchDuration, buildFlyOutBatch } from "../physics/flyout";
 import type { useFlyOuts } from "./useFlyOuts";
 
 interface UseDismissOptions {
@@ -23,9 +23,17 @@ export function useDismiss({
 
       const noteValue = noteValueRef.current ?? 1;
       const visibleNotes = visibleNotesRef.current ?? 1;
-      const safeCount = Math.min(count, Math.ceil(remainingRef.current / noteValue));
+      const safeCount = Math.min(
+        count,
+        Math.ceil(remainingRef.current / noteValue),
+      );
 
-      const batch = buildFlyOutBatch(visibleNotes, safeCount, velocityX, velocityY);
+      const batch = buildFlyOutBatch(
+        visibleNotes,
+        safeCount,
+        velocityX,
+        velocityY,
+      );
 
       // ONE state update, ONE cleanup timer, ONE spray call — no forEach, no timers
       addFlyOuts(batch, batchDuration(safeCount));

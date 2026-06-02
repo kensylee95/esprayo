@@ -1,6 +1,6 @@
+import type { FlyOutState } from "../types";
 import { getStackConfig } from "./stack";
 import { computeExitTrajectory } from "./trajectories";
-import type { FlyOutState } from "../types";
 
 // ─── Timing constants ────────────────────────────────────────────────────────
 
@@ -37,8 +37,7 @@ export function buildFlyOutBatch(
   return Array.from({ length: count }, (_, i) => {
     const spreadX =
       i === 0 ? velocityX : velocityX + (Math.random() - 0.5) * 400;
-    const spreadY =
-      i === 0 ? velocityY : velocityY - Math.random() * 200;
+    const spreadY = i === 0 ? velocityY : velocityY - Math.random() * 200;
 
     return {
       id: nextFlyId(),

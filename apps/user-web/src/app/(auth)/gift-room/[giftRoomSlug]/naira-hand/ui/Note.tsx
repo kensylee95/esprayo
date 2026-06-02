@@ -4,10 +4,11 @@ import {
   motion,
   type PanInfo,
   useMotionValue,
+  useMotionValueEvent,
   useTransform,
 } from "framer-motion";
 import Image from "next/image";
-import { memo, useRef, useState, useEffect } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
 interface NoteProps {
   isTop: boolean;
@@ -17,12 +18,23 @@ interface NoteProps {
   cfgZIndex: number;
   noteId: number;
   dismissing: boolean;
-  onDismiss: (id: number, vy: number, vx: number, notesToSpray: number) => void;
+  onDismiss: (
+    id: number,
+    vy: number,
+    vx: number,
+    notesToSpray: number,
+    endX: number,
+    endY: number,
+  ) => void;
 }
 
 const MAX_CHARGE_MS = 1000;
 const MAX_NOTES = 100;
 const HOLD_INTENT_MS = 800;
+
+// Movement threshold in px — if the pointer moves more than this before
+// HOLD_INTENT_MS elapses, we treat it as a drag, not a hold.
+const DRAG_MOVE_THRESHOLD = 8;
 
 const Note = memo(function Note({
   isTop,
@@ -31,17 +43,18 @@ const Note = memo(function Note({
   cfgRotate,
   cfgZIndex,
   noteId,
-  dismissing,
   onDismiss,
 }: NoteProps) {
   const dragY = useMotionValue(0);
   const dragX = useMotionValue(0);
   const charge = useMotionValue(0);
-  const transformedCharge = useTransform(charge, (v) => Math.max(1, Math.round(v * MAX_NOTES)))
 
+  // ── FIX #3: subscribe to MotionValue so the counter actually re-renders ──
+  const [displayCount, setDisplayCount] = useState(1);
+  useMotionValueEvent(charge, "change", (v) => {
+    setDisplayCount(Math.max(1, Math.round(v * MAX_NOTES)));
+  });
 
-  // Derive rotate/opacity from drag — works correctly now that
-  // there's no competing CSS transform on a parent
   const rotate = useTransform(dragX, [-200, 200], [-15, 15]);
   const opacity = useTransform(dragY, [0, -150], [1, 0]);
   const progressScale = charge;
@@ -51,9 +64,17 @@ const Note = memo(function Note({
   const raf = useRef<number | null>(null);
   const startTime = useRef<number>(0);
   const isCharging = useRef(false);
-  const isDragging = useRef(false);
+
+  // ── FIX #2: track pointer position ourselves so we can detect real movement ──
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const movedTooFar = useRef(false);
+
+  // ── FIX #2: Framer's drag is disabled while we are in the hold-intent window,
+  //    and re-enabled only once we've decided it's a real drag (not a hold). ──
+  const [dragEnabled, setDragEnabled] = useState(true);
 
   const [barVisible, setBarVisible] = useState(false);
+
   useEffect(() => {
     return () => {
       if (holdTimer.current) clearTimeout(holdTimer.current);
@@ -61,33 +82,27 @@ const Note = memo(function Note({
     };
   }, []);
 
-  function startCharge() {
-    if (!isTop) return;
-    isDragging.current = false;
-    if (holdTimer.current) clearTimeout(holdTimer.current);
-    if (raf.current) cancelAnimationFrame(raf.current);
+  // ── Charge tick ──
+  function startChargeTick() {
+    startTime.current = performance.now();
+    charge.set(0);
+    isCharging.current = true;
+    setBarVisible(true);
 
-    holdTimer.current = setTimeout(() => {
-      setBarVisible(true);
-      startTime.current = performance.now();
-      charge.set(0);
-      isCharging.current = true;
+    const tick = () => {
+      if (!isCharging.current) return;
+      const elapsed = performance.now() - startTime.current;
+      const next = Math.min(elapsed / MAX_CHARGE_MS, 1);
+      charge.set(next);
+      if (next < 1) {
+        raf.current = requestAnimationFrame(tick);
+      } else {
+        isCharging.current = false;
+        navigator.vibrate?.([20, 40, 20]);
+      }
+    };
 
-      const tick = () => {
-        if (!isCharging.current) return;
-        const elapsed = performance.now() - startTime.current;
-        const next = Math.min(elapsed / MAX_CHARGE_MS, 1);
-        charge.set(next);
-        if (next < 1) {
-          raf.current = requestAnimationFrame(tick);
-        } else {
-          isCharging.current = false;
-          navigator.vibrate?.([20, 40, 20]);
-        }
-      };
-
-      raf.current = requestAnimationFrame(tick);
-    }, HOLD_INTENT_MS);
+    raf.current = requestAnimationFrame(tick);
   }
 
   function resetCharge() {
@@ -96,10 +111,68 @@ const Note = memo(function Note({
     isCharging.current = false;
     charge.set(0);
     setBarVisible(false);
+    pointerStart.current = null;
+    movedTooFar.current = false;
+  }
+
+  // ── FIX #2: onPointerDown — disable Framer drag temporarily and start the
+  //    hold-intent timer. If the pointer moves > threshold before the timer
+  //    fires, re-enable drag and cancel the charge. ──
+  function handlePointerDown(e: React.PointerEvent) {
+    if (!isTop) return;
+    // Capture starting position
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+    movedTooFar.current = false;
+
+    // Disable Framer drag so it doesn't steal the event during hold window
+    setDragEnabled(false);
+
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+    if (raf.current) cancelAnimationFrame(raf.current);
+
+    holdTimer.current = setTimeout(() => {
+      // If pointer moved too far, this is a swipe — bail out
+      if (movedTooFar.current) {
+        setDragEnabled(true);
+        return;
+      }
+      // Committed to a hold — start charging
+      startChargeTick();
+    }, HOLD_INTENT_MS);
+  }
+
+  // ── FIX #2: onPointerMove — detect if the user has moved far enough to
+  //    count as a drag, then re-enable Framer drag and cancel charge. ──
+  function handlePointerMove(e: React.PointerEvent) {
+    if (!isTop) return;
+    if (!pointerStart.current) return;
+
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > DRAG_MOVE_THRESHOLD && !movedTooFar.current) {
+      movedTooFar.current = true;
+
+      // only cancel pending hold intent
+      if (holdTimer.current) {
+        clearTimeout(holdTimer.current);
+        holdTimer.current = null;
+      }
+
+      // IMPORTANT:
+      // don't stop charging if it already started
+      setDragEnabled(true);
+    }
   }
 
   function handlePointerUp() {
-    if (!isDragging.current) resetCharge();
+    setDragEnabled(true);
+  }
+
+  function handlePointerCancel() {
+    resetCharge();
+    setDragEnabled(true);
   }
 
   function playSwipeSfx() {
@@ -111,71 +184,87 @@ const Note = memo(function Note({
     audioRef.current.play().catch(() => {});
   }
 
+  // ── onDragStart — framer confirmed a drag; make sure charge is killed ──
   function handleDragStart() {
-    isDragging.current = true;
-    if (holdTimer.current) clearTimeout(holdTimer.current);
+    setDragEnabled(true);
+
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
   }
 
-function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
-  console.log("dragEnd fired", { 
-    offsetY: info.offset.y, 
-    velocityY: info.velocity.y,
-    shouldDismiss: info.offset.y < -60 || info.velocity.y < -500,
-    noteId,
-    isTop 
-  });
-  
-  isDragging.current = false;
-  const shouldDismiss = info.offset.y < -60 || info.velocity.y < -500;
-  
-  if (!shouldDismiss) {
-    dragY.set(0);
-    dragX.set(0);
+  function handleDragEnd(
+    e: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo,
+  ) {
+    setDragEnabled(true);
+
+    const isDeliberateSwipe =
+      info.offset.y < -80 && Math.abs(info.velocity.y) > 200;
+    const isFastFlick = info.velocity.y < -600;
+
+    if (!isDeliberateSwipe && !isFastFlick) {
+      dragY.set(0);
+      dragX.set(0);
+      return;
+    }
+
+    let endX = 0;
+    let endY = 0;
+    if (e instanceof PointerEvent || e instanceof MouseEvent) {
+      endX = e.clientX;
+      endY = e.clientY;
+    } else if (e instanceof TouchEvent && e.changedTouches.length > 0) {
+      endX = e.changedTouches[0].clientX;
+      endY = e.changedTouches[0].clientY;
+    }
+
+    // ── FIX #4: snapshot charge BEFORE resetCharge() zeros it ──
+    const notesToSpray = Math.max(1, Math.round(charge.get() * MAX_NOTES));
+    playSwipeSfx();
+    navigator.vibrate?.(20);
+    onDismiss(
+      noteId,
+      info.velocity.y,
+      info.velocity.x,
+      notesToSpray,
+      endX,
+      endY,
+    );
     resetCharge();
-    return;
   }
-
-  const notesToSpray = Math.max(1, Math.round(charge.get() * MAX_NOTES));
-  console.log("calling onDismiss", { noteId, notesToSpray });
-  playSwipeSfx();
-  navigator.vibrate?.(20);
-  onDismiss(noteId, info.velocity.y, info.velocity.x, notesToSpray);
-  resetCharge();
-}
 
   return (
-    // Single motion.div — no parent CSS transform fighting framer-motion.
-    // translateX(-50%) is handed to framer via the x style prop so it's
-    // part of the same matrix framer uses for drag tracking.
     <motion.div
-  drag={isTop}
-  dragConstraints={{ top: -600, bottom: 60, left: -200, right: 200 }}
-  dragElastic={{ top: 0.4, bottom: 0.05, left: 0.1, right: 0.1 }}
-  dragMomentum
-  onPointerDown={startCharge}
-  onPointerUp={handlePointerUp}
-  onDragStart={handleDragStart}
-  onDragEnd={handleDragEnd}
-  whileDrag={{ scale: 1.03 }}
-  // ↓ Remove animate entirely — it fights dragY on the top note
-  // animate={dismissing ? { y: -400, opacity: 0 } : { y: 0, opacity: 1 }}
-  style={{
-    position: "absolute",
-    bottom: "18%",
-    left: "50%",
-    x: isTop ? dragX : cfgX,
-    y: isTop ? dragY : cfgY,
-    rotate: isTop ? rotate : cfgRotate,
-    opacity: isTop ? opacity : 1,
-    translateX: "-50%",
-    zIndex: cfgZIndex,
-    willChange: "transform",
-    cursor: isTop ? "grab" : "default",
-    touchAction: "none",
-    padding: 8,
-    pointerEvents: isTop ? "auto" : "none", // ← explicit, non-top notes don't steal events
-  }}
->
+      drag={isTop && dragEnabled}
+      dragConstraints={{ top: -600, bottom: 60, left: -200, right: 200 }}
+      dragElastic={{ top: 0.4, bottom: 0.05, left: 0.1, right: 0.1 }}
+      dragMomentum
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      whileDrag={{ scale: 1 }}
+      style={{
+        position: "absolute",
+        bottom: "18%",
+        left: "50%",
+        x: isTop ? dragX : cfgX,
+        y: isTop ? dragY : cfgY,
+        rotate: isTop ? rotate : cfgRotate,
+        opacity: isTop ? opacity : 1,
+        translateX: "-50%",
+        zIndex: cfgZIndex,
+        willChange: "transform",
+        cursor: isTop ? "grab" : "default",
+        touchAction: "none",
+        padding: 8,
+        pointerEvents: isTop ? "auto" : "none",
+      }}
+    >
       {/* Charge bar */}
       {isTop && barVisible && (
         <div
@@ -208,7 +297,8 @@ function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo)
               }}
             />
           </div>
-          <motion.span
+          {/* FIX #3: use React state, not raw MotionValue, for the counter */}
+          <span
             style={{
               color: "#F0D080",
               fontSize: 13,
@@ -217,19 +307,18 @@ function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo)
               textAlign: "right",
             }}
           >
-            {transformedCharge}
-          </motion.span>
+            {displayCount}
+          </span>
         </div>
       )}
 
-      {/* Note image */}
+      {/* Note image — FIX #1: remove pointerEvents:none from wrapper so
+          the hit area works correctly; the motion.div handles all events. */}
       <div
         style={{
-          width: "clamp(120px, 22vw, 160px)",
-          aspectRatio: "130 / 240",
+          width: 150,
+          aspectRatio: "150 / 240",
           position: "relative",
-          boxShadow: "0 6px 12px rgba(0,0,0,0.14)",
-          pointerEvents: "none",
           userSelect: "none",
         }}
       >
@@ -239,7 +328,7 @@ function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo)
           fill
           priority={isTop}
           draggable={false}
-          style={{ objectFit: "contain" }}
+          style={{ objectFit: "contain", pointerEvents: "none" }}
         />
       </div>
     </motion.div>

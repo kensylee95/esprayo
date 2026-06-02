@@ -18,6 +18,7 @@ import styles from "./GiftRoom.module.scss";
 import LeaderboardTab from "./LeaderboardTab";
 //import SprayTab from "./SprayTab/SprayTab";
 import NairaWidget from "./naira-hand";
+import type { NoteValue } from "./naira-hand/types";
 import SprayButton from "./SprayButton/SprayButton";
 
 export default function GiftRoomPage({
@@ -41,9 +42,9 @@ export default function GiftRoomPage({
   }, []);
 
   const initialBalanceRef = useRef<number | null>(null);
-if (initialBalanceRef.current === null && wallet.balance != null) {
-  initialBalanceRef.current = wallet.balance;
-}
+  if (initialBalanceRef.current === null && wallet.balance != null) {
+    initialBalanceRef.current = wallet.balance;
+  }
 
   const { leaderboard, stats, roomError, liveAlert, rivalryAlert } =
     useGiftRoom(token, eventId);
@@ -51,7 +52,11 @@ if (initialBalanceRef.current === null && wallet.balance != null) {
   const { sendGift } = useGiftSender(token);
 
   const handleSend = useCallback(
-    async (noteValue: number, numberSent: number, remainingAmount: number) => {
+    async (
+      noteValue: NoteValue,
+      numberSent: number,
+      remainingAmount: number,
+    ) => {
       try {
         navigator.vibrate?.(80);
 
@@ -60,8 +65,9 @@ if (initialBalanceRef.current === null && wallet.balance != null) {
 
         sendGift({
           eventId,
-          amount: noteValue*numberSent,
+          amount: noteValue * numberSent,
           displayName,
+          denomination: noteValue,
         });
 
         navigator.vibrate?.([100, 50, 100, 50, 200]);
@@ -163,7 +169,7 @@ if (initialBalanceRef.current === null && wallet.balance != null) {
             className={styles.sprayOverlay}
           >
             <NairaWidget
-               totalAmount={initialBalanceRef.current ?? 0}
+              totalAmount={initialBalanceRef.current ?? 0}
               noteValue={1_000}
               visibleStack={5}
               onSprayReset={() => {

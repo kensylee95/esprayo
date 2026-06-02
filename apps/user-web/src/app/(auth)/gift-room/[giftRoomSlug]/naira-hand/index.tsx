@@ -50,10 +50,22 @@ export default function NairaWidget({
   );
 
   const dismiss = useCallback(
-    (_noteId: number, vy: number, vx: number, count: number) => {
+    (
+      _noteId: number,
+      vy: number,
+      vx: number,
+      count: number,
+      endX: number,
+      endY: number,
+    ) => {
       if (remainingRef.current <= 0) return;
-      // draw all notes on canvas — zero React components
-      canvasRef.current?.sprayNotes(count, vx, vy);
+      const canvas = canvasRef.current as unknown as {
+        getBoundingClientRect: () => DOMRect;
+      } | null;
+      const rect = canvas?.getBoundingClientRect?.();
+      const localX = rect ? endX - rect.left : endX;
+      const localY = rect ? endY - rect.top : endY;
+      canvasRef.current?.sprayNotes(count, vx, vy, localX, localY);
       spray(count);
     },
     [remainingRef, spray],
@@ -135,8 +147,11 @@ export default function NairaWidget({
           />
         );
       })}
-     <WorldCanvas ref={canvasRef} trigger={sprayTrigger} noteSrc="/assets/naira-note.png" />
-
+      <WorldCanvas
+        ref={canvasRef}
+        trigger={sprayTrigger}
+        noteSrc="/assets/naira-note.png"
+      />
 
       <SwipeHint visible={remainingAmount > 0} />
 
