@@ -148,9 +148,9 @@ export default function GiftRoomPage({
         });
       }
 
-      if (streakCountRef.current % 3 === 1) {
+      /* if (streakCountRef.current % 3 === 1) {
         navigator.vibrate?.(40);
-      }
+      }*/
     },
     [wallet],
   );
