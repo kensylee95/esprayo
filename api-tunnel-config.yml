@@ -1,0 +1,7 @@
+tunnel: api
+credentials-file: C:\Users\HP EliteBook 840 G7\.cloudflared\b8330a61-3b1d-4db3-bd03-02634a20846c.json
+
+ingress:
+  - hostname: api.sprayit.site
+    service: http://localhost:3001
+  - service: http_status:404

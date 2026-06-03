@@ -21,6 +21,13 @@ import NairaWidget from "./naira-hand";
 import type { NoteValue } from "./naira-hand/types";
 import SprayButton from "./SprayButton/SprayButton";
 
+const giftWorker =
+  typeof window !== "undefined"
+    ? new Worker(new URL("./workers/giftWorker.ts", import.meta.url), {
+        type: "module",
+      })
+    : null;
+
 export default function GiftRoomPage({
   eventData,
 }: {
@@ -36,6 +43,28 @@ export default function GiftRoomPage({
 
   const [streak, setStreak] = useState(0);
   const streakTimerRef = useRef<NodeJS.Timeout>(undefined);
+  const streakCountRef = useRef(0);
+  const streakFlushRef = useRef(false);
+  const flushHandlerRef =
+    useRef<(amount: number, noteValue: number) => void>(undefined);
+  flushHandlerRef.current = (amount: number, noteValue: number) => {
+    sendGift({
+      eventId,
+      amount,
+      displayName,
+      denomination: noteValue as NoteValue,
+    }).catch(() => {
+      wallet.setBalance((prev) => (prev ?? 0) + amount);
+    });
+  };
+  useEffect(() => {
+    if (!giftWorker) return;
+    giftWorker.onmessage = (e) => {
+      if (e.data.type === "flush") {
+        flushHandlerRef.current?.(e.data.amount, e.data.noteValue);
+      }
+    };
+  }, []); // ← empty deps, runs once
 
   useEffect(() => {
     getTokenClient().then(setToken);
@@ -51,45 +80,79 @@ export default function GiftRoomPage({
 
   const { sendGift } = useGiftSender(token);
 
-  const handleSend = useCallback(
-    async (
-      noteValue: NoteValue,
-      numberSent: number,
-      remainingAmount: number,
-    ) => {
-      try {
-        navigator.vibrate?.(80);
+  // Init worker once
+  const giftWorkerRef = useRef<Worker | null>(null);
+  const pendingDebitRef = useRef(0); // track optimistic debit for rollback
 
-        // optimistic debit
-        wallet.setBalance((prev) => (prev ?? 0) - noteValue);
+  const balanceFlushRef = useRef(false);
 
+  useEffect(() => {
+    const worker = new Worker(
+      new URL("./workers/giftWorker.ts", import.meta.url),
+      { type: "module" },
+    );
+
+    worker.onmessage = (e) => {
+      if (e.data.type === "flush") {
+        // network call on main thread but only fires once per 300ms pause
         sendGift({
           eventId,
-          amount: noteValue * numberSent,
+          amount: e.data.amount,
           displayName,
-          denomination: noteValue,
+          denomination: e.data.noteValue,
+        }).catch(() => {
+          // rollback optimistic debit on failure
+          wallet.setBalance((prev) => (prev ?? 0) + pendingDebitRef.current);
+          pendingDebitRef.current = 0;
         });
+        pendingDebitRef.current = 0;
+      }
+    };
 
-        navigator.vibrate?.([100, 50, 100, 50, 200]);
+    giftWorkerRef.current = worker;
+    return () => worker.terminate();
+  }, [eventId, displayName, sendGift, wallet]);
 
-        clearTimeout(streakTimerRef.current);
+  const handleSend = useCallback(
+    (noteValue: NoteValue, numberSent: number, _remainingAmount: number) => {
+      const debit = noteValue * numberSent;
 
-        setStreak((s) => s + 1);
+      pendingDebitRef.current += debit;
 
-        streakTimerRef.current = setTimeout(() => setStreak(0), 5000);
-
-        // optional analytics
-        console.log({
-          noteValue,
-          remainingAmount,
+      if (!balanceFlushRef.current) {
+        balanceFlushRef.current = true;
+        requestAnimationFrame(() => {
+          wallet.setBalance((prev) => (prev ?? 0) - pendingDebitRef.current);
+          pendingDebitRef.current = 0;
+          balanceFlushRef.current = false;
         });
-      } catch (error) {
-        wallet.setBalance((prev) => (prev ?? 0) + noteValue);
+      }
 
-        console.error(error);
+      giftWorker?.postMessage({
+        type: "spray",
+        data: { noteValue, numberSent },
+      });
+
+      streakCountRef.current += 1;
+      clearTimeout(streakTimerRef.current);
+      streakTimerRef.current = setTimeout(() => {
+        setStreak(0);
+        streakCountRef.current = 0;
+      }, 5000);
+
+      if (!streakFlushRef.current) {
+        streakFlushRef.current = true;
+        requestAnimationFrame(() => {
+          setStreak(streakCountRef.current);
+          streakFlushRef.current = false;
+        });
+      }
+
+      if (streakCountRef.current % 3 === 1) {
+        navigator.vibrate?.(40);
       }
     },
-    [sendGift, eventId, displayName, wallet],
+    [wallet],
   );
 
   if (roomError) {

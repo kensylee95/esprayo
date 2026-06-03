@@ -1,11 +1,24 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useAnimate } from "framer-motion";
+import { useEffect } from "react";
 
 export default function StageGlow({ intensity }: { intensity: number }) {
+  const [scope, animate] = useAnimate();
+
+  useEffect(() => {
+    if (intensity === 0) return;
+    // Replay animation on the same DOM node — no remount
+    animate(
+      scope.current,
+      { opacity: [0.7, 0] },
+      { duration: 1.2, ease: "easeOut" },
+    );
+  }, [intensity]);
+
   return (
     <>
-      {/* Persistent ambient glow — deep gold pool at the base */}
+      {/* Persistent ambient glow */}
       <motion.div
         animate={{ opacity: [0.5, 0.72, 0.5], scale: [1, 1.04, 1] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -23,7 +36,7 @@ export default function StageGlow({ intensity }: { intensity: number }) {
         }}
       />
 
-      {/* Green stage wash — subtle theatrical depth */}
+      {/* Green stage wash */}
       <motion.div
         animate={{ opacity: [0.3, 0.5, 0.3] }}
         transition={{
@@ -46,12 +59,9 @@ export default function StageGlow({ intensity }: { intensity: number }) {
         }}
       />
 
-      {/* Spray burst flash */}
-      <motion.div
-        key={intensity}
-        initial={{ opacity: intensity > 0 ? 0.7 : 0 }}
-        animate={{ opacity: 0 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
+      {/* Spray burst flash — same node, retriggered via useAnimate */}
+      <div
+        ref={scope}
         style={{
           position: "absolute",
           bottom: "10%",
@@ -59,6 +69,7 @@ export default function StageGlow({ intensity }: { intensity: number }) {
           transform: "translateX(-50%)",
           width: "220%",
           height: "75%",
+          opacity: 0,
           background:
             "radial-gradient(ellipse at 50% 88%, rgba(201,168,76,0.28) 0%, rgba(240,208,128,0.1) 30%, transparent 62%)",
           pointerEvents: "none",

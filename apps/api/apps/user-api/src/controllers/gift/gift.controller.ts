@@ -11,21 +11,7 @@ import { GiftService } from '@modules/gift/gift.service';
 import { CurrentUser, Public } from '@modules/auth/src';
 import { randomUUID } from 'crypto';
 import { NairaDenomination } from '@modules/gift/dtos/gift.dto';
-
-// -------------------------
-// DTOs
-// -------------------------
-class SendGiftDto {
-  eventId: string;
-  amount: number;
-  displayName: string;
-  tokens: number;
-}
-
-class TopUpDto {
-  tokens: number;
-  paymentReference: string;
-}
+import { SendGiftDto, TopUpDto } from './gift.dto';
 
 @Controller('gift-room')
 export class GiftController {
@@ -38,15 +24,23 @@ export class GiftController {
   async sendGift(@Body() dto: SendGiftDto, @CurrentUser('id') userId: string) {
     const allowed = [50, 100, 200, 500, 1000];
 
-    if (!allowed.includes(dto.amount)) {
+    if (!allowed.includes(dto.denomination)) {
+      throw new BadRequestException('Invalid denomination');
+    }
+
+    if (dto.amount <= 0) {
       throw new BadRequestException('Invalid amount');
     }
-    const denomination = String(dto.amount) as NairaDenomination;
 
+    if (dto.amount % Number(dto.denomination) !== 0) {
+      throw new BadRequestException(
+        'Amount must be a multiple of the selected denomination',
+      );
+    }
     return this.giftService.sendGift({
       eventId: dto.eventId,
       userId,
-      denomination: denomination,
+      denomination: String(dto.denomination) as NairaDenomination,
       displayName: dto.displayName,
       amount: dto.amount,
       reference: `gift_${dto.eventId}_${randomUUID()}`,

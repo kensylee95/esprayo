@@ -5,13 +5,14 @@ import Image from "next/image";
 import { useCallback, useMemo, useRef } from "react";
 import bg from "./assets/bg.jpg";
 import WorldCanvas, { type WorldCanvasHandle } from "./canvas/WorldCanvas";
+import { usePerformanceOverlay } from "./hooks/usePerformanceOverlay";
 import { useSprayState } from "./hooks/useSprayState";
+import PerfOverlay from "./perfOverlay";
 import { getStackConfig } from "./physics/stack";
 import type { NairaHandProps } from "./types";
 import AmountCounter from "./ui/AmountCounter";
 import CelebrationScreen from "./ui/CelebrationScreen";
-import FloatingSymbols from "./ui/FloatingSymbols";
-import Note from "./ui/Note";
+import Note, { type NoteHandle } from "./ui/Note";
 import StageGlow from "./ui/StageGlow";
 import SwipeHint from "./ui/SwipeHint";
 
@@ -29,8 +30,11 @@ export default function NairaWidget({
     onComplete,
     { onGift },
   );
+  const { stats, setActiveNotes } = usePerformanceOverlay();
+  process.env.NODE_ENV === "development" && <PerfOverlay stats={stats} />;
 
   const canvasRef = useRef<WorldCanvasHandle>(null);
+  const topNoteRef = useRef<NoteHandle>(null);
 
   const visibleNotes = Math.min(
     visibleStack,
@@ -40,13 +44,14 @@ export default function NairaWidget({
   const noteValueRef = useRef(noteValue);
   noteValueRef.current = noteValue;
 
+  // stable keys — no remount on swipe
   const notes = useMemo(
     () =>
       Array.from({ length: visibleNotes }, (_, i) => ({
         stackIndex: i,
-        key: i === visibleNotes - 1 ? `top-${sprayTrigger}` : `note-${i}`,
+        key: `note-${i}`,
       })),
-    [visibleNotes, sprayTrigger],
+    [visibleNotes],
   );
 
   const dismiss = useCallback(
@@ -59,13 +64,15 @@ export default function NairaWidget({
       endY: number,
     ) => {
       if (remainingRef.current <= 0) return;
-      const canvas = canvasRef.current as unknown as {
-        getBoundingClientRect: () => DOMRect;
-      } | null;
-      const rect = canvas?.getBoundingClientRect?.();
+
+      const rect = canvasRef.current?.getBoundingClientRect();
       const localX = rect ? endX - rect.left : endX;
       const localY = rect ? endY - rect.top : endY;
+
       canvasRef.current?.sprayNotes(count, vx, vy, localX, localY);
+
+      // Synchronous — no rAF queue buildup
+      topNoteRef.current?.reset();
       spray(count);
     },
     [remainingRef, spray],
@@ -119,23 +126,21 @@ export default function NairaWidget({
           pointerEvents: "none",
         }}
       />
-
-      <FloatingSymbols />
       <StageGlow intensity={sprayTrigger} />
 
-      {/* ── Canvas handles particles + flyout notes ── */}
       <AmountCounter
         mints={Math.ceil(remainingAmount / noteValue)}
         amount={remainingAmount}
       />
 
-      {/* ── Note stack ── */}
+      {/* ── Note stack — stable keys, no remount ── */}
       {notes.map(({ key, stackIndex }) => {
         const isTop = stackIndex === visibleNotes - 1;
         const cfg = getStackConfig(stackIndex, visibleNotes);
         return (
           <Note
             key={key}
+            ref={isTop ? topNoteRef : null}
             noteId={stackIndex}
             isTop={isTop}
             cfgY={cfg.y}
@@ -147,10 +152,15 @@ export default function NairaWidget({
           />
         );
       })}
+
+      {/* ── Canvas: after stack so it renders on top ── */}
       <WorldCanvas
         ref={canvasRef}
         trigger={sprayTrigger}
         noteSrc="/assets/naira-note.png"
+        setActiveNotes={
+          process.env.NODE_ENV === "development" ? setActiveNotes : undefined
+        }
       />
 
       <SwipeHint visible={remainingAmount > 0} />
