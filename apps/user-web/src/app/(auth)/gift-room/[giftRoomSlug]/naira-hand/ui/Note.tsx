@@ -124,7 +124,7 @@ const Note = memo(
           rafRef.current = requestAnimationFrame(tick);
         } else {
           isCharging.current = false;
-          navigator.vibrate?.([20, 40, 20]);
+          //navigator.vibrate?.([20, 40, 20]);
         }
       };
       rafRef.current = requestAnimationFrame(tick);

@@ -1,12 +1,6 @@
 import { SocketEvents } from "@app/socket-events";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createGiftRoomSocket } from "@/services/socket";
-import {
-  createAudioContext,
-  playRivalrySound,
-  //playRoomBurstSound,
-} from "../app/(auth)/gift-room/[giftRoomSlug]/audio";
-import { triggerRoomBurst } from "../app/(auth)/gift-room/[giftRoomSlug]/confetti";
 
 import type {
   GetWayRes,
@@ -28,13 +22,9 @@ export function useGiftRoom(token: string | null, eventId: string) {
   const [liveAlert, setLiveAlert] = useState<string | null>(null);
   const [rivalryAlert, setRivalryAlert] = useState<string | null>(null);
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const liveAlertTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const getAudio = useCallback(() => {
-    audioCtxRef.current ??= createAudioContext();
-    return audioCtxRef.current;
-  }, []);
+  const pendingUpdatesRef = useRef<LeaderboardUpdatePayload[]>([]);
+  const flushRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -69,38 +59,41 @@ export function useGiftRoom(token: string | null, eventId: string) {
     // -----------------------------
     // LEADERBOARD UPDATE
     // -----------------------------
+
     const onLeaderboardUpdate = (payload: LeaderboardUpdatePayload) => {
-      setStats((s) => ({
-        ...s,
-        totalTokens: payload.totalTokens,
-        totalGifts: payload.totalGifts,
-      }));
+      pendingUpdatesRef.current.push(payload);
 
-      setLb((prev) => {
-        const { userId, displayName, newScore, newRank, giftCount } =
-          payload.patch;
+      if (flushRef.current) return;
 
-        const updatedMap = new Map(prev.map((u) => [u.userId, u]));
+      flushRef.current = window.setTimeout(() => {
+        const updates = pendingUpdatesRef.current;
 
-        const existing = updatedMap.get(userId);
+        pendingUpdatesRef.current = [];
+        flushRef.current = null;
 
-        updatedMap.set(userId, {
-          userId,
-          displayName,
-          score: newScore, // ✅ SINGLE SOURCE OF TRUTH
-          giftCount: giftCount ?? (existing?.giftCount ?? 0) + 1,
-          rank: newRank,
+        setLb((prev) => {
+          const map = new Map(prev.map((u) => [u.userId, u]));
+
+          for (const update of updates) {
+            const p = update.patch;
+
+            map.set(p.userId, {
+              userId: p.userId,
+              displayName: p.displayName,
+              score: p.newScore,
+              giftCount: p.giftCount ?? 0,
+              rank: p.newRank,
+            });
+          }
+
+          return Array.from(map.values())
+            .sort((a, b) => b.score - a.score)
+            .map((e, i) => ({
+              ...e,
+              rank: i + 1,
+            }));
         });
-
-        const sorted = Array.from(updatedMap.values())
-          .sort((a, b) => b.score - a.score)
-          .map((e, i) => ({
-            ...e,
-            rank: i + 1,
-          }));
-
-        return sorted;
-      });
+      }, 250);
     };
 
     // -----------------------------
@@ -118,9 +111,6 @@ export function useGiftRoom(token: string | null, eventId: string) {
       giftEmoji: string;
       giftName: string;
     }) => {
-      triggerRoomBurst();
-      navigator.vibrate?.(30);
-
       //const ctx = getAudio();
       //if (ctx) playRoomBurstSound(ctx);
 
@@ -151,11 +141,6 @@ export function useGiftRoom(token: string | null, eventId: string) {
 
       setRivalryAlert(msg);
 
-      const ctx = getAudio();
-      if (ctx) playRivalrySound(ctx);
-
-      navigator.vibrate?.([50, 30, 50]);
-
       setTimeout(() => setRivalryAlert(null), 4000);
     };
 
@@ -182,7 +167,7 @@ export function useGiftRoom(token: string | null, eventId: string) {
       socket.off(SocketEvents.guestCountUpdate, onGuestCountUpdate);
       socket.off("alert:rivalry", onRivalry);
     };
-  }, [token, eventId, getAudio]);
+  }, [token, eventId]);
 
   return {
     leaderboard,
@@ -191,6 +176,5 @@ export function useGiftRoom(token: string | null, eventId: string) {
     roomError,
     liveAlert,
     rivalryAlert,
-    getAudio,
   };
 }
