@@ -19,6 +19,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RealtimeModule } from '@modules/RealtimeGateway/RealtimeGateway.module';
 import Redis from 'ioredis';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { StorageControllerModule } from './controllers/storage/storage.controller.module';
 
 @Module({
   imports: [
@@ -68,7 +69,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     UsersControllerModule,
     EventControllerModule,
     WalletsControllerModule,
-
+    StorageControllerModule,
     EventGatewayModule,
     //Logger
     LoggerModule.forRootAsync({

@@ -5,6 +5,7 @@ export type EventDTO = {
   title: string;
   type: string;
   venue?: string;
+  coverImageUrl?: string | undefined;
   welcomeMessage?: string;
 };
 

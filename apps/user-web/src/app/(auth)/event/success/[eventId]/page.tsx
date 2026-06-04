@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import eventService from "@/services/Event/Event";
-import SuccessPage from "./SuccessPage";
+import SuccessPage from "../Success";
 
 interface PageProps {
   params: Promise<{ eventId: string }>;

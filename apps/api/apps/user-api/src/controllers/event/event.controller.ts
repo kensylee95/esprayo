@@ -1,16 +1,37 @@
 import { CurrentUser } from '@modules/auth/src';
 import { EventService } from '@modules/event/event.service';
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { SupabaseStorageService } from '@modules/superbase-storage/superbase-storage.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import type { EventDTO, UpdateEventDto } from './dtos/event.controller.dtos';
 
 @Controller('events')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly storage: SupabaseStorageService,
+  ) {}
 
   // CREATE EVENT
   @Post()
+  @UseInterceptors(
+    FileInterceptor('coverImage', {
+      storage: memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  @Post()
   createEvent(@CurrentUser('id') userId: string, @Body() dto: EventDTO) {
-    return this.eventService.createEvent(userId, dto);
+    return this.eventService.createEvent(userId, { ...dto });
   }
 
   // GET SINGLE EVENT
