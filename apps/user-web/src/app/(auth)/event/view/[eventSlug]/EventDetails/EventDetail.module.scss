@@ -1,7 +1,43 @@
 @use "@app/styles/mixins/variables" as vars;
 @use "@app/styles/mixins/mixins" as mixins;
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ─── Local design tokens ──────────────────────────────────────────────────────
+
+$gold-4:      rgba(vars.$gold, 0.04);
+$gold-8:      rgba(vars.$gold, 0.08);
+$gold-14:     rgba(vars.$gold, 0.14);
+$gold-22:     rgba(vars.$gold, 0.22);
+$gold-32:     rgba(vars.$gold, 0.32);
+$gold-solid:  rgba(vars.$gold, 0.88);
+
+$surface-hi:  rgba(255, 255, 255, 0.038);
+$surface-md:  rgba(255, 255, 255, 0.025);
+$border-sub:  rgba(255, 255, 255, 0.065);
+$border-mid:  rgba(255, 255, 255, 0.10);
+$border-hi:   rgba(255, 255, 255, 0.15);
+$specular:    rgba(255, 255, 255, 0.06);
+
+$text-faint:  rgba(vars.$text-1, 0.28);
+$text-dim:    rgba(vars.$text-1, 0.42);
+$text-mid:    rgba(vars.$text-1, 0.60);
+$text-sub:    rgba(vars.$text-1, 0.78);
+
+$red:         #f87171;
+$red-4:       rgba(248, 113, 113, 0.04);
+$red-8:       rgba(248, 113, 113, 0.08);
+$red-20:      rgba(248, 113, 113, 0.20);
+$red-32:      rgba(248, 113, 113, 0.32);
+
+$green:       #86efac;
+$green-8:     rgba(134, 239, 172, 0.08);
+$green-22:    rgba(134, 239, 172, 0.22);
+
+// Font stacks
+$font-display: 'Cormorant Garamond', 'Cormorant', Georgia, 'Times New Roman', serif;
+$font-ui:      'DM Sans', system-ui, sans-serif;
+$font-mono:    'DM Mono', 'Fira Code', ui-monospace, monospace;
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 .page {
   display: flex;
@@ -9,382 +45,835 @@
   min-height: 100dvh;
   background: vars.$void;
   position: relative;
-}
+  font-family: $font-ui;
 
-// ── Cover ─────────────────────────────────────────────────────────────────────
-
-.cover {
-  padding-inline: 10px;
-  padding-top: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: start;
-  position: relative;
-  flex-shrink: 0;
-  transition: opacity 0.2s ease;
-}
-
-.coverMuted {
-  opacity: 0.5;
-}
-
-.coverBack {
-  position: absolute;
-  top: 14px;
-  left: 14px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(vars.$void, 0.6);
-  border: 0.5px solid rgba(vars.$text-1, 0.1);
-  color: vars.$text-2;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s ease;
-
-  &:hover { background: rgba(vars.$void, 0.85); }
-}
-
-.coverEmoji {
-  font-size: 44px;
-  line-height: 1;
-}
-
-// ── Body ──────────────────────────────────────────────────────────────────────
-
-.body {
-  padding: 18px 20px 0;
-  flex: 1;
-}
-
-.detTitle {
-  @include mixins.display;
-  font-size: 1.5rem;
-  line-height: 1.15;
-  color: vars.$text-1;
-  margin-bottom: 10px;
-}
-
-// ── Badges ────────────────────────────────────────────────────────────────────
-
-.badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 18px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  border-radius: vars.$radius-pill;
-  padding: 3px 10px;
-  font-family: vars.$font-mono;
-  font-size: 9px;
-  white-space: nowrap;
-}
-
-.badgeLive {
-  background: #1a2a1a;
-  border: 0.5px solid rgba(vars.$success, 0.2);
-  color: vars.$success;
-}
-
-.badgeDraft {
-  background: #2a1e10;
-  border: 0.5px solid rgba(vars.$warning, 0.2);
-  color: vars.$warning;
-}
-
-.badgeEnded {
-  background: vars.$surface-2;
-  border: 0.5px solid vars.$surface-3;
-  color: vars.$text-3;
-}
-
-.badgeCancelled {
-  background: #1a1010;
-  border: 0.5px solid rgba(vars.$danger, 0.2);
-  color: vars.$danger;
-}
-
-.badgeType {
-  background: #1a1810;
-  border: 0.5px solid rgba(vars.$gold, 0.2);
-  color: vars.$gold;
-}
-
-.badgeSlug {
-  background: vars.$surface-1;
-  border: 0.5px solid vars.$surface-3;
-  color: vars.$text-3;
-  letter-spacing: 1px;
-}
-
-// ── Info card + join code ─────────────────────────────────────────────────────
-
-.infoCard {
-  background: vars.$surface-1;
-  border: 0.5px solid vars.$surface-2;
-  border-radius: vars.$radius-card;
-  overflow: hidden;
-  margin-bottom: 18px;
-}
-
-.infoKey {
-  font-family: vars.$font-body;
-  font-size: 11px;
-  color: vars.$text-3;
-}
-
-.joinRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 14px;
-  gap: 8px;
-}
-
-.joinRight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.joinCode {
-  font-family: vars.$font-mono;
-  font-size: 12px;
-  color: vars.$text-1;
-  letter-spacing: 0.1em;
-}
-
-.copyBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: vars.$surface-2;
-  border: 0.5px solid vars.$surface-3;
-  border-radius: vars.$radius-pill;
-  padding: 4px 10px;
-  font-family: vars.$font-mono;
-  font-size: 9px;
-  color: vars.$text-3;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  white-space: nowrap;
-
-  &:hover {
-    background: vars.$surface-3;
-    color: vars.$text-2;
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: stretch;
   }
 }
 
-.copyBtnCopied {
-  background: #1a2a1a;
-  border-color: rgba(vars.$success, 0.3);
-  color: vars.$success;
+// ─── Cover ────────────────────────────────────────────────────────────────────
+
+.cover {
+  position: relative;
+  height: 300px;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+
+  @media (min-width: 768px) {
+    height: auto;
+    width: 42%;
+    min-height: 100dvh;
+    position: sticky;
+    top: 0;
+  }
 }
 
-// ── Actions ───────────────────────────────────────────────────────────────────
+.coverMuted {
+  opacity: 0.28;
+  filter: saturate(0.3) brightness(0.8);
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+
+  .cover:hover & {
+    transform: scale(1.02);
+  }
+}
+
+// ── Atmospheric placeholder ───────────────────────────────────────────────────
+
+.coverPlaceholder {
+  width: 100%;
+  height: 100%;
+  background: vars.$surface-1;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+// faint dot-grid background
+.coverPlaceholder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(vars.$gold, 0.18) 1px, transparent 1px);
+  background-size: 28px 28px;
+  background-position: center;
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black 0%, transparent 100%);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+// noise grain
+.coverPlaceholder::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  pointer-events: none;
+}
+
+.coverOrb {
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(vars.$gold, 0.16) 0%,
+    rgba(vars.$gold, 0.05) 45%,
+    transparent 70%
+  );
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: orbBreath 7s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+// second ring halo
+.coverOrb::after {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(vars.$gold, 0.10);
+  animation: orbBreath 7s ease-in-out infinite reverse;
+}
+
+@keyframes orbBreath {
+  0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.7; }
+  50%       { transform: translate(-50%, -50%) scale(1.08); opacity: 1;   }
+}
+
+// ── Cover overlays ────────────────────────────────────────────────────────────
+
+.coverGradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(vars.$void, 0.05) 0%,
+    transparent 25%,
+    rgba(vars.$void, 0.96) 100%
+  );
+  pointer-events: none;
+
+  @media (min-width: 768px) {
+    background: linear-gradient(
+      to right,
+      transparent 45%,
+      rgba(vars.$void, 0.45) 72%,
+      rgba(vars.$void, 0.92) 100%
+    );
+  }
+}
+
+// gold engraved divider line on desktop
+.cover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    $gold-14 25%,
+    $gold-22 50%,
+    $gold-14 75%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 4;
+  display: none;
+
+  @media (min-width: 768px) {
+    display: block;
+  }
+}
+
+// ── Cover controls ────────────────────────────────────────────────────────────
+
+.coverBack {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(vars.$void, 0.50);
+  border: 0.5px solid $border-hi;
+  color: vars.$text-1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  backdrop-filter: blur(14px) saturate(1.5);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  z-index: 5;
+
+  &:hover {
+    background: rgba(vars.$void, 0.82);
+    border-color: $gold-22;
+    transform: translateX(-2px);
+  }
+
+  &:active { transform: scale(0.92); }
+}
+
+.coverStatus {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(vars.$void, 0.60);
+  border: 0.5px solid $border-hi;
+  border-radius: 100px;
+  padding: 6px 13px;
+  backdrop-filter: blur(14px) saturate(1.6);
+  z-index: 5;
+
+  @media (min-width: 768px) {
+    bottom: 32px;
+    right: 32px;
+  }
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dotDraft    { background: rgba(vars.$text-1, 0.30); }
+.dotActive   {
+  background: $green;
+  box-shadow: 0 0 0 0 rgba(134, 239, 172, 0.5);
+  animation: livePulse 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.dotCancelled { background: $red; }
+.dotEnded     { background: rgba(vars.$text-1, 0.22); }
+
+@keyframes livePulse {
+  0%   { box-shadow: 0 0 0 0   rgba(134, 239, 172, 0.5); }
+  60%  { box-shadow: 0 0 0 5px rgba(134, 239, 172, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(134, 239, 172, 0); }
+}
+
+.statusText {
+  font-family: $font-ui;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: $text-mid;
+}
+
+// ─── Right column scaffold ────────────────────────────────────────────────────
+
+// ambient warm glow behind body content
+.body {
+  flex: 1;
+  padding: 28px 24px 0;
+  position: relative;
+
+  // ambient radial bloom behind the title area
+  &::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    left: -80px;
+    width: 480px;
+    height: 380px;
+    background: radial-gradient(ellipse, rgba(vars.$gold, 0.055) 0%, transparent 68%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * { position: relative; z-index: 1; }
+
+  @media (min-width: 768px) {
+    padding: 56px 48px 0;
+    max-width: 560px;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 76px 64px 0;
+  }
+}
 
 .actions {
-  padding: 0 20px 36px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 0 24px max(env(safe-area-inset-bottom), 40px);
+  position: relative;
+  z-index: 1;
+
+  @media (min-width: 768px) {
+    padding: 0 48px max(env(safe-area-inset-bottom), 56px);
+    max-width: 560px;
+    margin-top: 76px;
+  }
+
+  @media (min-width: 1024px) {
+    padding: 0 64px max(env(safe-area-inset-bottom), 56px);
+  }
 }
 
-.btnPrimary {
-  @include mixins.btn-primary;
+// ─── Title row ────────────────────────────────────────────────────────────────
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.title {
+  font-family: $font-display;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: vars.$text-1;
+  margin: 0;
+
+  // very subtle text-shadow for depth
+  text-shadow: 0 1px 20px rgba(vars.$gold, 0.08);
+}
+
+.typePill {
+  flex-shrink: 0;
+  margin-top: 7px;
+  font-family: $font-ui;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: $gold-solid;
+  background: $gold-8;
+  border: 0.5px solid $gold-22;
+  border-radius: 3px;
+  padding: 4px 9px;
+}
+
+// ─── Meta ─────────────────────────────────────────────────────────────────────
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 36px;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: $font-ui;
+  font-size: 12px;
+  color: $text-dim;
+  letter-spacing: 0.01em;
+}
+
+.metaIcon { opacity: 0.45; flex-shrink: 0; }
+
+// ─── Ornamental divider ───────────────────────────────────────────────────────
+
+// used between sections for a luxury editorial rhythm
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 32px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: linear-gradient(to right, $gold-22, transparent);
+  }
+
+  &::after {
+    background: linear-gradient(to left, $gold-22, transparent);
+  }
+}
+
+.dividerDiamond {
+  width: 5px;
+  height: 5px;
+  background: $gold-22;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  border: 0.5px solid $gold-32;
+}
+
+// ─── Event code card ─────────────────────────────────────────────────────────
+
+.codeCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  background: $surface-hi;
+  border: 0.5px solid $border-sub;
+  border-radius: 14px;
+  margin-bottom: 30px;
+  position: relative;
+  overflow: hidden;
+
+  // specular top highlight — simulates physical material
+  box-shadow:
+    inset 0 1px 0 0 $specular,
+    0 1px 24px rgba(vars.$void, 0.4);
+
+  // top shimmer accent
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 18%;
+    right: 18%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, $gold-22, transparent);
+    pointer-events: none;
+  }
+
+  // inner corner light
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80px;
+    height: 80px;
+    background: radial-gradient(circle at 0% 0%, rgba(vars.$gold, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+.codeCardLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.codeLabel {
+  font-family: $font-ui;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $text-faint;
+  margin: 0;
+}
+
+// engraved serial-number treatment
+.codeValue {
+  font-family: $font-mono;
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  color: vars.$text-1;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+
+  // subtle bottom rule like an engraved plate
+  border-bottom: 0.5px solid $border-sub;
+  padding-bottom: 3px;
+}
+
+.copyBtn {
+  flex-shrink: 0;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 0.5px solid $border-mid;
+  background: $surface-md;
+  color: $text-mid;
+  cursor: pointer;
+  font-family: $font-ui;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(8px);
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  box-shadow: inset 0 1px 0 0 $specular;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: $border-hi;
+    color: vars.$text-1;
+  }
+}
+
+.copyBtnDone {
+  background: $green-8 !important;
+  border-color: $green-22 !important;
+  color: $green !important;
+}
+
+.copyInner {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+// ─── Welcome message ─────────────────────────────────────────────────────────
+
+.welcome {
+  font-family: $font-display;
+  font-size: 15.5px;
+  font-style: italic;
+  line-height: 1.75;
+  color: $text-mid;
+  margin: 0 0 36px;
+  padding: 20px 0;
+  border-top: 0.5px solid $border-sub;
+  border-bottom: 0.5px solid $border-sub;
+  letter-spacing: 0.01em;
+}
+
+// ─── Actions divider ─────────────────────────────────────────────────────────
+
+.actionsDivider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 24px 28px;
+
+  @media (min-width: 768px) {
+    margin: 0 48px 28px;
+  }
+
+  @media (min-width: 1024px) {
+    margin: 0 64px 28px;
+  }
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: $border-sub;
+  }
+}
+
+.actionsDividerMark {
+  width: 4px;
+  height: 4px;
+  background: $gold-22;
+  transform: rotate(45deg);
+  flex-shrink: 0;
+  border: 0.5px solid $gold-32;
+}
+
+// ─── Buttons ─────────────────────────────────────────────────────────────────
+
+.btnPrimary,
+.btnGift,
+.btnCancel,
+.btnLive,
+.btnCancelledStatic {
   width: 100%;
-  padding: 14px;
-  font-size: 13px;
-  letter-spacing: 0.3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 9px;
+  border-radius: 13px;
+  font-family: $font-ui;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  padding: 15px 22px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+
+  & + & { margin-top: 10px; }
 }
 
-.btnPrimaryActive {
-  background: #1a2a1a;
-  border-color: rgba(vars.$success, 0.35);
-  color: vars.$success;
+// gold primary — material depth via inset shadows
+.btnPrimary {
+  background: linear-gradient(
+    160deg,
+    rgba(vars.$gold, 0.20) 0%,
+    rgba(vars.$gold, 0.09) 100%
+  );
+  border: 0.5px solid $gold-22;
+  color: $gold-solid;
+  position: relative;
+  overflow: hidden;
 
-  &:hover { background: #1f321f; }
+  // specular top edge — the "button has thickness" illusion
+  box-shadow:
+    inset 0 1px 0 0 rgba(vars.$gold, 0.20),
+    inset 0 -1px 0 0 rgba(0,0,0,0.2),
+    0 2px 16px rgba(vars.$gold, 0.06);
+
+  // pressed state: shimmer drops to bottom
+  &:active:not(:disabled) {
+    box-shadow:
+      inset 0 -1px 0 0 rgba(vars.$gold, 0.20),
+      inset 0 1px 0 0 rgba(0,0,0,0.2);
+    transform: translateY(1px);
+  }
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(
+      160deg,
+      rgba(vars.$gold, 0.28) 0%,
+      rgba(vars.$gold, 0.14) 100%
+    );
+    border-color: $gold-32;
+    box-shadow:
+      inset 0 1px 0 0 rgba(vars.$gold, 0.28),
+      inset 0 -1px 0 0 rgba(0,0,0,0.2),
+      0 4px 28px rgba(vars.$gold, 0.10);
+  }
+
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.btnLive {
+  background: $green-8;
+  border: 0.5px solid $green-22;
+  color: $green;
+  cursor: default;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 0 rgba(134, 239, 172, 0.08);
 }
 
 .btnGift {
-  width: 100%;
-  background: #10181a;
-  border: 0.5px solid rgba(vars.$gold, 0.2);
-  border-radius: vars.$radius-pill;
-  padding: 13px;
-  font-family: vars.$font-body;
-  font-size: 12px;
-  font-weight: 500;
-  color: vars.$gold;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  background: $surface-hi;
+  border: 0.5px solid $border-sub;
+  color: $text-sub;
+  box-shadow: inset 0 1px 0 0 $specular;
 
   &:hover {
-    background: #141e20;
-    border-color: rgba(vars.$gold, 0.35);
+    background: rgba(255, 255, 255, 0.06);
+    border-color: $border-mid;
+    color: vars.$text-1;
+    box-shadow:
+      inset 0 1px 0 0 $specular,
+      0 4px 20px rgba(0,0,0,0.2);
   }
 }
 
 .btnCancel {
-  width: 100%;
-  background: #1a1010;
-  border: 0.5px solid rgba(vars.$danger, 0.25);
-  border-radius: vars.$radius-pill;
-  padding: 13px;
-  font-family: vars.$font-body;
-  font-size: 12px;
-  font-weight: 500;
-  color: vars.$danger;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  background: transparent;
+  border: 0.5px solid transparent;
+  color: $text-faint;
+  font-size: 12.5px;
+  padding: 11px 22px;
+  margin-top: 6px !important;
+  letter-spacing: 0.04em;
 
   &:hover {
-    background: #221414;
-    border-color: rgba(vars.$danger, 0.4);
-  }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    color: $red;
+    border-color: $red-20;
+    background: $red-4;
   }
 }
 
-// ── Cancel sheet ──────────────────────────────────────────────────────────────
+.btnCancelledStatic {
+  background: $red-4;
+  border: 0.5px solid $red-20;
+  color: rgba(248, 113, 113, 0.50);
+  cursor: default;
+  pointer-events: none;
+}
+
+.btnInner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinnerDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: dotBlink 1.2s ease-in-out infinite;
+}
+
+@keyframes dotBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.18; }
+}
+
+// ─── Cancel bottom sheet ──────────────────────────────────────────────────────
 
 .sheetOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(vars.$void, 0.75);
+  background: rgba(vars.$void, 0.76);
+  backdrop-filter: blur(12px) saturate(1.3);
+  z-index: 100;
   display: flex;
   align-items: flex-end;
-  z-index: 200;
-  backdrop-filter: blur(4px);
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  justify-content: center;
 }
 
 .sheet {
   width: 100%;
-  background: vars.$surface-1;
-  border-top: 0.5px solid vars.$surface-2;
-  border-radius: 24px 24px 0 0;
-  padding: 20px 20px max(env(safe-area-inset-bottom), 28px);
-  animation: slideUp 0.25s ease both;
-}
+  max-width: 460px;
+  background: color-mix(in srgb, vars.$void 58%, vars.$surface-1 42%);
+  border: 0.5px solid $border-mid;
+  border-bottom: none;
+  border-radius: 22px 22px 0 0;
+  padding: 14px 28px max(env(safe-area-inset-bottom), 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 -12px 48px rgba(0,0,0,0.4),
+    inset 0 1px 0 0 rgba(255,255,255,0.08);
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  // gold shimmer at the top rim
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15%;
+    right: 15%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, $gold-22, transparent);
+  }
 }
 
 .sheetHandle {
-  width: 36px;
-  height: 4px;
-  background: vars.$surface-3;
-  border-radius: vars.$radius-pill;
-  margin: 0 auto 20px;
+  width: 34px;
+  height: 3.5px;
+  border-radius: 2px;
+  background: rgba(vars.$text-1, 0.10);
+  margin-bottom: 28px;
 }
 
-.sheetIcon {
-  font-size: 28px;
-  text-align: center;
-  margin-bottom: 10px;
+.sheetIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: $red-8;
+  border: 0.5px solid $red-20;
+  display: grid;
+  place-items: center;
+  margin-bottom: 20px;
+  color: $red;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255,255,255,0.04),
+    0 4px 20px rgba(248,113,113,0.08);
 }
 
 .sheetTitle {
-  @include mixins.display;
-  font-size: 1.3rem;
+  font-family: $font-display;
+  font-size: 20px;
+  font-weight: 500;
   color: vars.$text-1;
-  text-align: center;
-  margin-bottom: 6px;
+  margin: 0 0 10px;
+  letter-spacing: -0.01em;
 }
 
 .sheetSub {
-  font-family: vars.$font-body;
-  font-size: 11px;
-  color: vars.$text-3;
-  text-align: center;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.sheetWarn {
-  background: #1a1010;
-  border: 0.5px solid rgba(vars.$danger, 0.2);
-  border-radius: vars.$radius-card;
-  padding: 11px 13px;
-  display: flex;
-  gap: 9px;
-  align-items: flex-start;
-  margin-bottom: 18px;
-}
-
-.warnIcon {
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: vars.$danger;
-}
-
-.warnText {
-  font-family: vars.$font-body;
-  font-size: 11px;
-  color: vars.$text-3;
-  line-height: 1.55;
+  font-family: $font-ui;
+  font-size: 13.5px;
+  color: $text-mid;
+  line-height: 1.65;
+  margin: 0 0 20px;
 
   strong {
-    color: vars.$danger;
+    color: $text-sub;
     font-weight: 500;
   }
 }
 
+.sheetWarn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: $red-4;
+  border: 0.5px solid $red-20;
+  border-radius: 8px;
+  padding: 9px 14px;
+  margin-bottom: 28px;
+}
+
+.warnIcon  { color: $red; flex-shrink: 0; opacity: 0.75; }
+
+.warnText {
+  font-family: $font-ui;
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(248, 113, 113, 0.70);
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
 .btnConfirmCancel {
   width: 100%;
-  background: #2a1010;
-  border: 0.5px solid rgba(vars.$danger, 0.35);
-  border-radius: vars.$radius-pill;
   padding: 14px;
-  font-family: vars.$font-body;
-  font-size: 13px;
+  border-radius: 13px;
+  background: $red-8;
+  border: 0.5px solid $red-20;
+  color: $red;
+  font-family: $font-ui;
+  font-size: 13.5px;
   font-weight: 500;
-  color: vars.$danger;
+  letter-spacing: 0.03em;
   cursor: pointer;
-  margin-bottom: 8px;
-  transition: background 0.15s ease;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+  margin-bottom: 10px;
+  box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.04);
 
-  &:hover    { background: #361414; }
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    background: $red-20;
+    border-color: $red-32;
+    box-shadow:
+      inset 0 1px 0 0 rgba(255,255,255,0.04),
+      0 4px 20px rgba(248,113,113,0.10);
+  }
+
+  &:disabled { opacity: 0.40; cursor: not-allowed; }
 }
 
 .btnKeep {
-  @include mixins.btn-ghost;
   width: 100%;
-  padding: 12px;
-  font-size: 12px;
-  color: vars.$text-3;
+  padding: 14px;
+  border-radius: 13px;
+  background: transparent;
+  border: 0.5px solid $border-sub;
+  color: $text-mid;
+  font-family: $font-ui;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
 
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &:hover:not(:disabled) {
+    background: $surface-hi;
+    border-color: $border-hi;
+    color: vars.$text-1;
+  }
+
+  &:disabled { opacity: 0.40; cursor: not-allowed; }
 }

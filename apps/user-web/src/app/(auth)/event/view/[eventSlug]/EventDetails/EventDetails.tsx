@@ -1,29 +1,23 @@
 "use client";
+
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertTriangle,
   Check,
   ChevronLeft,
   Copy,
   Gift,
-  Play,
+  MapPin,
   X,
+  Zap,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { getTokenClient } from "@/helpers/request";
 import { EventStatus, type IEvent } from "@/services/Event/Event.dto";
 import { useEvent } from "../../../../../../hooks/useEvents";
 import s from "./EventDetail.module.scss";
-
-interface EventDetailProps {
-  event: IEvent;
-  onBack?: () => void;
-  onActivate?: (id: string) => Promise<void>;
-  onCancel?: (id: string) => Promise<void>;
-  onOpenGiftRoom?: (id: string) => void;
-}
-
-// ── Cancel sheet ──────────────────────────────────────────────────────────────
 
 interface CancelSheetProps {
   eventTitle: string;
@@ -44,43 +38,36 @@ function CancelSheet({ eventTitle, onConfirm, onDismiss }: CancelSheetProps) {
   };
 
   return (
-    <div
+    <motion.div
       className={s.sheetOverlay}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       onClick={onDismiss}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          onDismiss();
-        }
-      }}
-      role="button"
-      tabIndex={0}
     >
-      <div
+      <motion.div
         className={s.sheet}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.stopPropagation();
-          }
-        }}
-        role="button"
-        tabIndex={0}
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className={s.sheetHandle} />
-        <div className={s.sheetIcon}>🚫</div>
-        <p className={s.sheetTitle}>Cancel event?</p>
+
+        <div className={s.sheetIconWrap}>
+          <X size={22} className={s.sheetIconSvg} />
+        </div>
+
+        <p className={s.sheetTitle}>Cancel this event?</p>
         <p className={s.sheetSub}>
-          This will cancel{" "}
-          <strong style={{ color: "inherit" }}>{eventTitle}</strong> and notify
-          all registered guests.
+          <strong>{eventTitle}</strong> will be permanently cancelled. All RSVPs
+          will be voided.
         </p>
 
         <div className={s.sheetWarn}>
-          <AlertTriangle size={14} className={s.warnIcon} />
-          <p className={s.warnText}>
-            <strong>This action is irreversible.</strong> All RSVPs will be
-            voided and the event will be permanently marked as cancelled.
-          </p>
+          <AlertTriangle size={13} className={s.warnIcon} />
+          <p className={s.warnText}>This action cannot be undone.</p>
         </div>
 
         <button
@@ -99,20 +86,16 @@ function CancelSheet({ eventTitle, onConfirm, onDismiss }: CancelSheetProps) {
         >
           Keep event
         </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
-
-export default function EventDetail({ event }: EventDetailProps) {
+export default function EventDetail({ event }: { event: IEvent }) {
   const [status, setStatus] = useState<EventStatus>(event.status);
   const [showCancelSheet, setShowCancel] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -131,21 +114,13 @@ export default function EventDetail({ event }: EventDetailProps) {
     setActivating(true);
     try {
       const token = await getTokenClient();
-      if (!token) return null;
+      if (!token) return;
       await eventHook.activateEvent(event.id, token);
       setStatus(EventStatus.ACTIVE);
     } finally {
       setActivating(false);
     }
   }, [isDraft, event.id, eventHook]);
-
-  /*  const handleConfirmCancel = useCallback(async () => {
-      const token = await getTokenClient();
-      if (!token) return null;
-      setStatus(EventStatus.CANCELLED);
-      setShowCancel(false);
-    }, [event.id]);
-    */
 
   const handleCopy = useCallback(async () => {
     await navigator.clipboard.writeText(event.slug);
@@ -155,102 +130,175 @@ export default function EventDetail({ event }: EventDetailProps) {
 
   return (
     <>
-      <div className={s.page}>
-        {/* Cover */}
+      <motion.div
+        className={s.page}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        {/* ── Cover hero ── */}
         <div className={`${s.cover} ${isInactive ? s.coverMuted : ""}`}>
-          {
-            <button
-              type="button"
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  router.back;
-                }
-              }}
-              className={s.coverBack}
-              onClick={() => router.back}
-              aria-label="Go back"
-            >
-              <ChevronLeft />
-            </button>
-          }
-        </div>
-
-        {/* Body */}
-        <div className={s.body}>
-          <h1 className={s.detTitle}>{event.title}</h1>
-
-          <div className={s.badges}>
-            <span className={`${s.badge} ${s[`badge${capitalize(status)}`]}`}>
-              {status}
-            </span>
-            <span className={`${s.badge} ${s.badgeType}`}>{event.type}</span>
-            <span className={`${s.badge} ${s.badgeSlug}`}>{event.slug}</span>
-          </div>
-
-          {/* Join code */}
-          <div className={s.infoCard}>
-            <div className={s.joinRow}>
-              <span className={s.infoKey}>Join code</span>
-              <div className={s.joinRight}>
-                <span className={s.joinCode}>{event.slug}</span>
-                <button
-                  type="button"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      handleCopy;
-                    }
-                  }}
-                  className={`${s.copyBtn} ${copied ? s.copyBtnCopied : ""}`}
-                  onClick={handleCopy}
-                  aria-label="Copy join code"
-                >
-                  {copied ? (
-                    <>
-                      <Check size={11} /> copied
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={11} /> copy
-                    </>
-                  )}
-                </button>
-              </div>
+          {event.coverImageUrl ? (
+            <Image
+              src={event.coverImageUrl}
+              alt={event.title}
+              className={s.coverImg}
+            />
+          ) : (
+            <div className={s.coverPlaceholder}>
+              <div className={s.coverOrb} />
             </div>
+          )}
+
+          {/* overlay gradient */}
+          <div className={s.coverGradient} />
+
+          {/* back button */}
+          <button
+            type="button"
+            className={s.coverBack}
+            onClick={() => router.back()}
+            aria-label="Go back"
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          {/* status pill on cover */}
+          <div className={s.coverStatus}>
+            <span
+              className={`${s.statusDot} ${s[`dot${capitalize(status)}`]}`}
+            />
+            <span className={s.statusText}>{capitalize(status)}</span>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className={s.actions}>
+        {/* ── Body ── */}
+        <motion.div
+          className={s.body}
+          initial={{ y: 24, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {/* title + type */}
+          <div className={s.titleRow}>
+            <h1 className={s.title}>{event.title.toUpperCase()}</h1>
+            <span className={s.typePill}>{event.type}</span>
+          </div>
+
+          {/* meta row */}
+          <div className={s.metaRow}>
+            {event.venue && (
+              <span className={s.metaItem}>
+                <MapPin size={12} className={s.metaIcon} />
+                {event.venue}
+              </span>
+            )}
+            {/*<span className={s.metaItem}>
+              <Calendar size={12} className={s.metaIcon} />
+              {new Date(event.createdAt).toLocaleDateString("en-GB", {
+                day: "numeric", month: "short", year: "numeric",
+              })}
+            </span>*/}
+          </div>
+
+          {/* join code card */}
+          <div className={s.codeCard}>
+            <div className={s.codeCardLeft}>
+              <p className={s.codeLabel}>Event code</p>
+              <p className={s.codeValue}>{event.slug}</p>
+            </div>
+            <motion.button
+              type="button"
+              className={`${s.copyBtn} ${copied ? s.copyBtnDone : ""}`}
+              onClick={handleCopy}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              aria-label="Copy event code"
+            >
+              <AnimatePresence mode="wait">
+                {copied ? (
+                  <motion.span
+                    key="check"
+                    className={s.copyInner}
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Check size={13} />
+                    Copied
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="copy"
+                    className={s.copyInner}
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <Copy size={13} />
+                    Copy
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </div>
+
+          {/* welcome message */}
+          {event.welcomeMessage && (
+            <p className={s.welcome}>{event.welcomeMessage}</p>
+          )}
+        </motion.div>
+
+        {/* ── Actions ── */}
+        <motion.div
+          className={s.actions}
+          initial={{ y: 16, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.25, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
           {isDraft && (
-            <button
+            <motion.button
               type="button"
               className={s.btnPrimary}
               onClick={handleActivate}
               disabled={activating}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Play size={14} />
-              {activating ? "Activating…" : "Activate event"}
-            </button>
+              {activating ? (
+                <span className={s.btnInner}>
+                  <span className={s.spinnerDot} />
+                  Activating…
+                </span>
+              ) : (
+                <span className={s.btnInner}>
+                  <Zap size={15} strokeWidth={1.5} />
+                  Activate event
+                </span>
+              )}
+            </motion.button>
           )}
 
           {isLive && (
-            <button
-              type="button"
-              className={`${s.btnPrimary} ${s.btnPrimaryActive}`}
-              disabled
-            >
-              <Check size={14} /> Event is live
-            </button>
+            <div className={s.btnLive}>
+              <Check size={14} strokeWidth={2} />
+              Event is live
+            </div>
           )}
 
           {!isInactive && (
-            <button
+            <motion.button
               type="button"
               className={s.btnGift}
               onClick={() => router.push(`/gift-room/${event.id}`)}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Gift size={14} /> Open gift room
-            </button>
+              <Gift size={15} strokeWidth={1.5} />
+              Open gift room
+            </motion.button>
           )}
 
           {!isInactive && (
@@ -259,25 +307,28 @@ export default function EventDetail({ event }: EventDetailProps) {
               className={s.btnCancel}
               onClick={() => setShowCancel(true)}
             >
-              <X size={14} /> Cancel event
+              <X size={14} />
+              Cancel event
             </button>
           )}
 
           {isCancelled && (
-            <button type="button" className={s.btnCancel} disabled>
+            <div className={s.btnCancelledStatic}>
               <X size={14} /> Event cancelled
-            </button>
+            </div>
           )}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
-      {showCancelSheet && (
-        <CancelSheet
-          eventTitle={event.title}
-          onConfirm={() => {}}
-          onDismiss={() => setShowCancel(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showCancelSheet && (
+          <CancelSheet
+            eventTitle={event.title.toUpperCase()}
+            onConfirm={() => {}}
+            onDismiss={() => setShowCancel(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }

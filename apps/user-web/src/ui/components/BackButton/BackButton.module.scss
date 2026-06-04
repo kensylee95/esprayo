@@ -3,13 +3,16 @@
 
 .iconStyle{
 color:  rgba(255,255,255,0.80);
+&:hover {
+        color: vars.$gold;
+    }
 }
 .backBtn {
     display: flex;
     font-size: 16px;
     appearance: none;
     -webkit-appearance: none;
-    background: transparent !important;
+    background: inherit !important;
     padding: 0 !important;
     width: 32px !important;
     height: 32px !important;
@@ -21,4 +24,5 @@ color:  rgba(255,255,255,0.80);
     &:hover {
         color: vars.$text-2;
     }
+    
 }

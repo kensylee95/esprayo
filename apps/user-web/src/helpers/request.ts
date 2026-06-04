@@ -41,10 +41,13 @@ export async function request<T>(
   const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const { token, ...fetchOptions } = options || {};
 
+  const isFormData = fetchOptions.body instanceof FormData;
+
   const res = await fetch(`${BASE_URL}${endpoint}`, {
     ...fetchOptions,
     headers: {
-      "Content-Type": "application/json",
+      // skip Content-Type for FormData — browser sets it automatically with boundary
+      ...(!isFormData && { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(fetchOptions.headers || {}),
     },

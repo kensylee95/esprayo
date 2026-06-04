@@ -2,6 +2,7 @@ import { EventStatus, EventType } from '../entities/event.entity';
 
 export interface EventCreateDTO {
   title: string;
+  coverImageUrl?: string | undefined;
   description?: string | undefined;
   type: EventType;
   welcomeMessage?: string;
