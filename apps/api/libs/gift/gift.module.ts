@@ -17,6 +17,7 @@ import { LeaderboardServiceModule } from '@modules/leaderboard/leaderboard.modul
 import { Gift } from './entities/gift.entity';
 import { GIFTS_PERSIST_QUEUE } from './job.constants';
 import { ConfigModule } from '@nestjs/config';
+import { PushModule } from '@modules/push/push.module';
 
 @Module({
   imports: [
@@ -24,6 +25,8 @@ import { ConfigModule } from '@nestjs/config';
     TypeOrmModule.forFeature([Gift]),
 
     LeaderboardServiceModule,
+
+    PushModule,
 
     WalletModule,
 
