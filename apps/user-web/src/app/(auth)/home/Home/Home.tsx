@@ -8,68 +8,84 @@ import {
   Sparkles,
   Wallet,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { deleteToken, getTokenClient } from "@/helpers/request";
 import { useWallet } from "@/hooks/useWallets";
 import eventService from "@/services/Event/Event";
-import { EventStatus, type IEvent } from "@/services/Event/Event.dto";
+import type { IEvent } from "@/services/Event/Event.dto";
 import styles from "./Home.module.scss";
+import { RecentEvents } from "./RecentEvents/RecentEvents";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface QuickAction {
   icon: LucideIcon;
   label: string;
   sub: string;
   href: string;
+  /** Icon fill color */
   color: string;
+  /** CSS custom properties injected onto the tile */
+  cssVars: React.CSSProperties;
 }
+
+// ── Config ────────────────────────────────────────────────────────────────────
 
 const QUICK_ACTIONS: QuickAction[] = [
   {
     icon: QrCode,
     label: "Join event",
-    sub: "Enter code or scan QR",
+    sub: "Scan or enter code",
     href: "/join",
-    color: "#7C3AED", // violet
+    color: "#7C3AED",
+    cssVars: {
+      "--qa-accent-clr": "#7C3AED",
+      "--qa-icon-bg": "rgba(124,58,237,0.08)",
+      "--qa-icon-border": "rgba(124,58,237,0.18)",
+    } as React.CSSProperties,
   },
   {
     icon: Sparkles,
     label: "Create event",
     sub: "Host a gift room",
-    href: "/event/create/step-1",
-    color: "#F59E0B", // gold
+    href: "/event/create",
+    color: "#C9A84C",
+    cssVars: {
+      "--qa-accent-clr": "#C9A84C",
+      "--qa-icon-bg": "rgba(201,168,76,0.08)",
+      "--qa-icon-border": "rgba(201,168,76,0.18)",
+    } as React.CSSProperties,
   },
   {
     icon: Wallet,
     label: "Fund wallet",
     sub: "Buy tokens",
     href: "/wallet/fund",
-    color: "#10B981", // emerald
+    color: "#10B981",
+    cssVars: {
+      "--qa-accent-clr": "#10B981",
+      "--qa-icon-bg": "rgba(16,185,129,0.08)",
+      "--qa-icon-border": "rgba(16,185,129,0.18)",
+    } as React.CSSProperties,
   },
   {
     icon: LayoutGrid,
     label: "My events",
     sub: "View & manage",
     href: "/event/view",
-    color: "#EC4899", // pink
+    color: "#EC4899",
+    cssVars: {
+      "--qa-accent-clr": "#EC4899",
+      "--qa-icon-bg": "rgba(236,72,153,0.08)",
+      "--qa-icon-border": "rgba(236,72,153,0.18)",
+    } as React.CSSProperties,
   },
 ];
 
-function StatusBadge({ status }: { status: EventStatus }) {
-  if (status === EventStatus.ACTIVE) {
-    return (
-      <span className={`${styles.badge} ${styles.badgeLive}`}>● LIVE</span>
-    );
-  }
-  if (status === EventStatus.DRAFT) {
-    return (
-      <span className={`${styles.badge} ${styles.badgeDraft}`}>Draft</span>
-    );
-  }
-  return <span className={`${styles.badge} ${styles.badgeEnded}`}>Ended</span>;
-}
+// ── Data fetching ─────────────────────────────────────────────────────────────
 
-// Extracted outside component — no dependency on component state or props
 async function fetchRecentEvents(): Promise<IEvent[]> {
   const token = await getTokenClient();
   if (!token) return [];
@@ -78,8 +94,10 @@ async function fetchRecentEvents(): Promise<IEvent[]> {
   return Promise.all(eventIds.map((id) => service.getEvent(id)));
 }
 
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function HomePage() {
-  const [recentActiveEvents, setRecentActiveEvents] = useState<IEvent[]>([]);
+  const [recentEvents, setRecentEvents] = useState<IEvent[]>([]);
   const router = useRouter();
   const wallet = useWallet();
 
@@ -89,90 +107,98 @@ export default function HomePage() {
   }, [router]);
 
   useEffect(() => {
-    fetchRecentEvents().then(setRecentActiveEvents);
+    fetchRecentEvents().then(setRecentEvents);
   }, []);
+
+  const balance = wallet.balance ?? 0;
+  const nairaEquivalent = (balance * 10).toLocaleString();
 
   return (
     <div className={styles.page}>
       <main className={styles.main}>
         {/* ── Header ── */}
         <header className={styles.header}>
-          <span className={styles.logo}>SprayIt</span>
+          <span className={styles.logo}>
+            <Image src="/assets/logo.png" width={30} height={30} alt="" />
+          </span>
           <button
             type="button"
             className={styles.logout}
             onClick={handleLogout}
             aria-label="Log out"
           >
-            <LogOut size={16} /> Logout
+            <LogOut size={14} aria-hidden="true" />
+            Logout
           </button>
         </header>
 
         {/* ── Balance card ── */}
-        <div
-          className={styles.balanceCard}
-          onClick={() => router.push("/wallet/fund")}
-          role="button"
-          tabIndex={0}
-          aria-label="Wallet balance, tap to fund"
-          onKeyDown={(e) => e.key === "Enter" && router.push("/wallet/fund")}
-        >
-          <div className={styles.balOrb} aria-hidden="true" />
-          <p className={styles.balLabel}>Token balance</p>
-          <p className={styles.balValue}>
-            {(wallet.balance ?? 0).toLocaleString()}
-          </p>
-          <p className={styles.balSub}>
-            ≈ ₦{((wallet.balance ?? 0) * 10).toLocaleString()} · tap to fund
-          </p>
+        <div className={styles.balanceWrap}>
+          <div
+            className={styles.balanceCard}
+            onClick={() => router.push("/wallet/fund")}
+            role="button"
+            tabIndex={0}
+            aria-label={`Token balance: ${balance.toLocaleString()}. Tap to fund.`}
+            onKeyDown={(e) => e.key === "Enter" && router.push("/wallet/fund")}
+          >
+            {/* Decorative rings */}
+            <div className={styles.balDecoRing} aria-hidden="true" />
+            <div className={styles.balDecoRingInner} aria-hidden="true" />
+            <div className={styles.balDecoDot} aria-hidden="true" />
+
+            <div className={styles.balTop}>
+              <p className={styles.balLabel}>Token balance</p>
+              <div className={styles.balLiveChip} aria-hidden="true">
+                <span className={styles.balLiveDot} />
+                ACTIVE
+              </div>
+            </div>
+
+            <p className={styles.balValue}>
+              <span className={styles.balCurrencySymbol}>T</span>
+              {balance.toLocaleString()}
+            </p>
+
+            <div className={styles.balBottom}>
+              <p className={styles.balNaira}>≈ ₦{nairaEquivalent}</p>
+              <div className={styles.balFundCta} aria-hidden="true">
+                Fund →
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Section divider (mobile only) ── */}
+        <div className={styles.sectionDivider} aria-hidden="true">
+          <div className={styles.dividerLine} />
+          <span className={styles.dividerLabel}>Actions</span>
+          <div className={styles.dividerLine} />
         </div>
 
         {/* ── Quick actions ── */}
         <div className={styles.quickGrid}>
-          {QUICK_ACTIONS.map(({ icon: Icon, label, sub, href, color }) => (
-            <button
-              type="button"
-              key={href}
-              className={styles.quickAction}
-              onClick={() => router.push(href)}
-            >
-              <span className={styles.qaIcon} aria-hidden="true">
-                <Icon color={color} size={24} />
-              </span>
-              <span className={styles.qaLabel}>{label}</span>
-              <span className={styles.qaSub}>{sub}</span>
-            </button>
-          ))}
+          {QUICK_ACTIONS.map(
+            ({ icon: Icon, label, sub, href, color, cssVars }) => (
+              <button
+                type="button"
+                key={href}
+                className={styles.quickAction}
+                style={cssVars}
+                onClick={() => router.push(href)}
+              >
+                <span className={styles.qaIconWrap} aria-hidden="true">
+                  <Icon color={color} size={17} />
+                </span>
+                <span className={styles.qaLabel}>{label}</span>
+                <span className={styles.qaSub}>{sub}</span>
+              </button>
+            ),
+          )}
         </div>
 
         {/* ── Recent events ── */}
-        {recentActiveEvents.length > 0 && (
-          <>
-            <p className={styles.sectionLabel}>Recent</p>
-            <ul className={styles.eventList}>
-              {recentActiveEvents.map((event) => (
-                <li key={event.id}>
-                  <button
-                    type="button"
-                    className={styles.eventCard}
-                    onClick={() => router.push(`/gift-room/${event.id}`)}
-                  >
-                    <div className={styles.ecInfo}>
-                      <p
-                        style={{ marginBottom: "10px" }}
-                        className={styles.ecTitle}
-                      >
-                        {event.title.toUpperCase()}
-                      </p>
-                      <p className={styles.ecSub}>Join Code: {event.slug}</p>
-                    </div>
-                    <StatusBadge status={event.status} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
+        <RecentEvents events={recentEvents} />
       </main>
     </div>
   );

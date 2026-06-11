@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   type ClipboardEvent,
@@ -13,15 +14,22 @@ import { EventStatus } from "@/services/Event/Event.dto";
 import BackButton from "@/ui/components/BackButton/BackButton";
 import styles from "./join.module.scss";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const CODE_LENGTH = 5;
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface EventPreview {
   id: string;
-  emoji: string;
+  initial: string;
+  coverImageUrl?: string;
   title: string;
   sub: string;
   status: "live" | "draft";
 }
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function JoinEventPage() {
   const router = useRouter();
@@ -31,31 +39,30 @@ export default function JoinEventPage() {
   const [error, setError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  //const code = digits.join("");
-  //const isComplete = code.length === CODE_LENGTH && digits.every(Boolean);
+  // ── Lookup ──────────────────────────────────────────────────────────────────
 
-  // Simulate event lookup — replace with GET /events/join/:slug
   async function lookupCode(fullCode: string) {
     if (fullCode.length !== CODE_LENGTH) return;
     const token = await getTokenClient();
     if (!token) return;
+
     try {
       setLoading(true);
       setError("");
 
       const service = eventService(token);
       const event = await service.getBySlug(fullCode);
-      //event.id
+
       setPreview({
         id: event.id,
-        emoji: "",
+        initial: event.title.trim().charAt(0).toUpperCase(),
+        coverImageUrl: event.coverImageUrl ?? undefined,
         title: event.title,
-        sub: event.gifterCount.toString(),
+        sub: `${event.gifterCount} ${event.gifterCount === 1 ? "guest" : "guests"}`,
         status: event.status === EventStatus.ACTIVE ? "live" : "draft",
       });
-      //add to recent looked up
-      service.saveRecentEventId(event.id);
 
+      service.saveRecentEventId(event.id);
       inputRefs.current.forEach((el) => {
         el?.blur();
       });
@@ -68,11 +75,14 @@ export default function JoinEventPage() {
     }
   }
 
+  // ── Input handlers ──────────────────────────────────────────────────────────
+
   function handleDigitChange(index: number, value: string) {
     const char = value
       .replace(/[^a-zA-Z0-9]/g, "")
       .toUpperCase()
       .slice(-1);
+
     const next = [...digits];
     next[index] = char;
     setDigits(next);
@@ -81,9 +91,8 @@ export default function JoinEventPage() {
       inputRefs.current[index + 1]?.focus();
     }
 
-    const full = next.join("");
     if (next.every(Boolean)) {
-      lookupCode(full);
+      lookupCode(next.join(""));
     }
   }
 
@@ -108,6 +117,7 @@ export default function JoinEventPage() {
       .replace(/[^a-zA-Z0-9]/g, "")
       .toUpperCase()
       .slice(0, CODE_LENGTH);
+
     const next = Array(CODE_LENGTH).fill("");
     pasted.split("").forEach((c, i) => {
       next[i] = c;
@@ -122,25 +132,33 @@ export default function JoinEventPage() {
     router.push(`/gift-room/${preview.id}/name-screen`);
   }
 
+  // ── Render ──────────────────────────────────────────────────────────────────
+
   return (
     <div className={styles.page}>
+      {/* Decorative rings */}
       <div className={styles.orb} aria-hidden="true" />
+
+      {/* Back */}
       <div className={styles.alignButton}>
         <BackButton onClick={() => router.back()} />
       </div>
+
+      {/* Hero */}
       <div className={styles.hero}>
         <h1 className={styles.title}>
-          Join a<br />
-          gift room.
+          Join a <span className={styles.titleAccent}>gift</span>
+          <br />
+          room.
         </h1>
         <p className={styles.sub}>
-          Enter the 5-letter code or scan the QR at the venue
+          Enter the 5-character code or scan the QR at the venue
         </p>
       </div>
 
-      {/* ── Code entry ── */}
+      {/* Code entry */}
       <div className={styles.codeCard}>
-        <label htmlFor="Join Code" className={styles.codeLabel}>
+        <label htmlFor="join code" className={styles.codeLabel}>
           Enter join code
         </label>
         <div className={styles.boxes}>
@@ -166,55 +184,65 @@ export default function JoinEventPage() {
             />
           ))}
         </div>
+
         {loading && <p className={styles.searching}>Looking up code…</p>}
         {error && <p className={styles.errorMsg}>{error}</p>}
       </div>
 
-      {/* ── Divider ── */}
-      {/*<div className={styles.dividerRow}>
-        <div className={styles.divLine} />
-        <span className={styles.divText}>or</span>
-        <div className={styles.divLine} />
-      </div>*/}
-
-      {/* ── QR zone ── */}
-      {/*<button type="button" className={styles.qrZone} aria-label="Scan QR code">
-        <span className={styles.qrIcon} aria-hidden="true">
-          📷
-        </span>
-        <span className={styles.qrTitle}>Scan QR code</span>
-        <span className={styles.qrSub}>
-          Point your camera at the QR at the venue
-        </span>
-      </button>*/}
-
-      {/* ── Event preview ── */}
+      {/* Event preview — animates in on match */}
       {preview && (
         <div className={styles.preview}>
-          <span className={styles.previewEmoji} aria-hidden="true">
-            {preview.emoji}
-          </span>
-          <div className={styles.previewInfo}>
-            <p className={styles.previewTitle}>{preview.title}</p>
-            <p className={styles.previewSub}>Found · {preview.sub}</p>
-          </div>
-          {preview.status === "live" && (
-            <span className={styles.liveBadge}>● LIVE</span>
+          {/* Cover image or initial fallback */}
+          {preview.coverImageUrl ? (
+            <Image
+              src={preview.coverImageUrl}
+              alt={preview.title}
+              className={styles.previewCover}
+            />
+          ) : (
+            <div className={styles.previewCoverFallback} aria-hidden="true">
+              <span className={styles.previewCoverInitial}>
+                {preview.initial}
+              </span>
+            </div>
           )}
+
+          {/* Info bar with inline CTA */}
+          <div className={styles.previewBody}>
+            <div className={styles.previewInfo}>
+              <p className={styles.previewTitle}>
+                {preview.title.toUpperCase()}
+              </p>
+              <p className={styles.previewSub}>Found · {preview.sub}</p>
+            </div>
+            <div className={styles.previewActions}>
+              {preview.status === "live" && (
+                <span className={styles.liveBadge}>
+                  <span className={styles.liveBadgeDot} aria-hidden="true" />
+                  LIVE
+                </span>
+              )}
+              <button
+                type="button"
+                className={styles.ctaInline}
+                onClick={handleEnter}
+                disabled={loading}
+              >
+                {loading ? "…" : "Enter →"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ── CTA ── */}
-      <div className={styles.ctaWrap}>
-        <button
-          type="button"
-          className={styles.cta}
-          onClick={handleEnter}
-          disabled={!preview || loading}
-        >
-          {loading ? "Looking up…" : "Enter gift room"}
-        </button>
-      </div>
+      {/* Ghost CTA — keeps layout stable before event is found */}
+      {!preview && (
+        <div className={styles.ctaWrap}>
+          <button type="button" className={styles.cta} disabled>
+            Enter gift room
+          </button>
+        </div>
+      )}
     </div>
   );
 }

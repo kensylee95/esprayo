@@ -197,6 +197,9 @@ export class EventGateway
           'NX',
         );
 
+        await this.redis.sadd(`event:${eventId}:guests`, userId);
+        await this.redis.expire(`event:${eventId}:guests`, 86400);
+
         if (isNew) {
           guestCount = await this.redis.incr(this.guestCountKey(eventId));
 

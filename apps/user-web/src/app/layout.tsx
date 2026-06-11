@@ -1,7 +1,8 @@
 import "./globals.scss";
 export const metadata = {
-  title: "Seranade",
-  description: "Gifting App",
+  title: "Spray It",
+  description: "Event gifting application",
+  manifest: "/manifest.webmanifest",
 };
 export default function RootLayout({
   children,

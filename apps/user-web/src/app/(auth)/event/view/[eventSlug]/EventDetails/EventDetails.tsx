@@ -140,6 +140,8 @@ export default function EventDetail({ event }: { event: IEvent }) {
         <div className={`${s.cover} ${isInactive ? s.coverMuted : ""}`}>
           {event.coverImageUrl ? (
             <Image
+              width={1024}
+              height={1024}
               src={event.coverImageUrl}
               alt={event.title}
               className={s.coverImg}
