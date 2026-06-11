@@ -20,6 +20,7 @@ import { RealtimeModule } from '@modules/RealtimeGateway/RealtimeGateway.module'
 import Redis from 'ioredis';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { StorageControllerModule } from './controllers/storage/storage.controller.module';
+import { PushControllerModule } from './controllers/push/push.controller.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { StorageControllerModule } from './controllers/storage/storage.controlle
     WalletsControllerModule,
     StorageControllerModule,
     EventGatewayModule,
+    PushControllerModule,
     //Logger
     LoggerModule.forRootAsync({
       inject: [AppConfig.KEY],

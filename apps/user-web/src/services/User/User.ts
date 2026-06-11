@@ -7,7 +7,7 @@ import type {
   UserUpdateDto,
 } from "./users.dto";
 
-const userService = (token?: string) => ({
+const userService = (token: string) => ({
   // GET CURRENT USER
   getMe(): Promise<UserDto> {
     return request("/users/find", { token });

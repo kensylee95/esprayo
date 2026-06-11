@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
 import eventService from "@/services/Event/Event";
 import LeaderboardDisplayPage from "./LeaderboardDisplay";
 
@@ -19,6 +20,6 @@ async function getEvent(eventSlug: string) {
 export default async function Page({ params }: PageProps) {
   const { eventSlug } = await params;
   const event = await getEvent(eventSlug);
-  if (!event) return null;
+  if (!event) return notFound();
   return <LeaderboardDisplayPage event={event} />;
 }

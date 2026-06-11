@@ -32,6 +32,8 @@ import { REDIS_CLIENT } from '@modules/redis/redis.module';
 import { giftCountKey, giftLockKey } from '../../constants';
 import { RealtimeGatewayService } from '@modules/RealtimeGateway/RealtimeGateway.service';
 import { SocketEvents } from '@app/socket-events';
+import { PushService } from '@modules/push/push.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GiftService {
@@ -52,7 +54,66 @@ export class GiftService {
     private readonly walletService: WalletService,
 
     private readonly leaderboardService: LeaderboardService,
+    private readonly pushService: PushService,
+    private readonly configService: ConfigService,
   ) {}
+
+  async getEventGuestIds(eventId: string): Promise<string[]> {
+    return this.redis.smembers(`event:${eventId}:guests`);
+  }
+
+  private async broadcastGift(
+    payload: GiftPayload,
+    leaderboard: {
+      score: number;
+      rank: number;
+      totalScore: number;
+      totalGifts: number;
+    },
+  ): Promise<void> {
+    const { score, rank, totalScore, totalGifts } = leaderboard;
+
+    this.realtime.emitTo(
+      `gift-room:${payload.eventId}`,
+      SocketEvents.giftReceived,
+      {
+        displayName: payload.displayName,
+        newScore: score,
+        newRank: rank,
+      },
+    );
+
+    this.realtime.emitTo(
+      `gift-room:${payload.eventId}`,
+      SocketEvents.leaderboardUpdate,
+      {
+        patch: {
+          userId: payload.userId,
+          displayName: payload.displayName,
+          newScore: score,
+          newRank: rank,
+        },
+        totalScore,
+        totalGifts,
+      },
+    );
+
+    const guestIds = await this.getEventGuestIds(payload.eventId);
+    const recipients = guestIds.filter((id) => id !== payload.userId);
+
+    await this.pushService
+      .sendToMany(recipients, {
+        title: `${payload.displayName} just sprayed! 🎉`,
+        body: `₦${payload.amount} just hit the gift room — come see the action!`,
+        url: `${this.configService.get('FRONT_END_URL')}/gift-room/${payload.eventId}`,
+      })
+      .catch((err) => {
+        this.logger.warn(
+          'push notification failed',
+          err instanceof Error ? err.stack : String(err),
+        );
+      });
+  }
 
   async sendGift(payload: GiftPayload): Promise<GiftResult | null> {
     const locked = await this.redis.set(
@@ -99,40 +160,7 @@ export class GiftService {
         );
 
       // 3. broadcast — best-effort, never throws up
-      try {
-        this.realtime.emitTo(
-          `gift-room:${payload.eventId}`,
-          SocketEvents.giftReceived,
-          {
-            displayName: payload.displayName,
-            newScore: score,
-            newRank: rank,
-          },
-        );
-
-        this.realtime.emitTo(
-          `gift-room:${payload.eventId}`,
-          SocketEvents.leaderboardUpdate,
-          {
-            patch: {
-              userId: payload.userId,
-              displayName: payload.displayName,
-              newScore: score,
-              newRank: rank,
-            },
-            totalScore,
-            totalGifts,
-          },
-        );
-      } catch (broadcastErr) {
-        this.logger.warn(
-          'realtime broadcast failed — gift persisted and leaderboard updated',
-          broadcastErr instanceof Error
-            ? broadcastErr.stack
-            : String(broadcastErr),
-        );
-      }
-
+      void this.broadcastGift(payload, { score, rank, totalScore, totalGifts });
       return { success: true, newBalance };
     } catch (err) {
       await this.redis

@@ -16,9 +16,11 @@ import { LeaderboardServiceModule } from '@modules/leaderboard/leaderboard.modul
 
 import { Gift } from './entities/gift.entity';
 import { GIFTS_PERSIST_QUEUE } from './job.constants';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([Gift]),
 
     LeaderboardServiceModule,

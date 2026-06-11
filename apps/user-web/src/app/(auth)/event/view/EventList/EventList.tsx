@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { IEvent } from "@/services/Event/Event.dto";
+import BackButton from "@/ui/components/BackButton/BackButton";
 import styles from "./EventList.module.scss";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,6 +22,7 @@ export interface EventSummary {
   tokenBalance: number;
   giftCount: number;
   emoji: string;
+  coverImageUrl?: string | null;
 }
 
 type FilterTab = "all" | "active" | "draft" | "ended";
@@ -43,12 +46,24 @@ const EVENT_TYPE_EMOJI: Record<string, string> = {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: EventStatus }) {
-  const map: Record<EventStatus, { cls: string; label: string }> = {
-    active: { cls: styles.badgeLive, label: "● LIVE" },
+  if (status === "active") {
+    return (
+      <span className={`${styles.badge} ${styles.badgeLive}`}>
+        <span className={styles.badgeLiveDot} aria-hidden="true" />
+        LIVE
+      </span>
+    );
+  }
+
+  const map: Record<
+    Exclude<EventStatus, "active">,
+    { cls: string; label: string }
+  > = {
     draft: { cls: styles.badgeDraft, label: "Draft" },
     ended: { cls: styles.badgeEnded, label: "Ended" },
     cancelled: { cls: styles.badgeCancelled, label: "Cancelled" },
   };
+
   const { cls, label } = map[status];
   return <span className={`${styles.badge} ${cls}`}>{label}</span>;
 }
@@ -67,35 +82,72 @@ function EventCard({
         ? styles.cardDraft
         : styles.cardEnded;
 
+  const formattedDate = new Date(event.startsAt).toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+
   return (
     <button
       type="button"
       className={`${styles.eventCard} ${cardCls}`}
       onClick={onClick}
     >
-      <div className={`${styles.eventIcon} ${styles[`icon_${event.status}`]}`}>
-        {event.emoji}
-      </div>
-      <div className={styles.eventInfo}>
-        <p className={styles.eventTitle}>{event.title}</p>
-        <p className={styles.eventMeta}>
-          {new Date(event.startsAt).toLocaleDateString("en-NG", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-          {event.venue ? ` · ${event.venue}` : ""}
-        </p>
-      </div>
-      <div className={styles.eventRight}>
-        <StatusBadge status={event.status} />
-        {event.tokenBalance > 0 && (
-          <span
-            className={`${styles.tokenCount} ${event.status === "ended" ? styles.tokenMuted : ""}`}
+      {/* ── Cover image ── */}
+      {event.coverImageUrl ? (
+        <div className={styles.coverImageWrap}>
+          <Image
+            src={event.coverImageUrl}
+            width={500}
+            height={500}
+            alt={event.title}
+            className={styles.coverImage}
+          />
+          {/* Status badge overlaid on the image */}
+          <div className={styles.coverBadgeOverlay}>
+            <StatusBadge status={event.status} />
+          </div>
+          {/* Emoji overlaid bottom-left */}
+          <div
+            className={`${styles.coverEmoji} ${styles[`icon_${event.status}`]}`}
           >
-            {event.tokenBalance.toLocaleString()} tkn
-          </span>
+            {event.emoji}
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── Row: icon + info + right (only when no cover image) ── */}
+      <div className={styles.cardBody}>
+        {!event.coverImageUrl && (
+          <div
+            className={`${styles.eventIcon} ${styles[`icon_${event.status}`]}`}
+          >
+            {event.emoji}
+          </div>
         )}
+
+        <div className={styles.eventInfo}>
+          <p className={styles.eventTitle}>{event.title}</p>
+          <p className={styles.eventMeta}>
+            {formattedDate}
+            {event.venue ? ` · ${event.venue}` : ""}
+          </p>
+        </div>
+
+        <div className={styles.eventRight}>
+          {/* Badge only shown here when there's no cover image */}
+          {!event.coverImageUrl && <StatusBadge status={event.status} />}
+          {event.tokenBalance > 0 && (
+            <span
+              className={`${styles.tokenCount} ${
+                event.status === "ended" ? styles.tokenMuted : ""
+              }`}
+            >
+              {event.tokenBalance.toLocaleString()} tkn
+            </span>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -105,25 +157,26 @@ function EventCard({
 
 export default function EventsList({ userEvents }: { userEvents: IEvent[] }) {
   const router = useRouter();
-
   const [filter, setFilter] = useState<FilterTab>("all");
 
-  const events: EventSummary[] = useMemo(() => {
-    return userEvents.map((eventData) => ({
-      ...eventData,
-      emoji: EVENT_TYPE_EMOJI[eventData.type.toLowerCase()] ?? "✨",
-    }));
-  }, [userEvents]);
+  const events: EventSummary[] = useMemo(
+    () =>
+      userEvents.map((e) => ({
+        ...e,
+        emoji: EVENT_TYPE_EMOJI[e.type.toLowerCase()] ?? "✨",
+      })),
+    [userEvents],
+  );
 
   const filtered = useMemo(() => {
-    return events.filter((e) => {
-      if (filter === "all") return true;
-      if (filter === "active") return e.status === "active";
-      if (filter === "draft") return e.status === "draft";
-      if (filter === "ended")
-        return e.status === "ended" || e.status === "cancelled";
-      return true;
-    });
+    if (filter === "all") return events;
+    if (filter === "active") return events.filter((e) => e.status === "active");
+    if (filter === "draft") return events.filter((e) => e.status === "draft");
+    if (filter === "ended")
+      return events.filter(
+        (e) => e.status === "ended" || e.status === "cancelled",
+      );
+    return events;
   }, [events, filter]);
 
   const counts = useMemo(
@@ -139,10 +192,13 @@ export default function EventsList({ userEvents }: { userEvents: IEvent[] }) {
 
   return (
     <div className={styles.page}>
+      <div className={styles.backButton}>
+        <BackButton onClick={() => router.back()} />
+      </div>
       <main className={styles.main}>
         {/* ── Header ── */}
         <div className={styles.pageHeader}>
-          <div>
+          <div className={styles.pageTitleGroup}>
             <h1 className={styles.pageTitle}>My Events</h1>
             <p className={styles.pageSub}>
               {counts.active} active · {counts.draft} draft · {counts.ended}{" "}
@@ -169,10 +225,18 @@ export default function EventsList({ userEvents }: { userEvents: IEvent[] }) {
           ))}
         </div>
 
+        {/* ── List / empty state ── */}
         {filtered.length === 0 ? (
           <div className={styles.emptyState}>
-            <p className={styles.emptyIcon}>🎁</p>
+            <div className={styles.emptyIconWrap} aria-hidden="true">
+              🎁
+            </div>
             <p className={styles.emptyText}>No events here yet</p>
+            <p className={styles.emptySub}>
+              {filter === "all"
+                ? "Create your first gift room"
+                : `No ${filter} events`}
+            </p>
           </div>
         ) : (
           <ul className={styles.eventList}>
