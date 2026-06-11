@@ -26,7 +26,7 @@ export class PushService implements OnModuleInit {
 
   onModuleInit() {
     webpush.setVapidDetails(
-      this.config.vapidMailto,
+      `mailto:${this.config.vapidMailto}`,
       this.config.vapidPublicKey,
       this.config.vapidPrivateKey,
     );
