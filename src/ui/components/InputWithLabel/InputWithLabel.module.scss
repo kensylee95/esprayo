@@ -1,0 +1,17 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-family: vars.$font-mono;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: vars.$text-2;
+}
+
+.input {
+  @include mixins.input;
+}

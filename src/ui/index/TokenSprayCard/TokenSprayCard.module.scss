@@ -1,0 +1,53 @@
+@use "@app/styles/mixins/variables" as *;
+@use "@app/styles/mixins/mixins" as *;
+
+.card {
+  @include card;
+  margin-top: 1rem;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-direction: column;
+  @media(min-width: 350px){
+    flex-direction: row;
+  }
+}
+
+.left { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.label {
+  @include label;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.presets { display: flex; gap: 0.4rem; }
+
+.chip {
+  border-radius: 9999px;
+  padding: 0.3rem 0.7rem;
+  font-family: $font-mono;
+  font-size: 12px;
+  background: $surface-2;
+  color: $text-2;
+  border: 0.5px solid $surface-3;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  &:hover { color: $text-1; }
+}
+
+.chipActive {
+  background: rgba($gold, 0.15);
+  color: $gold-light;
+  border-color: rgba($gold, 0.4);
+}
+
+.sprayBtn {
+  @include btn-primary;
+  padding: 0.6rem 1.2rem;
+}
+
+.arrow { font-family: $font-mono; }

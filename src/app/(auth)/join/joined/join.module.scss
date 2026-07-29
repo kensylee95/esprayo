@@ -1,0 +1,438 @@
+@use "@app/styles/mixins/variables" as vars;
+@use "@app/styles/mixins/mixins" as mixins;
+
+$font-display-luxury: 'Cormorant Garamond', serif;
+$font-body-clean: 'DM Sans', sans-serif;
+$font-mono-clean: 'DM Mono', monospace;
+$gold-pale: #E8D5A3;
+$gold-dim: #7A5F24;
+$radius-card: 16px;
+$radius-pill: 99px;
+
+// ── Page shell ────────────────────────────────────────────────────────────────
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: vars.$void;
+  position: relative;
+  overflow: hidden;
+}
+
+// Decorative concentric rings top-right
+.orb {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(vars.$gold, 0.07);
+  top: -80px;
+  right: -80px;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 30px;
+    border-radius: 50%;
+    border: 0.5px solid rgba(vars.$gold, 0.05);
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 65px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(vars.$gold, 0.04) 0%, transparent 70%);
+  }
+}
+
+// ── Back button alignment ─────────────────────────────────────────────────────
+
+.alignButton {
+  margin: 18px 0 0 16px;
+  width: fit-content;
+}
+
+// ── Hero ──────────────────────────────────────────────────────────────────────
+
+.hero {
+  padding: 10px 22px 24px;
+}
+
+.title {
+  font-family: $font-display-luxury;
+  font-size: 2.4rem;
+  font-weight: 300;
+  line-height: 1.1;
+  color: $gold-pale;
+  letter-spacing: 0.01em;
+  margin-bottom: 8px;
+}
+
+.titleAccent {
+  font-style: italic;
+  color: vars.$gold;
+}
+
+.sub {
+  font-family: $font-mono-clean;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: vars.$text-3;
+  line-height: 1.7;
+}
+
+// ── Code card ─────────────────────────────────────────────────────────────────
+
+.codeCard {
+  margin: 0 18px 8px;
+  background: vars.$surface-1;
+  border: 0.5px solid vars.$surface-3;
+  border-radius: $radius-card;
+  padding: 20px 18px 18px;
+}
+
+.codeLabel {
+  display: block;
+  font-family: $font-mono-clean;
+  font-size: 8px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: vars.$text-3;
+  margin-bottom: 14px;
+}
+
+// ── Code boxes ────────────────────────────────────────────────────────────────
+
+.boxes {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.box {
+  width: 52px;
+  height: 58px;
+  background: vars.$surface-2;
+  border: 0.5px solid vars.$surface-3;
+  border-radius: 12px;
+  text-align: center;
+  font-family: $font-mono-clean;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: vars.$text-1;
+  caret-color: vars.$gold;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+
+  &.active {
+    border-color: vars.$gold;
+    background: vars.$surface-1;
+    box-shadow: 0 0 0 2px rgba(vars.$gold, 0.06);
+  }
+
+  &.filled {
+    background: #1C1A0E;
+    border-color: rgba(vars.$gold, 0.35);
+    color: vars.$gold;
+  }
+}
+
+.searching {
+  font-family: $font-mono-clean;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: vars.$text-3;
+  text-align: center;
+  margin-top: 14px;
+  animation: blink 1.4s ease infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
+
+.errorMsg {
+  font-family: $font-mono-clean;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: vars.$danger;
+  text-align: center;
+  margin-top: 14px;
+  line-height: 1.6;
+}
+
+// ── Divider ───────────────────────────────────────────────────────────────────
+
+.dividerRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+}
+
+.divLine {
+  flex: 1;
+  height: 0.5px;
+  background: vars.$surface-3;
+}
+
+.divText {
+  font-family: $font-mono-clean;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: vars.$text-3;
+}
+
+// ── QR zone ───────────────────────────────────────────────────────────────────
+
+.qrZone {
+  margin: 0 18px 16px;
+  background: vars.$surface-1;
+  border: 0.5px dashed vars.$surface-3;
+  border-radius: $radius-card;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease;
+
+  &:hover  { border-color: rgba(vars.$gold, 0.3); }
+  &:active { background: vars.$surface-2; }
+}
+
+.qrIcon  { font-size: 22px; }
+
+.qrTitle {
+  font-family: $font-body-clean;
+  font-size: 12px;
+  font-weight: 500;
+  color: vars.$text-2;
+}
+
+.qrSub {
+  font-family: $font-mono-clean;
+  font-size: 9px;
+  color: vars.$text-3;
+}
+
+// ── Event preview ─────────────────────────────────────────────────────────────
+
+.preview {
+  margin: 0 18px 8px;
+  border-radius: $radius-card;
+  overflow: hidden;
+  position: relative;
+  animation: slideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  border: 0.5px solid rgba(vars.$gold, 0.2);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+// Cover image — full bleed top half
+.previewCover {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+
+// Fallback banner when no cover image
+.previewCoverFallback {
+  width: 100%;
+  height: 130px;
+  background: linear-gradient(135deg, #1A1810 0%, #0E0D08 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  // faint radial glow centred on the initial
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 60%, rgba(vars.$gold, 0.08) 0%, transparent 65%);
+  }
+}
+
+.previewCoverInitial {
+  font-family: $font-display-luxury;
+  font-size: 4rem;
+  font-weight: 300;
+  color: rgba(vars.$gold, 0.35);
+  letter-spacing: 0.05em;
+  position: relative;
+  z-index: 1;
+  line-height: 1;
+}
+
+// Bottom info bar
+.previewBody {
+  background: vars.$surface-1;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.previewInfo { flex: 1; min-width: 0; }
+
+.previewTitle {
+  font-family: $font-body-clean;
+  font-size: 13px;
+  font-weight: 500;
+  color: vars.$text-1;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+
+.previewSub {
+  font-family: $font-mono-clean;
+  font-size: 9px;
+  color: vars.$text-3;
+  letter-spacing: 0.06em;
+}
+
+.previewActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+// Compact CTA sitting inside the card
+.ctaInline {
+  @include mixins.btn-primary;
+  padding: 8px 14px;
+  font-family: $font-mono-clean;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(vars.$success, 0.08);
+  border: 0.5px solid rgba(vars.$success, 0.2);
+  border-radius: $radius-pill;
+  padding: 3px 9px;
+  font-family: $font-mono-clean;
+  font-size: 8px;
+  letter-spacing: 0.05em;
+  color: vars.$success;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.liveBadgeDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: vars.$success;
+  animation: pulseDot 2s ease infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.65); }
+}
+
+// ── CTA ───────────────────────────────────────────────────────────────────────
+
+.ctaWrap {
+  padding: 0 18px 36px;
+  margin-top: auto;
+}
+
+.cta {
+  @include mixins.btn-primary;
+  width: 100%;
+  padding: 15px;
+  font-family: $font-mono-clean;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+
+  &:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@media (min-width: 640px) {
+  .page {
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+  }
+
+  .orb {
+    width: 380px;
+    height: 380px;
+    top: -120px;
+    right: -120px;
+  }
+
+  .alignButton {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 0 8px;
+  }
+
+  .hero {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 0 24px;
+  }
+
+  .title { font-size: 3rem; }
+
+  .codeCard {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 0 10px;
+  }
+
+  .preview {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 0 10px;
+  }
+
+  .ctaWrap {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 0 0;
+    margin-top: 8px;
+  }
+}
