@@ -7,149 +7,10 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@app/socket-events':
-        specifier: workspace:*
-        version: link:packages/socket-events
-      '@app/styles':
-        specifier: workspace:*
-        version: link:packages/app_styles
-      '@hookform/resolvers':
-        specifier: ^5.4.0
-        version: 5.4.0(react-hook-form@7.72.1(react@19.2.0))
-      '@lottiefiles/dotlottie-react':
-        specifier: ^0.19.4
-        version: 0.19.4(react@19.2.0)
-      '@react-oauth/google':
-        specifier: ^0.13.5
-        version: 0.13.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@serwist/next':
-        specifier: ^9.5.11
-        version: 9.5.11(next@16.0.10(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(sass@1.99.0))(react@19.2.0)(typescript@5.9.3)(webpack@5.106.1)
-      '@serwist/precaching':
-        specifier: ^9.5.11
-        version: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
-      '@serwist/sw':
-        specifier: ^9.5.11
-        version: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
-      '@supabase/supabase-js':
-        specifier: ^2.107.0
-        version: 2.107.0
-      '@tanstack/query-async-storage-persister':
-        specifier: ^5.90.21
-        version: 5.99.0
-      '@tanstack/react-query':
-        specifier: ^5.90.19
-        version: 5.99.0(react@19.2.0)
-      '@tanstack/react-query-persist-client':
-        specifier: ^5.90.21
-        version: 5.99.0(@tanstack/react-query@5.99.0(react@19.2.0))(react@19.2.0)
-      bcrypt:
-        specifier: ^5.1.1
-        version: 5.1.1
-      d3-scale:
-        specifier: ^4.0.2
-        version: 4.0.2
-      d3-shape:
-        specifier: ^3.2.0
-        version: 3.2.0
-      framer-motion:
-        specifier: ^12.23.26
-        version: 12.38.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      lottie-react:
-        specifier: ^2.4.1
-        version: 2.4.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      lucide-react:
-        specifier: ^1.8.0
-        version: 1.8.0(react@19.2.0)
-      next:
-        specifier: 16.0.10
-        version: 16.0.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(sass@1.99.0)
-      next-qrcode:
-        specifier: ^2.5.1
-        version: 2.5.1(react@19.2.0)
-      passport:
-        specifier: ^0.7.0
-        version: 0.7.0
-      passport-jwt:
-        specifier: ^4.0.1
-        version: 4.0.1
-      passport-local:
-        specifier: ^1.0.0
-        version: 1.0.0
-      react:
-        specifier: 19.2.0
-        version: 19.2.0
-      react-dom:
-        specifier: 19.2.0
-        version: 19.2.0(react@19.2.0)
-      react-hook-form:
-        specifier: ^7.68.0
-        version: 7.72.1(react@19.2.0)
-      react-hot-toast:
-        specifier: ^2.6.0
-        version: 2.6.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react-icons:
-        specifier: ^5.5.0
-        version: 5.6.0(react@19.2.0)
-      react-spinners:
-        specifier: ^0.17.0
-        version: 0.17.0(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      socket.io-client:
-        specifier: ^4.8.3
-        version: 4.8.3
-      use-debounce:
-        specifier: ^10.1.0
-        version: 10.1.1(react@19.2.0)
-      uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
-      zod:
-        specifier: ^4.2.1
-        version: 4.4.1
-      zustand:
-        specifier: ^5.0.9
-        version: 5.0.12(@types/react@19.2.14)(react@19.2.0)
     devDependencies:
-      '@biomejs/biome':
-        specifier: 2.2.0
-        version: 2.2.0
-      '@svgr/webpack':
-        specifier: ^8.1.0
-        version: 8.1.0(typescript@5.9.3)
-      '@types/d3-scale':
-        specifier: ^4.0.9
-        version: 4.0.9
-      '@types/d3-shape':
-        specifier: ^3.1.8
-        version: 3.1.8
-      '@types/node':
-        specifier: ^20
-        version: 20.19.39
-      '@types/react':
-        specifier: ^19
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19
-        version: 19.2.3(@types/react@19.2.14)
-      '@types/webpack':
-        specifier: ^5.28.5
-        version: 5.28.5
-      babel-plugin-react-compiler:
-        specifier: 1.0.0
-        version: 1.0.0
-      baseline-browser-mapping:
-        specifier: ^2.10.10
-        version: 2.10.19
-      sass:
-        specifier: ^1.94.2
-        version: 1.99.0
-      serwist:
-        specifier: ^9.5.11
-        version: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
       typescript:
-        specifier: ^5
-        version: 5.9.3
+        specifier: ^6.0.3
+        version: 6.0.3
 
   apps/api:
     dependencies:
@@ -402,7 +263,7 @@ importers:
         version: 0.13.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       '@serwist/next':
         specifier: ^9.5.11
-        version: 9.5.11(next@16.0.10(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(sass@1.99.0))(react@19.2.0)(typescript@5.9.3)(webpack@5.106.1)
+        version: 9.5.11(next@16.0.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(sass@1.99.0))(react@19.2.0)(typescript@5.9.3)(webpack@5.106.1)
       '@serwist/precaching':
         specifier: ^9.5.11
         version: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
@@ -6339,6 +6200,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   ua-is-frozen@0.1.2:
     resolution: {integrity: sha512-RwKDW2p3iyWn4UbaxpP2+VxwqXh0jpvdxsYpZ5j/MLLiQOfbsV5shpgQiw93+KMYQPcteeMQ289MaAFzs3G9pw==}
 
@@ -8576,7 +8442,7 @@ snapshots:
     transitivePeerDependencies:
       - browserslist
 
-  '@serwist/next@9.5.11(next@16.0.10(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(sass@1.99.0))(react@19.2.0)(typescript@5.9.3)(webpack@5.106.1)':
+  '@serwist/next@9.5.11(next@16.0.10(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(sass@1.99.0))(react@19.2.0)(typescript@5.9.3)(webpack@5.106.1)':
     dependencies:
       '@serwist/build': 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
       '@serwist/utils': 9.5.11(browserslist@4.28.2)
@@ -13039,6 +12905,8 @@ snapshots:
       - supports-color
 
   typescript@5.9.3: {}
+
+  typescript@6.0.3: {}
 
   ua-is-frozen@0.1.2: {}
 
