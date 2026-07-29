@@ -175,3 +175,28 @@
     border: 0.5px solid vars.$surface-3;
     color: vars.$text-3;
 }
+
+// ── Desktop / tablet ─────────────────────────────────────────────────────────
+// On mobile this is a full-screen bottom sheet. On larger viewports that
+// reads as broken (a mobile pattern stretched edge-to-edge), so instead we
+// present it as a centered modal panel, rounded on all corners.
+@include mixins.md-up {
+    .portal {
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .tabContent {
+        margin-top: 0;
+        flex: none;
+        width: 100%;
+        max-width: 420px;
+        max-height: min(720px, calc(100dvh - 48px));
+        border-radius: 24px;
+        border: 1px solid vars.$surface-2;
+        box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.45),
+            0 0 0 1px rgba(255, 255, 255, 0.02);
+    }
+}

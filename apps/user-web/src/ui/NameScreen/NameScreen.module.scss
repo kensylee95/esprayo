@@ -1,56 +1,43 @@
 @use "@app/styles/mixins/variables" as vars;
 @use "@app/styles/mixins/mixins" as mixins;
-.phone {
-  background: vars.$void;
-  overflow: hidden;
-  width: 100%;
-  height: 100vh;
-}
-
-.bar {
-  height: 36px;
-  background: vars.$surface-4;
-}
 
 .screen {
-  padding: 32px 20px;
+  min-height: 100dvh;
+  background: vars.$void;
+  display: flex;
+  align-items: stretch;
 }
 
-.back {
-  font-size: 18px;
-  color: vars.$text-3;
-  margin-bottom: 20px;
+.container {
+  width: 100%;
+  padding: 48px 20px 32px;
+  display: flex;
+  flex-direction: column;
 }
 
 .title {
-  font-family: "Cormorant Garamond", serif;
+  @include mixins.display;
   font-size: 1.8rem;
-  color: white;
+  color: vars.$text-1;
 }
 
 .hint {
   color: vars.$text-2;
-  margin-bottom: 20px;
-   font-size: 1rem;
+  font-size: 1rem;
   line-height: 1.65;
   margin-top: 12px;
+  margin-bottom: 20px;
+}
+
+.inputWrapper {
+  display: flex;
+  width: 100%;
 }
 
 .input {
   @include mixins.input;
   margin-bottom: 24px;
 }
-.inputWrapper{
- display: flex; 
- width: 100%;
-}
-
-.row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
 
 .active {
   border: 1.5px solid vars.$gold;
@@ -58,4 +45,24 @@
 
 .cta {
   @include mixins.btn-primary;
+}
+
+// ── Desktop / tablet ─────────────────────────────────────────────────────────
+@include mixins.md-up {
+  .screen {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .container {
+    max-width: 460px;
+    padding: 40px;
+    border: 1px solid vars.$surface-3;
+    border-radius: 28px;
+    background: vars.$surface-1;
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(255, 255, 255, 0.02);
+  }
 }
