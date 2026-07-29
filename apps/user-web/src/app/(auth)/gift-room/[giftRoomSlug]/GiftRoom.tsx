@@ -11,8 +11,6 @@ import BackButton from "@/ui/components/BackButton/BackButton";
 import WalletFundOverlay from "@/ui/components/WalletFundOverlay/WalletFundOverlay";
 import { useGiftRoom } from "../../../../hooks/useGiftRoom";
 import NavButton from "../NavButton/NavButton";
-//import { playNumber1Sound } from "./audio";
-//import { triggerNumber1Burst } from "./confetti";
 import type { Overlay } from "./GiftRoom.dto";
 import styles from "./GiftRoom.module.scss";
 import LeaderboardTab from "./LeaderboardTab";
@@ -224,7 +222,7 @@ export default function GiftRoomPage({
       )*/}
 
       <AnimatePresence>
-        {tab === "spray" && (
+        {tab === "spray" && wallet.balance != null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
