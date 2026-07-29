@@ -107,47 +107,49 @@ export class LeaderboardService {
   // ADD GIFT FULL (extended metrics)
   // -------------------------
 
-  async addGiftFull(
-    eventId: string,
-    userId: string,
-    displayName: string,
-    nairaValue: number,
-    denomination: NairaDenomination,
-    giftCountKey: string,
-  ): Promise<{
-    score: number;
-    rank: number;
-    totalScore: number;
-    totalGifts: number;
-  }> {
-    const pipeline = this.redis.pipeline();
+async addGiftFull(
+  eventId: string,
+  userId: string,
+  displayName: string,
+  nairaValue: number,
+  denomination: NairaDenomination,
+  giftCountKey: string,
+): Promise<{
+  score: number;
+  rank: number;
+  totalScore: number;
+  totalGifts: number;
+  giftCount: number;
+}> {
+  const pipeline = this.redis.pipeline();
 
-    pipeline.zincrby(this.lbKey(eventId), nairaValue, userId);
-    pipeline.zrevrank(this.lbKey(eventId), userId);
+  pipeline.zincrby(this.lbKey(eventId), nairaValue, userId);
+  pipeline.zrevrank(this.lbKey(eventId), userId);
 
-    pipeline.hset(this.metaKey(eventId, userId), {
-      displayName,
-      lastGift: denomination,
-    });
+  pipeline.hset(this.metaKey(eventId, userId), {
+    displayName,
+    lastGift: denomination,
+  });
 
-    pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1);
+  pipeline.hincrby(this.metaKey(eventId, userId), 'giftCount', 1);
 
-    pipeline.incrby(this.totalScoreKey(eventId), nairaValue);
+  pipeline.incrby(this.totalScoreKey(eventId), nairaValue);
 
-    pipeline.sadd(this.usersSetKey(eventId), userId);
+  pipeline.sadd(this.usersSetKey(eventId), userId);
 
-    pipeline.incr(giftCountKey);
+  pipeline.incr(giftCountKey);
 
-    const results = await pipeline.exec();
-    this.assertPipelineResults(results, 'addGiftFull');
+  const results = await pipeline.exec();
+  this.assertPipelineResults(results, 'addGiftFull');
 
-    return {
-      score: Number(results![0][1]),
-      rank: Number(results![1][1]) + 1,
-      totalScore: Number(results![4][1]),
-      totalGifts: Number(results![6][1]),
-    };
-  }
+  return {
+    score: Number(results![0][1]),
+    rank: Number(results![1][1]) + 1,
+    totalScore: Number(results![4][1]),
+    totalGifts: Number(results![6][1]),
+    giftCount: Number(results![3][1]),
+  };
+}
 
   // -------------------------
   // GET TOP

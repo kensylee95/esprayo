@@ -48,7 +48,7 @@ export function useGiftRoom(token: string | null, eventId: string) {
 
           setStats((s) => ({
             ...s,
-            totalTokens: res.totalTokens,
+            totalScore: res.totalTokens ?? 0, // GetWayRes.totalTokens -> RoomStats.totalScore
             totalGifts: res.totalGifts ?? 0,
             guestCount: res.guestCount ?? 0,
           }));
@@ -70,6 +70,11 @@ export function useGiftRoom(token: string | null, eventId: string) {
 
         pendingUpdatesRef.current = [];
         flushRef.current = null;
+
+        // Most recent update carries the freshest server-computed totals —
+        // these are authoritative aggregates from the backend, not something
+        // we should recompute from the (possibly truncated) visible leaderboard.
+        const latest = updates[updates.length - 1];
 
         setLb((prev) => {
           const map = new Map(prev.map((u) => [u.userId, u]));
@@ -93,6 +98,12 @@ export function useGiftRoom(token: string | null, eventId: string) {
               rank: i + 1,
             }));
         });
+
+        setStats((s) => ({
+          ...s,
+          totalScore: latest.totalTokens ?? s.totalScore, // totalTokens -> totalScore
+          totalGifts: latest.totalGifts ?? s.totalGifts,
+        }));
       }, 250);
     };
 
