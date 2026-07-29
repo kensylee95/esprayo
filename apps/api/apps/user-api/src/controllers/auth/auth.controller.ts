@@ -252,9 +252,7 @@ export class AuthController {
     };
     const accessToken = this.authService.generateToken(payload);
 
-    // Don't put the real JWT in the redirect URL — URLs are logged by
-    // servers/CDNs, kept in browser history, and can leak via Referer
-    // headers. Instead hand off a short-lived, single-use random code and
+    //hand off a short-lived, single-use random code and
     // let the frontend exchange it for the token via POST.
     const exchangeCode = nanoid();
     await this.redis.set(
