@@ -32,53 +32,55 @@ export default function OTPVerification({ phone, onVerify, onBack }: Props) {
         ←
       </button>
 
-      <div className={styles.brand}>Serenade</div>
+      <div className={styles.content}>
+        <div className={styles.brand}>Serenade</div>
 
-      <h1 className={styles.title}>
-        Check your
-        <br />
-        messages.
-      </h1>
+        <h1 className={styles.title}>
+          Check your
+          <br />
+          messages.
+        </h1>
 
-      <p className={styles.subtitle}>
-        We sent a 6-digit code to
-        <br />
-        <span className={styles.phone}>{phone}</span>
-      </p>
+        <p className={styles.subtitle}>
+          We sent a 6-digit code to
+          <br />
+          <span className={styles.phone}>{phone}</span>
+        </p>
 
-      <label htmlFor="OTP" className={styles.label}>
-        Verification code
-      </label>
+        <label htmlFor="OTP" className={styles.label}>
+          Verification code
+        </label>
 
-      <div className={styles.otpBoxes}>
-        {[0, 1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className={`${styles.box} ${otp[i] ? styles.filled : ""}`}
-          >
-            {otp[i] || ""}
-          </div>
-        ))}
-      </div>
+        <div className={styles.otpBoxes}>
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className={`${styles.box} ${otp[i] ? styles.filled : ""}`}
+            >
+              {otp[i] || ""}
+            </div>
+          ))}
+        </div>
 
-      <div className={styles.timer}>
-        Code expires in <span>04:32</span>
-      </div>
+        <div className={styles.timer}>
+          Code expires in <span>04:32</span>
+        </div>
 
-      <button
-        type="button"
-        className={styles.cta}
-        disabled={!isComplete}
-        onClick={onVerify}
-      >
-        Verify & continue
-      </button>
-
-      <div className={styles.resend}>
-        Didn’t receive it?
-        <button type="button" className={styles.resendBtn}>
-          Resend code
+        <button
+          type="button"
+          className={styles.cta}
+          disabled={!isComplete}
+          onClick={onVerify}
+        >
+          Verify & continue
         </button>
+
+        <div className={styles.resend}>
+          Didn’t receive it?
+          <button type="button" className={styles.resendBtn}>
+            Resend code
+          </button>
+        </div>
       </div>
 
       <NumericKeyboard onClose={() => {}} onKeyPress={onKeyPress} />

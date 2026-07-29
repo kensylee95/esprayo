@@ -24,3 +24,7 @@ export type PhoneVerifyOtpDto = {
 export type GoogleLoginDto = {
   token: string;
 };
+
+export type ExchangeCodeDto = {
+  code: string;
+};

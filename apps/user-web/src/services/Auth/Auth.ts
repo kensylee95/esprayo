@@ -1,6 +1,7 @@
 import { request } from "@/helpers/request";
 import type {
   AuthResponse,
+  ExchangeCodeDto,
   GoogleLoginDto,
   LoginDto,
   PhoneSendOtpDto,
@@ -46,6 +47,18 @@ const authService = (token?: string) => ({
   // -----------------------------------
   googleLogin(payload: GoogleLoginDto): Promise<AuthResponse> {
     return request("/auth/google", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      token,
+    });
+  },
+
+  // -----------------------------------
+  // EXCHANGE ONE-TIME REDIRECT CODE FOR ACCESS TOKEN
+  // (used by the Google OAuth redirect handoff)
+  // -----------------------------------
+  exchangeCode(payload: ExchangeCodeDto): Promise<AuthResponse> {
+    return request("/auth/exchange-code", {
       method: "POST",
       body: JSON.stringify(payload),
       token,
