@@ -1,0 +1,110 @@
+@use "@app/styles/mixins/variables" as *;
+@use "@app/styles/mixins/mixins" as *;
+
+.section {
+  margin: 0 auto;
+  max-width: 72rem;
+  padding: 4rem 1.5rem;
+  @include md-up { padding: 6rem 1.5rem; }
+}
+
+.banner {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 0.5px solid $surface-2;
+  margin-bottom: 4rem;
+  aspect-ratio: 21 / 9;
+
+  @include sm-down { aspect-ratio: 4 / 5; }
+}
+
+.bannerImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.bannerOverlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba($void, 0.4) 0%, rgba($void, 0.85) 100%),
+    linear-gradient(90deg, rgba($void, 0.7) 0%, transparent 60%);
+}
+
+.bannerContent {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 2rem;
+  @include md-up { padding: 3rem; }
+}
+
+.bannerLabel {
+  @include label;
+  color: $gold-light;
+}
+
+.bannerTitle {
+  @include display;
+  margin-top: 0.75rem;
+  font-size: 2.25rem;
+  line-height: 1.05;
+  @include md-up { font-size: 3.5rem; }
+  em { font-style: italic; font-weight: 400; @include gold-text; }
+}
+
+.head { max-width: 36rem; margin-bottom: 3rem; }
+
+.label { @include label; }
+
+.title {
+  @include display;
+  margin-top: 1rem;
+  font-size: 2.25rem;
+  line-height: 1.1;
+  @include md-up { font-size: 3rem; }
+  em { font-style: italic; font-weight: 400; @include gold-text; }
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  @include md-up { grid-template-columns: repeat(2, 1fr); }
+}
+
+.card {
+  @include card;
+  padding: 1.75rem;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  &:hover {
+    border-color: rgba($gold, 0.3);
+    transform: translateY(-2px);
+  }
+}
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background: rgba($gold, 0.12);
+  color: $gold-light;
+  margin-bottom: 1rem;
+}
+
+.cardTitle {
+  @include display;
+  font-size: 1.375rem;
+  margin-bottom: 0.5rem;
+}
+
+.cardBody {
+  color: $text-2;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}

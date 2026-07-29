@@ -31,6 +31,11 @@ WORKDIR /app
 # Copy the deployed app
 COPY --from=workspace /monorepo/admin-api ./
 
+# node:22-alpine already ships an unprivileged 'node' user — use it instead
+# of running the process as root.
+RUN chown -R node:node /app
+USER node
+
 ENV NODE_ENV=production
 ENV PORT=3000
 

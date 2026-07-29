@@ -1,0 +1,22 @@
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rect {
+  animation: trail 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@for $i from 0 through 15 {
+  .rect#{$i} {
+    animation-delay: #{-1.6 + $i * 0.1}s;
+  }
+}
+
+@keyframes trail {
+  0%   { opacity: 1; }
+  6%   { opacity: 1; }
+  56%  { opacity: 0.06; }
+  100% { opacity: 0.06; }
+}
