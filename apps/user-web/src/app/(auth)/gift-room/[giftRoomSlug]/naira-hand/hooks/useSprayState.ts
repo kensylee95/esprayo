@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { NoteValue } from "../types";
 
 interface SprayOptions {
@@ -29,7 +29,16 @@ export function useSprayState(
   noteValueRef.current = noteValue;
   onCompleteRef.current = onComplete;
   optionsRef.current = options;
+const mountedWithZero = useRef(totalAmount === 0);
 
+useEffect(() => {
+  if (mountedWithZero.current && totalAmount > 0) {
+    remainingRef.current = totalAmount;
+    pendingRemainingRef.current = totalAmount;
+    setState({ remainingAmount: totalAmount, sprayTrigger: 0 });
+    mountedWithZero.current = false;
+  }
+}, [totalAmount]);
   const spray = useCallback((count = 1) => {
     if (remainingRef.current <= 0) return;
 
