@@ -93,7 +93,6 @@ export class WalletService {
   // GET BALANCE (CACHE → DB)
   // -------------------------
   async getBalance(userId: string): Promise<number> {
-    console.log('redis instance:', this.redis);
     const cached = await this.redis.get(this.balanceKey(userId));
     if (cached !== null) return Number(cached);
 
@@ -163,7 +162,8 @@ export class WalletService {
   }): Promise<number> {
     const { userId, amount, reference } = input;
 
-    // Atomic check-and-deduct in a single Redis round-trip
+    // Atomic check-and-deduct in a single Redis round-trip.
+    // -2 = cache key missing/expired, -1 = insufficient balance.
     const luaScript = `
     local balance = tonumber(redis.call('GET', KEYS[1]))
     if balance == nil then return -2 end
@@ -171,15 +171,44 @@ export class WalletService {
     return redis.call('DECRBY', KEYS[1], ARGV[1])
   `;
 
-    const result = (await this.redis.eval(
+    let result = (await this.redis.eval(
       luaScript,
       1,
       this.balanceKey(userId),
       amount,
     )) as number;
 
-    if (result === -2)
-      throw new BadRequestException('Wallet not found — join the room first');
+    if (result === -2) {
+      // Cache miss doesn't necessarily mean "no wallet" — the 24h TTL can
+      // simply have expired for a long-lived room/session. Hydrate from the
+      // DB (source of truth) and retry once before rejecting the debit.
+      const wallet = await this.walletRepository.findOne({ where: { userId } });
+      if (!wallet) {
+        throw new BadRequestException('Wallet not found — join the room first');
+      }
+
+      await this.redis.set(
+        this.balanceKey(userId),
+        wallet.balance,
+        'EX',
+        86400,
+        'NX', // avoid clobbering a concurrent writer that beat us to it
+      );
+
+      result = (await this.redis.eval(
+        luaScript,
+        1,
+        this.balanceKey(userId),
+        amount,
+      )) as number;
+
+      if (result === -2) {
+        // Should be unreachable now that the key is hydrated, but don't
+        // silently swallow it if it happens.
+        throw new BadRequestException('Wallet not found — join the room first');
+      }
+    }
+
     if (result === -1) throw new BadRequestException('Insufficient balance');
 
     // Queue DB sync — processor handles UPDATE + INSERT atomically

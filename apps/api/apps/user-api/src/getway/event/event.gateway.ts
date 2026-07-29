@@ -66,8 +66,30 @@ type GiftRoomSocket = Socket<
   SocketData
 >;
 
+// FRONT_END_URL supports a comma-separated list if you ever need to allow
+// multiple origins (e.g. staging + production).
+//
+// NOTE: this decorator's config is evaluated at module-import time, which
+// can be before ConfigModule has loaded .env locally. In production
+// (Fly/Vercel) FRONT_END_URL comes from platform-injected env vars, which
+// are already present in process.env before Node even starts, so this is
+// safe there. Locally, if you see every WS connection get rejected, set
+// FRONT_END_URL in the shell env you launch `nest start` from, or move this
+// gateway to `cors: true` + an explicit allow-list check in
+// handleConnection() instead.
+const allowedOrigins = process.env.FRONT_END_URL
+  ? process.env.FRONT_END_URL.split(',').map((origin) => origin.trim())
+  : null;
+
+if (!allowedOrigins) {
+  console.warn(
+    '[EventGateway] FRONT_END_URL not set at module load — falling back to ' +
+      "cors origin '*' for /gift-room. Set FRONT_END_URL to lock this down.",
+  );
+}
+
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: { origin: allowedOrigins ?? '*' },
   transports: ['websocket'],
   namespace: '/gift-room',
 })
